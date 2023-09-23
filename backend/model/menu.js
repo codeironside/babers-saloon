@@ -1,23 +1,20 @@
 const mongoose = require("mongoose");
 const MENU = mongoose.Schema(
   {
-    employeeid: {
+    shps_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "EMPLOYEE",
+      ref: "SHOPS",
       required: true,
     },
-    enterprise_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "BRANCH",
-      required: true,
-    },
-    menuName: {
+
+    menu_name: {
       type: String,
       required: [true, "please add a name "],
       unique: true,
     },
     price: {
-      type: String,
+      type: Number,
+      default: 0,
     },
     QuantityAvailable: {
       type: Number,
@@ -33,15 +30,11 @@ const MENU = mongoose.Schema(
       required: [true, "please add a menu code "],
       unique: true,
     },
-
-    MI_group: { type: String, required: [true, "please add a group Number"] },
     description: {
       type: String,
       required: [true, "please add a description"],
     },
-    MI_category: { type: String, required: [true, "please add a category"] },
-    Happy_hour_Price: { type: String },
-    Prep_Cost: { type: String },
+    discount_Price: { type: String },
   },
 
   {

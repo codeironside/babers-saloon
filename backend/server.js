@@ -10,6 +10,8 @@ const connectDB = require("./config/db");
 const dotenv = require("dotenv").config();
 const sessions = require("./middleware/sessions");
 // const GridFsStorage = require("multer-gridfs-storage");
+const morgan = require('morgan');
+const requestIp = require('request-ip');
 const { errorHandler } = require("./middleware/errormiddleware");
 const cors = require("cors");
 const corsOption = require("./config/corsOption")
@@ -27,6 +29,8 @@ const morgan = require("morgan");
 const logger = require("./utils/logger");
 //logger
 app.use(morgan("tiny", { stream: logger.stream }));
+app.use(morgan(':date[iso] - :method :url :status :res[content-length] - :response-time ms'));
+app.use(requestIp.mw());
 // app.use(morgan('tiny', { stream: stafflogger.stream }));
 
 connectDB();
