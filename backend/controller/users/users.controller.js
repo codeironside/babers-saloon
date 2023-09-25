@@ -2,7 +2,7 @@ const asynchandler = require("express-async-handler");
 const jwt = require("jsonwebtoken");
 
 const USER = require("../model/");
-const logger = require("../utils/logger");
+const logger = require("../../utils/logger");
 //
 //desc login users
 //access private-depending on endpoint needs
