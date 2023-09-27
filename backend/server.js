@@ -25,6 +25,8 @@ const app = express();
 //port  number
 const port = process.env.port || 5087;
 
+app.set('trust proxy', true);
+
 const logger = require("./utils/logger");
 //logger
 app.use(morgan("tiny", { stream: logger.stream }));

@@ -127,6 +127,7 @@ const login_users = asynchandler(async (req, res) => {
 //access public
 //router /users/register
 const register_users = asynchandler(async (req, res) => {
+  const ip = req.ip;
   const {
     firstName,
     middleName,
@@ -161,14 +162,16 @@ const register_users = asynchandler(async (req, res) => {
     userName,
     phoneNumber,
   });
-  const location = await getLocation(clientIp)
+  const location = await getLocation(ip)
+  console.log(ip)
   const token = generateToken(createUsers._id);
   if (createUsers) {
-    res.status(202).json({
+    res.status(202).header('Authorization', `Bearer ${token}`).json({
       status: "202",
-      message: "user created ",
-      token:token
+      message: "User created",
+      token: token
     });
+    
     logger.info(
       `user with id ${createUsers._id}, was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - ${req.session.id} - from ${location}`
     );
@@ -185,10 +188,21 @@ const generateToken = (id) => {
 };
 const getLocation = asynchandler(async (ip) => {
   try {
-    const response = await axios.get(`https://ipinfo.io/${ip}/json`);
+    // Set endpoint and your access key
+  const accessKey = process.env.ip_secret_key
+  const url = 'http://apiip.net/api/check?ip='+ ip +'&accessKey='+ accessKey; 
+
+  // Make a request and store the response
+  const response = await fetch(url);
+
+  // Decode JSON response:
+  const result = await response.json();
+
+  // Output the "code" value inside "currency" object
     return response.data;
   } catch (error) {
+    console.log(error)
     return null;
   }
 });
-module.exports = { register_users };
+module.exports = { register_users,login_users };
