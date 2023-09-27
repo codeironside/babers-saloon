@@ -16,6 +16,8 @@ const USERS = mongoose.Schema(
       type: String,
       required: [true, "please add a last name "],
       unique: true,
+      uniqueCaseInsensitive:
+        "Username must be unique. This username already exists.",
     },
     email: {
       type: String,

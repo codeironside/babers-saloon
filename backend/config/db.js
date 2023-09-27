@@ -3,7 +3,7 @@ const logger=require("../utils/logger")
 const connectDB = async () => {
   try {
     mongoose.set('strictQuery', true)
-    const conn = await mongoose.connect(process.env.OFFLINEMONGOURI);
+    const conn = await mongoose.connect(process.env.MONGO_URI);
   
     console.log(`Mongodb connected:${conn.connection.host}`.cyan.underline);
     logger.info(`database up and running on development`)

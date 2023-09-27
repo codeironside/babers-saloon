@@ -1,7 +1,7 @@
 const asynchandler = require("express-async-handler");
 const jwt = require("jsonwebtoken");
-
-const USER = require("../model/");
+const bycrypt = require("bcryptjs")
+const USER = require("../../model/users/user");
 const logger = require("../../utils/logger");
 //
 //desc login users
@@ -138,7 +138,6 @@ const register_users = asynchandler(async (req, res) => {
   } = req.body;
   if (
     !firstName ||
-    !middleName ||
     !lastName ||
     !email ||
     !password ||
@@ -162,14 +161,16 @@ const register_users = asynchandler(async (req, res) => {
     userName,
     phoneNumber,
   });
+  const location = await getLocation(clientIp)
   const token = generateToken(createUsers._id);
   if (createUsers) {
     res.status(202).json({
       status: "202",
       message: "user created ",
+      token:token
     });
     logger.info(
-      `user with id ${createUsers._id}, was created at ${createUsers.createdAt} - ${res.status} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - ${req.session.id}`
+      `user with id ${createUsers._id}, was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - ${req.session.id} - from ${location}`
     );
   }
 });
