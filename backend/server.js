@@ -48,7 +48,7 @@ app.use(cors(corsOption));
 //   app.set('trust proxy', 1) // trust first proxy
 //   sess.cookie.secure = true // serve secure cookies
 // }
-app.use(sessions);
+// app.use(sessions);
 
 app.use(express.json());
 //TODO:sessions
