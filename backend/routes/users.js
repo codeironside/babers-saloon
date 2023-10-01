@@ -10,6 +10,6 @@ const Router = express.Router()
 //register users
 Router.route("/register").post(register_users)
 //login users 
-Router.route("/login").post(protect,login_users)
+Router.route("/login").post(login_users)
 
 module.exports=Router

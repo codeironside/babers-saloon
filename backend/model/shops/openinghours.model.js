@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
-const workinghhours = new mongoose.Schema({
-  name: String,
+const workinghoursSchema = new mongoose.Schema({
+
   hours: {
     monday: {
       opening: Date,
@@ -35,4 +35,4 @@ const workinghhours = new mongoose.Schema({
 },{
     timestamps:true
 });
-module.exports=mongoose.model("workinghours",workinghhours)
+module.exports=mongoose.model("workinghours",workinghoursSchema)

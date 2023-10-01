@@ -1,12 +1,13 @@
 const mongoose = require("mongoose");
 
-const SHOPS = new mongoose.schema(
+const SHOPS = new mongoose.Schema(
   {
     shop_name: {
       type: String,
       required: [true, "please add a shop name"],
       unique: true,
     },
+    
     shop_address: {
       type: String,
       required: [true, "please add an address"],
@@ -38,8 +39,13 @@ const SHOPS = new mongoose.schema(
     instagram: { type: String },
     minimum_price: { type: String },
     maximum_price: { type: String },
-    opening_hours: { type: String },
-    instant_booking: [workinghours],
+    workinghours: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "WorkingHours",
+      },
+    ],
+    instant_booking: { type: String },
     category: {
       type: String,
       required: [true, "please add a category"],
@@ -47,6 +53,7 @@ const SHOPS = new mongoose.schema(
     owner: {
       type: mongoose.Schema.ObjectId,
       required: [true, "please include an owners Id"],
+      ref: "USER",
     },
     contact_number: {
       type: String,

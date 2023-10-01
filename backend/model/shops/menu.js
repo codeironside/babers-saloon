@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const MENU = mongoose.Schema(
   {
-    shps_id: {
+    shops_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "SHOPS",
       required: true,

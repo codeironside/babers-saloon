@@ -9,7 +9,7 @@ const errorHandler=(err,req,res,next)=>{
         Message:err.Message,
         stack:process.env.NODE_ENV === "production"? null: err.stack
     })
-    logger.error(new Error(`${res.status} - ${res.statusMessage} - ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip}`));
+    logger.error(new Error(`${res.status} - ${res.Message} - ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip}`));
     next()
 }
 module.exports={

@@ -28,6 +28,11 @@ const USERS = mongoose.Schema(
       type: String,
       required: [true, "please add a password "],
     },
+    role: {
+      type: String,
+      required: [true, "please specify a role"],
+      default:"USER"
+    },
   },
 
   {

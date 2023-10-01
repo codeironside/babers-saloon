@@ -55,12 +55,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 // app.use(methodOverride("_method"));
 
-// app.use("/employee", require("./routes/employee"));
-// // app.use("/shops", require("./routes/shops"));
-// app.use("/menu", require("./routes/menu"));
-// app.use("/branch", require("./routes/branch"));
-// app.use("/role", require("./routes/roles"));
+
 app.use("/users", require("./routes/users"))
+app.use("/shops", require("./routes/shops.route"))
 
 app.use(errorHandler);
 
