@@ -4,6 +4,7 @@ const bcrypt = require("bcryptjs");
 const USER = require("../../model/users/user");
 const logger = require("../../utils/logger");
 const { DateTime } = require("luxon");
+const {convertToWAT} = require('../../utils/datetime')
 
 const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 //
@@ -96,9 +97,7 @@ console.log(userName)
     // res.status(401).json({
     //   error: "Invalid credentials",
     // });
-    throw new Error("invalid credentials");
-
-    const location = await getLocation(clientIp);
+       const location = await getLocation(clientIp);
     logger.error(
       `user with id ${
         user._id
@@ -108,6 +107,9 @@ console.log(userName)
         req.ip
       } - ${req.session.id} - with IP: ${req.clientIp} from ${location}`
     );
+    throw new Error("invalid credentials");
+
+ 
   }
 });
 
@@ -193,9 +195,10 @@ const generateToken = (id) => {
 // Controller function to update a user
 //route /user/updateac
 //access private
+//data updateData
 const updateUser = async (req, res) => {
   const { userId } = req.params; // Get the user ID from the route parameters
-  console.log(userId)
+  const clientIp = req.clientIp;
   const updateData = req.body; // Get the updated data from the request body
 
   try {
@@ -213,6 +216,12 @@ const updateUser = async (req, res) => {
     }
 
     res.status(202).json(updatedUser);
+    const createdAt = updatedUser.updatedAt; // Assuming createdAt is a Date object in your Mongoose schema
+  const watCreatedAt = convertToWAT(createdAt);
+  const location = await getLocation(clientIp);
+    logger.info(
+      `user with id ${userId},updated profile ${watCreatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}  - from ${location}`
+    );
   } catch (error) {
     console.error(error);
     throw new Error('server Error')

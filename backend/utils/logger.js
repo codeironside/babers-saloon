@@ -61,9 +61,5 @@ logger.stream = {
     logger.info(message);
   },
 };
-// userlogger.stream = {
-//   write: (message) => {
-//     userlogger.info(message);
-//   },
-// };
+
 module.exports = logger;
