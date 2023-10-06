@@ -23,9 +23,9 @@ console.log(userName)
   if (loginAttempts.has(clientIp)) {
     const attempts = loginAttempts.get(clientIp);
     if (attempts >= MAX_LOGIN_ATTEMPTS) {
-      res.status(429).json({
-        error: "Too many login attempts. Try again later.",
-      });
+      throw new Error(
+        "Too many login attempts. Try again later.",
+      );
       const location = await getLocation(clientIp);
       logger.error(
         `user with id ${
@@ -67,7 +67,7 @@ console.log(userName)
 
     res.status(200).header("Authorization", `Bearer ${token}`).json({
       message: "successful",
-      token: token,
+      data: user,
     });
 
     // Log successful login
@@ -189,6 +189,35 @@ const generateToken = (id) => {
     { expiresIn: "12h" }
   );
 };
+
+// Controller function to update a user
+//route /user/updateac
+//access private
+const updateUser = async (req, res) => {
+  const { userId } = req.params; // Get the user ID from the route parameters
+  console.log(userId)
+  const updateData = req.body; // Get the updated data from the request body
+
+  try {
+    if(!userId){throw new Error('params is empty')}
+    // Use findByIdAndUpdate to update the user document by ID
+    if(!updateData){
+      throw new Error("body is empty")
+    }
+    const updatedUser = await USER.findByIdAndUpdate(userId, updateData, {
+      new: true, // Return the updated user document
+    });
+
+    if (!updatedUser) {
+      throw new Error('user not found ')
+    }
+
+    res.status(202).json(updatedUser);
+  } catch (error) {
+    console.error(error);
+    throw new Error('server Error')
+  }
+};
 const getLocation = asynchandler(async (ip) => {
   try {
     // Set endpoint and your access key
@@ -209,4 +238,4 @@ const getLocation = asynchandler(async (ip) => {
     return null;
   }
 });
-module.exports = { register_users, login_users, landing_page };
+module.exports = { register_users, login_users, landing_page, updateUser };
