@@ -155,7 +155,7 @@ const login_shops=asynchandler(async(req,res)=>{
 ///access private 
 //desc list all shops
 //routes /shops/all
-const getallshops = asyncHandler(async(req,res)=>{
+const getallshops = asynchandler(async(req,res)=>{
   const page = parseInt(req.query.poge)||1
   const pageSize =parseInt(req.query.pageSize)|| 10
   try{
