@@ -92,10 +92,11 @@ const create_shops =asynchandler( async (req, res) => {
     };
 
     // Create a new "WorkingHours" document
-    const newWorkingHours = await WorkingHours.create(workingHoursData);
+    const newWorkingHours = await working_hours.create(workingHoursData);
 
     // Create a new shop
     const createShops = await SHOPS.create({
+      owner:id,
       shop_name,
       shop_address,
       contact_email,
@@ -121,7 +122,8 @@ const create_shops =asynchandler( async (req, res) => {
     const updatedUser = await USER.findByIdAndUpdate(id, { role }, {
       new: true, // Return the updated document
     });
-
+    const location = await getLocation(req.ip);
+    console.log(req.ip);
     if (createShops && updatedUser) {
       res.status(200).json({
         data: {
@@ -131,12 +133,12 @@ const create_shops =asynchandler( async (req, res) => {
         SHOP_ID: createShops._id,
       });
       logger.info(
-        `User with id ${id} created a shop with id: ${createShops._id} at ${createShops.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - ${req.session.id} - from ${location}`
+        `User with id ${id} created a shop with id: ${createShops._id} at ${createShops.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
       );
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    throw new Error(`${error}`)
   }
 });
 
