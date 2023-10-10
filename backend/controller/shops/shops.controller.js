@@ -1,13 +1,13 @@
 const asynchandler = require("express-async-handler");
 const SHOPS = require("../../model/shops/shop");
-const logger = require("../../utils/logger")
+const logger = require("../../utils/logger");
 const USER = require("../../model/users/user.js");
-const working_hours = require('../../model/shops/openinghours.model')
+const working_hours = require("../../model/shops/openinghours.model");
 
 //access privare
 //route /shops/register/
 // route for creating shops
-const create_shops =asynchandler( async (req, res) => {
+const create_shops = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
     if (!id) throw new Error("Not a user");
@@ -58,7 +58,32 @@ const create_shops =asynchandler( async (req, res) => {
 
     const role = "SHOP_OWNER"; // The updated role value
 
+    // Create a new shop
+    const createShops = await SHOPS.create({
+      owner: id,
+      shop_name,
+      shop_address,
+      contact_email,
+      contact_number,
+      keywords,
+      google_maps_place_id,
+      longitude,
+      images,
+      facebook,
+      description,
+      website,
+      twitter,
+      whatsapp,
+      instagram,
+      minimum_price,
+      maximum_price,
+      instant_booking,
+      category,
+    });
+
+    // create working hours
     const workingHoursData = {
+      shopId: createShops._id,
       hours: {
         monday: {
           opening: monday_opening_hours,
@@ -93,37 +118,15 @@ const create_shops =asynchandler( async (req, res) => {
 
     // Create a new "WorkingHours" document
     const newWorkingHours = await working_hours.create(workingHoursData);
-
-    // Create a new shop
-    const createShops = await SHOPS.create({
-      owner:id,
-      shop_name,
-      shop_address,
-      contact_email,
-      contact_number,
-      keywords,
-      google_maps_place_id,
-      longitude,
-      images,
-      facebook,
-      description,
-      website,
-      twitter,
-      whatsapp,
-      instagram,
-      minimum_price,
-      maximum_price,
-      opening_hours: newWorkingHours._id, // Reference to the created working hours
-      instant_booking,
-      category,
-    });
-
     // Update user's role
-    const updatedUser = await USER.findByIdAndUpdate(id, { role }, {
-      new: true, // Return the updated document
-    });
+    const updatedUser = await USER.findByIdAndUpdate(
+      id,
+      { role },
+      {
+        new: true, // Return the updated document
+      }
+    );
     const location = await getLocation(req.ip);
-    console.log(req.ip);
     if (createShops && updatedUser) {
       res.status(200).json({
         data: {
@@ -138,86 +141,105 @@ const create_shops =asynchandler( async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    throw new Error(`${error}`)
+    throw new Error(`${error}`);
   }
 });
-
 
 //desc login shops
 //route /shops/login
 //access private
-const login_shops=asynchandler(async(req,res)=>{
-    const {id} =req.auth
-    const {SHOP_ID} = req.body
-    if(!id){throw new Error('not authorized')}
-    if(!SHOP_ID){
-        throw new Error('no shops found')
-    }
-})
-///access private 
+const login_shops = asynchandler(async (req, res) => {
+  const { id } = req.auth;
+  const { SHOP_ID } = req.body;
+  if (!id) {
+    throw new Error("not authorized");
+  }
+  if (!SHOP_ID) {
+    throw new Error("no shops found");
+  }
+});
+///access private
 //desc list all shops
 //routes /shops/all
-const getallshops = asynchandler(async(req,res)=>{
-  const page = parseInt(req.query.poge)||1
-  const pageSize =parseInt(req.query.pageSize)|| 10
-  try{
-    const totalCount = await SHOP.countDocuments()
-    const totalpages = Math.cell(totalCount/pageSize)
+const getallshops = asynchandler(async (req, res) => {
+  const page = parseInt(req.query.poge) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+  try {
+    const totalCount = await SHOP.countDocuments();
+    const totalpages = Math.cell(totalCount / pageSize);
     const shops = await SHOP.find()
-    .skip((page -1) * pageSize)
-    .limit(pageSize)
+      .skip((page - 1) * pageSize)
+      .limit(pageSize);
     res.json({
-      data:shops,
-      pahe:page,
-      totalPages:totalpages
-    })
+      data: shops,
+      pahe: page,
+      totalPages: totalpages,
+    });
+  } catch (error) {
+    throw new Error("internal server Error");
   }
-  catch(error){
-    throw new Error('internal server Error')
-  }
-})
+});
 // desc update shops
 //route /shops/update/
-//access private 
+//access private
 // Controller function to update a user
 //route /user/updateac
 //access private
 //data updateData
-const updateShops = async (req, res) => {
-  const { userId } = req.params; // Get the user ID from the route parameters
-  const clientIp = req.clientIp;
-  const {_id, ...updateData }= req.body; // Get the updated data from the request body
+const updateShops = asynchandler(async (req, res) => {
+  const { shopId } = req.params; // Get the user ID from the route parameters
+  const clientIp = req.ip;
+  const { _id, ...updateData } = req.body; // Get the updated data from the request body
 
   try {
-    if(!userId){throw new Error('params is empty')}
+    if (!shopId) {
+      throw new Error("params is empty");
+    }
     // Use findByIdAndUpdate to update the user document by ID
-    if(!updateData){
-      throw new Error("body is empty")
+    if (!updateData) {
+      throw new Error("body is empty");
     }
-    if(_id){
-      throw new Error('_id not found')
+    if (_id) {
+      throw new Error("_id not found");
     }
-    
+
     const updatedShops = await SHOPS.findByIdAndUpdate(_id, updateData, {
       new: true, // Return the updated user document
     });
+    const updatedWorkingHours = await WorkingHours.findByIdAndUpdate(
+      workingHoursId,
+      updateData,
+      {
+        new: true, // Return the updated working hours document
+      }
+    );
 
+    if (!updatedWorkingHours) {
+      throw new Error("working hours not found");
+    }
+
+    res.status(202).json(updatedWorkingHours);
+  
+    const location = await getLocation(clientIp);
+
+    logger.info(
+      `working hours with id ${workingHoursId},updated shop with shop id: ${shopId} at ${updatedWorkingHours.updatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+    );
     if (!updatedShops) {
-      throw new Error('Shop not found ')
+      throw new Error("Shop not found ");
     }
 
     res.status(202).json(updatedShops);
-    const createdAt = updatedShops.updatedAt; // Assuming createdAt is a Date object in your Mongoose schema
-  const watCreatedAt = convertToWAT(createdAt);
-  const location = await getLocation(clientIp);
+     // Assuming createdAt is a Date object in your Mongoose schema
     logger.info(
       `user with id ${userId},updated shop ${id} at ${watCreatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}  - from ${location}`
     );
   } catch (error) {
     console.error(error);
-    throw new Error('server Error')
+    throw new Error("server Error");
   }
-};
+});
+
 
 const getLocation = asynchandler(async (ip) => {
   try {
@@ -239,4 +261,4 @@ const getLocation = asynchandler(async (ip) => {
     return null;
   }
 });
-module.exports = {create_shops}
+module.exports = { create_shops };

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const workinghoursSchema = new mongoose.Schema({
+  shopId: { type: mongoose.Schema.ObjectId,ref:'SHOPS', required: true },
   hours: {
     monday: {
       opening: { type: Date, default: new Date('2023-10-09T10:00:00.000Z') },
