@@ -10,16 +10,20 @@ const connectDB = require("./config/db");
 const dotenv = require("dotenv").config();
 const sessions = require("./middleware/sessions");
 // const GridFsStorage = require("multer-gridfs-storage");
+const http = require('http')
 const morgan = require('morgan');
 const requestIp = require('request-ip');
 const { errorHandler } = require("./middleware/errormiddleware");
 const cors = require("cors");
 const corsOption = require("./config/corsOption")
 const credentials = require("./middleware/credentials")
+const {Server} = require('socket.io')
 
 
 
+const server = http.createServer(app);
 
+const io = new Server(server);
 // const helmet = require("./middleware/helmet");
 const app = express();
 //port  number
@@ -58,9 +62,12 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use("/users", require("./routes/users"))
 app.use("/shops", require("./routes/shops.route"))
+app.use("/chats", require("./routes/chat"))
 
 app.use(errorHandler);
+io.on('connection',(socket)=>{
 
+})
 app.listen(port, () => {
   console.log(`server running on port ${port}`);
   logger.info(`server running on development`);
