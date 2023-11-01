@@ -6,7 +6,7 @@ const Router = express.Router()
 
 
 //register users
-Router.get("/send-message").post(protect, chatlogic)
+Router.route("/send-message").post(protect, chatlogic)
 
 
 module.exports=Router

@@ -14,4 +14,4 @@ const chatlogic = asynchandler(async(req,res)=>{
 })
 
 
-module.exports = chatlogic;
+module.exports = {chatlogic};
