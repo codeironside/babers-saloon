@@ -1,38 +1,39 @@
 const mongoose = require('mongoose');
 
-const workinghoursSchema = new mongoose.Schema({
-  shopId: { type: mongoose.Schema.ObjectId,ref:'SHOPS', required: true },
+const workinghoursSchema = mongoose.Schema({
+  shopId: { type: mongoose.Schema.ObjectId, ref: 'SHOPS', required: true },
   hours: {
     monday: {
-      opening: { type: Date, default: new Date('2023-10-09T10:00:00.000Z') },
-      closing: { type: Date, default: new Date('2023-10-09T18:00:00.000Z') },
+      opening: { type: String, default: "09:30:00" },
+      closing: { type: String, default: "21:30:00" },
     },
     tuesday: {
-      opening: { type: Date, default: new Date('2023-10-10T10:00:00.000Z') },
-      closing: { type: Date, default: new Date('2023-10-10T18:00:00.000Z') },
+      opening: { type: String, default: "09:30:00" },
+      closing: { type: String, default: "21:30:00" },
     },
     wednesday: {
-      opening: { type: Date, default: new Date('2023-10-11T10:00:00.000Z') },
-      closing: { type: Date, default: new Date('2023-10-11T18:00:00.000Z') },
+      opening: { type: String, default: "09:30:00" },
+      closing: { type: String, default: "21:30:00" },
     },
     thursday: {
-      opening: { type: Date, default: new Date('2023-10-12T10:00:00.000Z') },
-      closing: { type: Date, default: new Date('2023-10-12T18:00:00.000Z') },
+      opening: { type: String, default: "09:30:00" },
+      closing: { type: String, default: "21:30:00" },
     },
     friday: {
-      opening: { type: Date, default: new Date('2023-10-13T10:00:00.000Z') },
-      closing: { type: Date, default: new Date('2023-10-13T18:00:00.000Z') },
+      opening: { type: String, default: "09:30:00" },
+      closing: { type: String, default: "21:30:00" },
     },
     saturday: {
-      opening: { type: Date, default: new Date('2023-10-14T10:00:00.000Z') },
-      closing: { type: Date, default: new Date('2023-10-14T18:00:00.000Z') },
+      opening: { type: String, default: "09:30:00" },
+      closing: { type: String, default: "21:30:00" },
     },
     sunday: {
-      opening: { type: Date, default: new Date('2023-10-15T10:00:00.000Z') },
-      closing: { type: Date, default: new Date('2023-10-15T18:00:00.000Z') },
+      opening: { type: String, default: "09:30:00" },
+      closing: { type: String, default: "21:30:00" },
     },
   },
 }, {
   timestamps: true,
 });
-module.exports=mongoose.model("workinghours",workinghoursSchema)
+
+module.exports = mongoose.model("workinghours", workinghoursSchema);

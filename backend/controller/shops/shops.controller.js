@@ -4,6 +4,7 @@ const logger = require("../../utils/logger");
 const USER = require("../../model/users/user.js");
 const working_hours = require("../../model/shops/openinghours.model");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 //access privare
 //route /shops/register/
@@ -82,63 +83,72 @@ const create_shops = asynchandler(async (req, res) => {
       category,
     });
 
-    // create working hours
-    const workingHoursData = {
-      shopId: createShops._id,
-      hours: {
-        monday: {
-          opening: monday_opening_hours,
-          closing: monday_closing_hours,
-        },
-        tuesday: {
-          opening: tuesday_opening_hours,
-          closing: tuesday_closing_hours,
-        },
-        wednesday: {
-          opening: wednesday_opening_hours,
-          closing: wednesday_closing_hours,
-        },
-        thursday: {
-          opening: thursday_opening_hours,
-          closing: thursday_closing_hours,
-        },
-        friday: {
-          opening: friday_opening_hours,
-          closing: friday_closing_hours,
-        },
-        saturday: {
-          opening: saturday_opening_hours,
-          closing: saturday_closing_hours,
-        },
-        sunday: {
-          opening: sunday_opening_hours,
-          closing: sunday_closing_hours,
-        },
-      },
-    };
+    if (createShops) {
+      let newWorkingHours;
 
-    // Create a new "WorkingHours" document
-    const newWorkingHours = await working_hours.create(workingHoursData);
-    // Update user's role
-    const updatedUser = await USER.findByIdAndUpdate(
-      id,
-      { role },
-      {
-        new: true, // Return the updated document
+      try {
+        const workingHoursData = {
+          shopId: createShops._id,
+          hours: {
+            monday: {
+              opening: monday_opening_hours,
+              closing: monday_closing_hours,
+            },
+            tuesday: {
+              opening: tuesday_opening_hours,
+              closing: tuesday_closing_hours,
+            },
+            wednesday: {
+              opening: wednesday_opening_hours,
+              closing: wednesday_closing_hours,
+            },
+            thursday: {
+              opening: thursday_opening_hours,
+              closing: thursday_closing_hours,
+            },
+            friday: {
+              opening: friday_opening_hours,
+              closing: friday_closing_hours,
+            },
+            saturday: {
+              opening: saturday_opening_hours,
+              closing: saturday_closing_hours,
+            },
+            sunday: {
+              opening: sunday_opening_hours,
+              closing: sunday_closing_hours,
+            },
+          },
+        };
+
+        newWorkingHours = await working_hours.create(workingHoursData);
+      } catch (error) {
+        // If an error occurs during the creation of the working hours, delete the created shop
+        console.log(error);
+        await SHOPS.findByIdAndDelete(createShops._id);
+        throw new Error("Error creating working hours");
       }
-    );
-    const location = await getLocation(req.ip);
-    if (createShops && updatedUser) {
-      res.status(200).json({
-        data: {
-          shop: createShops,
-          workingHours: newWorkingHours,
-        },
-        SHOP_ID: createShops._id,
-      });
-      logger.info(
-        `User with id ${id} created a shop with id: ${createShops._id} at ${createShops.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+
+      const updatedUser = await USER.findByIdAndUpdate(
+        id,
+        { role },
+        { new: true }
       );
+
+      const location = await getLocation(req.ip);
+
+      if (createShops && updatedUser) {
+        res.status(200).json({
+          data: {
+            shop: createShops,
+            workingHours: newWorkingHours,
+          },
+          SHOP_ID: createShops._id,
+        });
+        logger.info(
+          `User with id ${id} created a shop with id: ${createShops._id} at ${createShops.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+        );
+      }
     }
   } catch (error) {
     console.error(error);
@@ -248,7 +258,6 @@ const getallshopone = asynchandler(async (req, res) => {
   }
 });
 
-
 // Controller function to update a shop
 //route /user/updateac
 //access private
@@ -288,10 +297,13 @@ const updateShops = asynchandler(async (req, res) => {
     }
 
     const location = await getLocation(clientIp);
-    const workingHours = await working_hours.findOne({ shopId: mongoose.Types.ObjectId(shopId) });
+    const workingHours = await working_hours.findOne({
+      shopId: new mongoose.Types.ObjectId(shopId),
+    });
     res.status(202).json({
       successful: true,
-      data: updatedShop,workingHours,
+      data: updatedShop,
+      workingHours,
     });
 
     logger.info(
@@ -306,7 +318,22 @@ const updateShops = asynchandler(async (req, res) => {
 //access private
 const updateWorkingHours = asynchandler(async (req, res) => {
   const { shopId } = req.params; // Get the working hours ID from the route parameters
-  const updateData = req.body // Get the updated data from the request body
+  const {
+    monday_opening_hours,
+    monday_closing_hours,
+    tuesday_opening_hours,
+    tuesday_closing_hours,
+    wednesday_opening_hours,
+    wednesday_closing_hours,
+    thursday_opening_hours,
+    thursday_closing_hours,
+    friday_opening_hours,
+    friday_closing_hours,
+    saturday_opening_hours,
+    saturday_closing_hours,
+    sunday_opening_hours,
+    sunday_closing_hours,
+  } = req.body; // Get the updated data from the request body
   const clientIp = req.ip;
   const { id } = req.auth;
 
@@ -315,24 +342,56 @@ const updateWorkingHours = asynchandler(async (req, res) => {
       throw new Error("Working hours ID is empty");
     }
 
-    if (!updateData) {
+    if (!req.body) {
       throw new Error("Update data is empty");
     }
 
-    const workingHours = await working_hours.findById(workingHoursId);
+    const workingHours = await working_hours.findOne({ shopId: shopId });
 
     if (!workingHours) {
       throw new Error("Working hours not found");
     }
     // Check if the authenticated user is the owner of the associated shop
-    const shop = await SHOPS.findById(workingHours.shopId);
+    const shop = await SHOPS.findById(shopId);
     if (!shop || shop.owner.toString() !== id) {
       throw new Error("Not authorized");
     }
-
+    const workingHoursData = {
+      shopId: shop._id,
+      hours: {
+        monday: {
+          opening: monday_opening_hours,
+          closing: monday_closing_hours,
+        },
+        tuesday: {
+          opening: tuesday_opening_hours,
+          closing: tuesday_closing_hours,
+        },
+        wednesday: {
+          opening: wednesday_opening_hours,
+          closing: wednesday_closing_hours,
+        },
+        thursday: {
+          opening: thursday_opening_hours,
+          closing: thursday_closing_hours,
+        },
+        friday: {
+          opening: friday_opening_hours,
+          closing: friday_closing_hours,
+        },
+        saturday: {
+          opening: saturday_opening_hours,
+          closing: saturday_closing_hours,
+        },
+        sunday: {
+          opening: sunday_opening_hours,
+          closing: sunday_closing_hours,
+        },
+      },
+    };
     const updatedWorkingHours = await working_hours.findByIdAndUpdate(
-      workingHoursId,
-      updateData,
+      workingHours._id,
+      workingHoursData,
       {
         new: true, // Return the updated working hours document
       }
@@ -350,7 +409,7 @@ const updateWorkingHours = asynchandler(async (req, res) => {
     });
 
     logger.info(
-      `User with id ${id} updated working hours with id: ${workingHoursId} at ${updatedWorkingHours.updatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+      `User with id ${id} updated working hours with id: ${shopId} at ${updatedWorkingHours.updatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
     );
   } catch (error) {
     console.error(error);
@@ -393,5 +452,5 @@ module.exports = {
   updateShops,
   login_shops,
   getallshopone,
-  updateWorkingHours
+  updateWorkingHours,
 };
