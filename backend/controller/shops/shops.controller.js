@@ -157,28 +157,55 @@ const login_shops = asynchandler(async (req, res) => {
   if (!SHOP_ID) {
     throw new Error("no shops found");
   }
-});
-///access private
-//desc list all shops
-//routes /shops/all
-const getallshops = asynchandler(async (req, res) => {
-  const page = parseInt(req.query.poge) || 1;
-  const pageSize = parseInt(req.query.pageSize) || 10;
   try {
-    const totalCount = await SHOP.countDocuments();
-    const totalpages = Math.cell(totalCount / pageSize);
-    const shops = await SHOP.find()
+    const shop = await SHOPS.findById(SHOP_ID);
+    // Get the current time
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+
+    // Format the time as a string
+    const currentTime = `${hours}:${minutes}:${seconds}`;
+    if (shop) {
+      res.status(200).json({
+        successful: true,
+        data: shop,
+      });
+      logger.info(
+        `User with id ${id} logged in a shop with id: ${SHOP_ID} at ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+      );
+    }
+  } catch (error) {
+    throw new Error("internal server error");
+  }
+});
+// access private
+// desc list all shops
+// route /shops/al
+
+const getallshops = asynchandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+  console.log(page, "   ", pageSize)
+  try {
+    const totalCount = await SHOPS.countDocuments();
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const shops = await SHOPS.find()
       .skip((page - 1) * pageSize)
       .limit(pageSize);
     res.json({
       data: shops,
-      pahe: page,
-      totalPages: totalpages,
+      page: page,
+      totalPages: totalPages,
     });
   } catch (error) {
-    throw new Error("internal server Error");
+    console.log(error)
+    throw new Error("Internal server error");
+    
   }
 });
+
 // desc update shops
 //route /shops/update/
 //access private
@@ -192,7 +219,7 @@ const updateShops = asynchandler(async (req, res) => {
   const { _id, ...updateData } = req.body; // Get the updated data from the request body
 
   try {
-    if (!shopId) {
+    if (!shopId) { 
       throw new Error("params is empty");
     }
     // Use findByIdAndUpdate to update the user document by ID
@@ -219,7 +246,7 @@ const updateShops = asynchandler(async (req, res) => {
     }
 
     res.status(202).json(updatedWorkingHours);
-  
+
     const location = await getLocation(clientIp);
 
     logger.info(
@@ -230,7 +257,7 @@ const updateShops = asynchandler(async (req, res) => {
     }
 
     res.status(202).json(updatedShops);
-     // Assuming createdAt is a Date object in your Mongoose schema
+    // Assuming createdAt is a Date object in your Mongoose schema
     logger.info(
       `user with id ${userId},updated shop ${id} at ${watCreatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}  - from ${location}`
     );
@@ -239,7 +266,6 @@ const updateShops = asynchandler(async (req, res) => {
     throw new Error("server Error");
   }
 });
-
 
 const getLocation = asynchandler(async (ip) => {
   try {
@@ -261,4 +287,4 @@ const getLocation = asynchandler(async (ip) => {
     return null;
   }
 });
-module.exports = { create_shops };
+module.exports = { create_shops, getallshops,updateShops, login_shops };

@@ -3,7 +3,7 @@ const asynchandler = require('express-async-handler')
 const { initialize } = require('./chatroom');
 const users = require('../../model/users/user')
 
-const chatlogic = asynchandler(async(req,res,io)=>{
+const chatlogic =async(req,res,io)=>{
     try {
         const { id } = req.auth;
         const { message } = req.body;
@@ -17,7 +17,6 @@ const chatlogic = asynchandler(async(req,res,io)=>{
         console.error('Error sending message:', error);
         return res.status(500).json({ success: false, error: 'Internal Server Error' });
       }
-})
-
+}
 
 module.exports = {chatlogic};
