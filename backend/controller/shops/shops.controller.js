@@ -3,6 +3,7 @@ const SHOPS = require("../../model/shops/shop");
 const logger = require("../../utils/logger");
 const USER = require("../../model/users/user.js");
 const working_hours = require("../../model/shops/openinghours.model");
+const jwt = require("jsonwebtoken");
 
 //access privare
 //route /shops/register/
@@ -167,8 +168,9 @@ const login_shops = asynchandler(async (req, res) => {
 
     // Format the time as a string
     const currentTime = `${hours}:${minutes}:${seconds}`;
+    const token = generateToken(shop._id);
     if (shop) {
-      res.status(200).json({
+      res.status(200).header("Authorization", `Bearer ${token}`).json({
         successful: true,
         data: shop,
       });
@@ -187,7 +189,7 @@ const login_shops = asynchandler(async (req, res) => {
 const getallshops = asynchandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
-  console.log(page, "   ", pageSize)
+  console.log(page, "   ", pageSize);
   try {
     const totalCount = await SHOPS.countDocuments();
     const totalPages = Math.ceil(totalCount / pageSize);
@@ -199,41 +201,136 @@ const getallshops = asynchandler(async (req, res) => {
       page: page,
       totalPages: totalPages,
     });
+    logger.info(
+      `shops were fetched ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+    );
   } catch (error) {
-    console.log(error)
+    console.log(error);
     throw new Error("Internal server error");
-    
   }
 });
 
-// desc update shops
-//route /shops/update/
-//access private
-// Controller function to update a user
+//desc get a shop owbers product
+//acess private
+//rouyte
+const getallshopone = asynchandler(async (req, res) => {
+  let page = parseInt(req.query.page) || 1;
+
+  const pageSize = parseInt(req.query.pageSize) || 10;
+  const { id } = req.auth; // Assuming you are passing userId as a route parameter
+
+  try {
+    const totalCount = await SHOPS.countDocuments({ owner: id }); // Assuming user field represents the user's ID
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const shops = await SHOPS.find({ user: userId })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize);
+    // Get the current time
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+
+    // Format the time as a string
+    const currentTime = `${hours}:${minutes}:${seconds}`;
+    const token = generateToken(id);
+    res.json({
+      data: shops,
+      page: page,
+      totalPages: totalPages,
+    });
+    logger.info(
+      `user with id ${id},fectched all his products - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+    );
+  } catch (error) {
+    console.log(error);
+    throw new Error("Internal server error");
+  }
+});
+
+
+// Controller function to update a shop
 //route /user/updateac
 //access private
 //data updateData
 const updateShops = asynchandler(async (req, res) => {
-  const { shopId } = req.params; // Get the user ID from the route parameters
+  const { shopId } = req.params; // Get the shop ID from the route parameters
   const clientIp = req.ip;
-  const { _id, ...updateData } = req.body; // Get the updated data from the request body
+  const { id } = req.auth;
+  const updateData = req.body; // Get the updated data from the request body
 
   try {
-    if (!shopId) { 
-      throw new Error("params is empty");
-    }
-    // Use findByIdAndUpdate to update the user document by ID
-    if (!updateData) {
-      throw new Error("body is empty");
-    }
-    if (_id) {
-      throw new Error("_id not found");
+    if (!shopId) {
+      throw new Error("Shop ID is empty");
     }
 
-    const updatedShops = await SHOPS.findByIdAndUpdate(_id, updateData, {
-      new: true, // Return the updated user document
+    if (!updateData) {
+      throw new Error("Update data is empty");
+    }
+
+    const shop = await SHOPS.findById(shopId);
+
+    if (!shop) {
+      throw new Error("Shop not found");
+    }
+
+    // Check if the authenticated user is the owner of the shop
+    if (shop.owner.toString() !== id) {
+      throw new Error("Not authorized");
+    }
+
+    const updatedShop = await SHOPS.findByIdAndUpdate(shopId, updateData, {
+      new: true, // Return the updated shop document
     });
-    const updatedWorkingHours = await WorkingHours.findByIdAndUpdate(
+
+    if (!updatedShop) {
+      throw new Error("Error updating shop");
+    }
+
+    const location = await getLocation(clientIp);
+    const workingHours = await working_hours.findOne({ shopId: mongoose.Types.ObjectId(shopId) });
+    res.status(202).json({
+      successful: true,
+      data: updatedShop,workingHours,
+    });
+
+    logger.info(
+      `User with id ${id} updated shop with id: ${shopId} at ${updatedShop.updatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+    );
+  } catch (error) {
+    console.error(error);
+    throw new Error("Server Error");
+  }
+});
+//update working hours
+//access private
+const updateWorkingHours = asynchandler(async (req, res) => {
+  const { shopId } = req.params; // Get the working hours ID from the route parameters
+  const updateData = req.body // Get the updated data from the request body
+  const clientIp = req.ip;
+  const { id } = req.auth;
+
+  try {
+    if (!shopId) {
+      throw new Error("Working hours ID is empty");
+    }
+
+    if (!updateData) {
+      throw new Error("Update data is empty");
+    }
+
+    const workingHours = await working_hours.findById(workingHoursId);
+
+    if (!workingHours) {
+      throw new Error("Working hours not found");
+    }
+    // Check if the authenticated user is the owner of the associated shop
+    const shop = await SHOPS.findById(workingHours.shopId);
+    if (!shop || shop.owner.toString() !== id) {
+      throw new Error("Not authorized");
+    }
+
+    const updatedWorkingHours = await working_hours.findByIdAndUpdate(
       workingHoursId,
       updateData,
       {
@@ -242,28 +339,22 @@ const updateShops = asynchandler(async (req, res) => {
     );
 
     if (!updatedWorkingHours) {
-      throw new Error("working hours not found");
+      throw new Error("Error updating working hours");
     }
-
-    res.status(202).json(updatedWorkingHours);
 
     const location = await getLocation(clientIp);
 
-    logger.info(
-      `working hours with id ${workingHoursId},updated shop with shop id: ${shopId} at ${updatedWorkingHours.updatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
-    );
-    if (!updatedShops) {
-      throw new Error("Shop not found ");
-    }
+    res.status(202).json({
+      successful: true,
+      data: updatedWorkingHours,
+    });
 
-    res.status(202).json(updatedShops);
-    // Assuming createdAt is a Date object in your Mongoose schema
     logger.info(
-      `user with id ${userId},updated shop ${id} at ${watCreatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}  - from ${location}`
+      `User with id ${id} updated working hours with id: ${workingHoursId} at ${updatedWorkingHours.updatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
     );
   } catch (error) {
     console.error(error);
-    throw new Error("server Error");
+    throw new Error("Server Error");
   }
 });
 
@@ -287,4 +378,20 @@ const getLocation = asynchandler(async (ip) => {
     return null;
   }
 });
-module.exports = { create_shops, getallshops,updateShops, login_shops };
+const generateToken = (id) => {
+  return jwt.sign(
+    {
+      id,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "12h" }
+  );
+};
+module.exports = {
+  create_shops,
+  getallshops,
+  updateShops,
+  login_shops,
+  getallshopone,
+  updateWorkingHours
+};

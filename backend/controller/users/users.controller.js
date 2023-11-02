@@ -182,15 +182,7 @@ const landing_page = asynchandler(async (req, res) => {
   }
 });
 
-const generateToken = (id) => {
-  return jwt.sign(
-    {
-      id,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: "12h" }
-  );
-};
+
 
 // Controller function to update a user
 //route /user/updateac
@@ -199,6 +191,7 @@ const generateToken = (id) => {
 const updateUser = async (req, res) => {
   const { userId } = req.params; // Get the user ID from the route parameters
   const clientIp = req.clientIp;
+  const {id}= req.auth
   const updateData = req.body; // Get the updated data from the request body
 
   try {
@@ -207,7 +200,7 @@ const updateUser = async (req, res) => {
     if(!updateData){
       throw new Error("body is empty")
     }
-    const updatedUser = await USER.findByIdAndUpdate(userId, updateData, {
+    const updatedUser = await USER.findByIdAndUpdate(id, updateData, {
       new: true, // Return the updated user document
     });
 
@@ -247,4 +240,14 @@ const getLocation = asynchandler(async (ip) => {
     return null;
   }
 });
+
+const generateToken = (id) => {
+  return jwt.sign(
+    {
+      id,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "12h" }
+  );
+};
 module.exports = { register_users, login_users, landing_page, updateUser };
