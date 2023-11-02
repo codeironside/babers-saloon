@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 const USER = require("../../model/users/user");
 const logger = require("../../utils/logger");
 const { DateTime } = require("luxon");
-const {convertToWAT} = require('../../utils/datetime')
+const { convertToWAT } = require("../../utils/datetime");
 
 const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 //
@@ -19,14 +19,12 @@ const loginAttempts = new Map();
 const login_users = asynchandler(async (req, res) => {
   const { userName, password } = req.body;
   const clientIp = req.clientIp;
-console.log(userName)
+  console.log(userName);
   // Check if there are too many login attempts from this IP address
   if (loginAttempts.has(clientIp)) {
     const attempts = loginAttempts.get(clientIp);
     if (attempts >= MAX_LOGIN_ATTEMPTS) {
-      throw new Error(
-        "Too many login attempts. Try again later.",
-      );
+      throw new Error("Too many login attempts. Try again later.");
       const location = await getLocation(clientIp);
       logger.error(
         `user with id ${
@@ -49,9 +47,7 @@ console.log(userName)
         req.ip
       } - ${req.session.id} - with IP: ${req.clientIp} from ${location}`
     );
-  throw new Error("fields can not be empty")
-  
-
+    throw new Error("fields can not be empty");
   }
   const user = await USER.findOne({ userName: userName });
   console.log(user);
@@ -97,7 +93,7 @@ console.log(userName)
     // res.status(401).json({
     //   error: "Invalid credentials",
     // });
-       const location = await getLocation(clientIp);
+    const location = await getLocation(clientIp);
     logger.error(
       `user with id ${
         user._id
@@ -108,8 +104,6 @@ console.log(userName)
       } - ${req.session.id} - with IP: ${req.clientIp} from ${location}`
     );
     throw new Error("invalid credentials");
-
- 
   }
 });
 
@@ -126,7 +120,9 @@ const register_users = asynchandler(async (req, res) => {
     password,
     userName,
     phoneNumber,
+    referralCode,
   } = req.body;
+
   if (
     !firstName ||
     !lastName ||
@@ -135,14 +131,17 @@ const register_users = asynchandler(async (req, res) => {
     !userName ||
     !phoneNumber
   ) {
-    throw new Error("fields can not be empty");
+    throw new Error("fields cannot be empty");
   }
+
   const findemail = await USER.findOne({ email: email });
   if (findemail) {
-    throw new Error("user already exist");
+    throw new Error("user already exists");
   }
+
   const salt = await bcrypt.genSalt(10);
   const hashedpassword = await bcrypt.hash(password, salt);
+
   const createUsers = await USER.create({
     firstName,
     middleName,
@@ -151,15 +150,34 @@ const register_users = asynchandler(async (req, res) => {
     password: hashedpassword,
     userName,
     phoneNumber,
+    referredby: referralCode, // Add the referral code to the model
   });
+  const codeone = createUsers._id.toString().slice(2, 4);
+  const codetwo = firstName.toString().slice(0, 3);
+  const referrCode = `REF-${codeone}${codetwo}`;
+
+  const updatereferral = await USER.findByIdAndUpdate(
+    createUsers._id,
+    { referCode: referrCode },
+    { new: true }
+  );
   const location = await getLocation(ip);
-  console.log(ip);
   const token = generateToken(createUsers._id);
+  let referredUsers;
+  if (referralCode) {
+    referredUsers = await USER.find(
+      { referredby: referralCode },
+      "firstName lastName pictureUrl"
+    );
+  } else {
+    referredUsers = [];
+  }
   if (createUsers) {
     res.status(202).header("Authorization", `Bearer ${token}`).json({
       status: "202",
-      message: "User created",
-      token: token,
+      message: updatereferral,
+      referralCount: referredUsers.length,
+      referredUsers: referredUsers,
     });
 
     logger.info(
@@ -182,7 +200,67 @@ const landing_page = asynchandler(async (req, res) => {
   }
 });
 
+//get one user
+//access private for user
+const getUser = asynchandler(async (req, res) => {
+  const { id } = req.auth;
 
+  const user = await USER.findById(id);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const referredUsers = await USER.find(
+    { referredby: user.referCode },
+    "firstName lastName pictureUrl"
+  );
+  const referralCount = referredUsers.length;
+
+  res.status(200).json({
+    status: 200,
+    user: {
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      pictureUrl: user.pictureUrl,
+    },
+    referralCount: referralCount,
+    referredUsers: referredUsers,
+  });
+
+  logger.info(
+    `User with id ${userId} information was fetched successfully. Referred users count: ${referralCount}`
+  );
+});
+//desc get all users for admin
+//access private for admins only
+//access private
+// desc list all shops
+// route /shops/al
+
+const getallshops = asynchandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+  console.log(page, "   ", pageSize);
+  try {
+    const totalCount = await USER.countDocuments();
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const shops = await SHOPS.find()
+      .skip((page - 1) * pageSize)
+      .limit(pageSize);
+    res.json({
+      data: shops,
+      page: page,
+      totalPages: totalPages,
+    });
+    logger.info(
+      `shops were fetched ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+    );
+  } catch (error) {
+    console.log(error);
+    throw new Error("Internal server error");
+  }
+});
 
 // Controller function to update a user
 //route /user/updateac
@@ -191,33 +269,39 @@ const landing_page = asynchandler(async (req, res) => {
 const updateUser = async (req, res) => {
   const { userId } = req.params; // Get the user ID from the route parameters
   const clientIp = req.clientIp;
-  const {id}= req.auth
+  const { id } = req.auth;
   const updateData = req.body; // Get the updated data from the request body
 
   try {
-    if(!userId){throw new Error('params is empty')}
+    if (!userId) {
+      throw new Error("params is empty");
+    }
     // Use findByIdAndUpdate to update the user document by ID
-    if(!updateData){
-      throw new Error("body is empty")
+    if (!updateData) {
+      throw new Error("body is empty");
     }
     const updatedUser = await USER.findByIdAndUpdate(id, updateData, {
       new: true, // Return the updated user document
     });
 
     if (!updatedUser) {
-      throw new Error('user not found ')
+      throw new Error("user not found ");
     }
+    if (updateData.userName === updatedUser.userName) {
+      throw new Error("User already exists");
+    }
+    
 
     res.status(202).json(updatedUser);
     const createdAt = updatedUser.updatedAt; // Assuming createdAt is a Date object in your Mongoose schema
-  const watCreatedAt = convertToWAT(createdAt);
-  const location = await getLocation(clientIp);
+    const watCreatedAt = convertToWAT(createdAt);
+    const location = await getLocation(clientIp);
     logger.info(
       `user with id ${userId},updated profile ${watCreatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}  - from ${location}`
     );
   } catch (error) {
     console.error(error);
-    throw new Error('server Error')
+    throw new Error("server Error");
   }
 };
 const getLocation = asynchandler(async (ip) => {

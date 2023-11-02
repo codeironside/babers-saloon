@@ -31,7 +31,17 @@ const USERS = mongoose.Schema(
     role: {
       type: String,
       required: [true, "please specify a role"],
-      default:"USER"
+      default: "USER",
+    },
+    banned_from_forum: {
+      type: Boolean,
+      default: false,
+    },
+    referCode: {
+      type: String,
+    },
+    referredBy: {
+      type: String,
     },
   },
 

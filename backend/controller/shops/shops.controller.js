@@ -265,7 +265,7 @@ const getallshopone = asynchandler(async (req, res) => {
 const updateShops = asynchandler(async (req, res) => {
   const { shopId } = req.params; // Get the shop ID from the route parameters
   const clientIp = req.ip;
-  const { id } = req.auth;
+  
   const updateData = req.body; // Get the updated data from the request body
 
   try {
@@ -300,7 +300,8 @@ const updateShops = asynchandler(async (req, res) => {
     const workingHours = await working_hours.findOne({
       shopId: new mongoose.Types.ObjectId(shopId),
     });
-    res.status(202).json({
+    const token = generateToken(id);
+    res.status(202).header("Authorization", `Bearer ${token}`).json({
       successful: true,
       data: updatedShop,
       workingHours,
@@ -402,8 +403,8 @@ const updateWorkingHours = asynchandler(async (req, res) => {
     }
 
     const location = await getLocation(clientIp);
-
-    res.status(202).json({
+    const token = generateToken(id);
+    res.status(202).header("Authorization", `Bearer ${token}`).json({
       successful: true,
       data: updatedWorkingHours,
     });
