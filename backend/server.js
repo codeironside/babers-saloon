@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const http = require('http'); // Import http module
+const socketIo = require('socket.io');
 const morgan = require('morgan');
 const requestIp = require('request-ip');
 const cors = require("cors");
@@ -12,8 +13,26 @@ const connectDB = require("./config/db");
 const logger = require("./utils/logger");
 
 const app = express();
-const server = http.createServer(app); // Create an http server instance
-const io = new Server(server); // Attach the server instance to socket.io
+const server = http.createServer(app);
+const io = socketIo(server);
+
+// ... Configure Express middleware, such as body parser, static files, and views ...
+
+// Socket.IO connection
+io.on('connection', (socket) => {
+  console.log('a user connected');
+
+  // Handle socket events here
+  socket.on('chat message', (msg) => {
+    // Handle incoming chat messages
+    io.emit('chat message', msg);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
+});
+
 
 const port = process.env.PORT || 5087;
 
@@ -39,9 +58,6 @@ app.use("/chats", require("./routes/chat"));
 // Error handling middleware
 app.use(errorHandler);
 
-io.on('connection', (socket) => {
-  // Handle socket connections
-});
 
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);

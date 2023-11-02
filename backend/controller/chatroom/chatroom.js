@@ -1,20 +1,22 @@
-const socketIo = require('socket.io')
+const socketIo = require('socket.io');
 
+const initialize = (server) => {
+    const io = socketIo(server);
 
+    io.on('connection', (socket) => {
+        console.log('a user connected');
+        const userId = socket.request.user.id;
 
-const initialize = (server)=>{
-    const io = socketIo(server)
+        socket.on('chat-message', (msg) => {
+            io.emit('chat-message', msg);
+        });
 
-    socket.on('connection',(server)=>{
-        console.log("a user connected")
-        const Userid =socket.request.user.id
-        socket.on('chat-message',(msg)=>{io.emit('chat-message',msg)})
-    })
-    socket.on('disconnect',()=>{
-        console.log('a user disconnected')
-    })
+        socket.on('disconnect', () => {
+            console.log('a user disconnected');
+        });
+    });
 
-    return io
-}
+    return io;
+};
 
-module.exports =initialize
+module.exports = { initialize };
