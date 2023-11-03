@@ -1,7 +1,12 @@
 const express = require('express')
 const Router= express.Router()
 const {protect} = require('../middleware/authmiddleware')
-const { create_shops, getallshops, updateShops, getallshopone, login_shops, updateWorkingHours, getallblogs } = require('../controller/blog/blog')
+const {   create_blog,
+    create_comment,
+    updateBlogOwner,
+    getallblogs,
+    getallblogsowner,
+    getblog,} = require('../controller/blog/blog')
 
 //access private
 Router.route('/create').post(protect,create_blog )
