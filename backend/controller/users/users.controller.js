@@ -19,7 +19,7 @@ const loginAttempts = new Map();
 const login_users = asynchandler(async (req, res) => {
   const { userName, password } = req.body;
   const clientIp = req.clientIp;
-  console.log(userName);
+  // console.log(userName);
   // Check if there are too many login attempts from this IP address
   if (loginAttempts.has(clientIp)) {
     const attempts = loginAttempts.get(clientIp);
@@ -50,7 +50,7 @@ const login_users = asynchandler(async (req, res) => {
     throw new Error("fields can not be empty");
   }
   const user = await USER.findOne({ userName: userName });
-  console.log(user);
+  // console.log(user);
   if (!user) {
     throw new Error("User does not exist");
   }
@@ -60,13 +60,29 @@ const login_users = asynchandler(async (req, res) => {
     // Reset the login attempts for this IP address
     loginAttempts.delete(clientIp);
 
+    const referredUsers = await USER.find(
+      { referredBy: user.referCode},
+      "firstName lastName userName pictureUrl"
+    );
+      console.log(user.referCode)
+    const referralCount = referredUsers.length;
     const token = generateToken(user._id); // Replace with your actual token
 
-    res.status(200).header("Authorization", `Bearer ${token}`).json({
-      message: "successful",
-      data: user,
-    });
-
+    res
+      .status(200)
+      .header("Authorization", `Bearer ${token}`)
+      .json({
+        status: 200,
+        user: {
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          userName: user.userName,
+          pictureUrl: user.pictureUrl,
+        },
+        referralCount: referralCount,
+        referredUsers: referredUsers,
+      });
     // Log successful login
     const location = await getLocation(clientIp);
     logger.info(
@@ -166,8 +182,8 @@ const register_users = asynchandler(async (req, res) => {
   let referredUsers;
   if (referralCode) {
     referredUsers = await USER.find(
-      { referredby: referralCode },
-      "firstName lastName pictureUrl"
+      { referredBy: referrCode },
+      "firstName lastName userName pictureUrl"
     );
   } else {
     referredUsers = [];
@@ -206,31 +222,31 @@ const getUser = asynchandler(async (req, res) => {
   const { id } = req.auth;
 
   const user = await USER.findById(id);
-  if (!user) {
-    throw new Error("User not found");
+  if (id === user._id || process.env.role === "superadmin") {
+    if (!user) {
+      throw new Error("User not found");
+    }
+  
+    const referredUsers = await USER.find(
+      { referredBy: user.referCode },
+      "firstName lastName userName pictureUrl"
+    );
+    const referralCount = referredUsers.length;
+  
+    res.status(200).json({
+      status: 200,
+      user: user,
+      referralCount: referralCount,
+      referredUsers: referredUsers,
+    });
+  
+    logger.info(
+      `User with id ${userId} information was fetched successfully. Referred users count: ${referralCount}`
+    );
+  }else{
+    throw new Error('unauthorized')
   }
-
-  const referredUsers = await USER.find(
-    { referredby: user.referCode },
-    "firstName lastName pictureUrl"
-  );
-  const referralCount = referredUsers.length;
-
-  res.status(200).json({
-    status: 200,
-    user: {
-      _id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      pictureUrl: user.pictureUrl,
-    },
-    referralCount: referralCount,
-    referredUsers: referredUsers,
-  });
-
-  logger.info(
-    `User with id ${userId} information was fetched successfully. Referred users count: ${referralCount}`
-  );
+  
 });
 //desc get all users for admin
 //access private for admins only
@@ -238,24 +254,31 @@ const getUser = asynchandler(async (req, res) => {
 // desc list all shops
 // route /shops/al
 
-const getallshops = asynchandler(async (req, res) => {
+const getallusers = asynchandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
   console.log(page, "   ", pageSize);
+  const {id}=req.auth
+   const user = await USER.findById(id);
   try {
-    const totalCount = await USER.countDocuments();
-    const totalPages = Math.ceil(totalCount / pageSize);
-    const shops = await SHOPS.find()
-      .skip((page - 1) * pageSize)
-      .limit(pageSize);
-    res.json({
-      data: shops,
-      page: page,
-      totalPages: totalPages,
-    });
-    logger.info(
-      `shops were fetched ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
-    );
+    if (user.role==='superadmin'||process.env.role === "superadmin") {
+      const totalCount = await USER.countDocuments();
+      const totalPages = Math.ceil(totalCount / pageSize);
+      const shops = await USER.find()
+        .skip((page - 1) * pageSize)
+        .limit(pageSize);
+      res.json({
+        data: shops,
+        page: page,
+        totalPages: totalPages,
+      });
+      logger.info(
+        `shops were fetched ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+      );
+    }else{
+      throw new Error('not authorized')
+    }
+ 
   } catch (error) {
     console.log(error);
     throw new Error("Internal server error");
@@ -276,9 +299,13 @@ const updateUser = async (req, res) => {
     if (!userId) {
       throw new Error("params is empty");
     }
-    // Use findByIdAndUpdate to update the user document by ID
+
     if (!updateData) {
       throw new Error("body is empty");
+    }
+    const updatUser = await USER.findById(id);
+    if (updateData.userName === updatUser.userName) {
+      throw new Error("not allowed");
     }
     const updatedUser = await USER.findByIdAndUpdate(id, updateData, {
       new: true, // Return the updated user document
@@ -287,12 +314,12 @@ const updateUser = async (req, res) => {
     if (!updatedUser) {
       throw new Error("user not found ");
     }
-    if (updateData.userName === updatedUser.userName) {
-      throw new Error("User already exists");
-    }
-    
 
-    res.status(202).json(updatedUser);
+    const token = generateToken(shop._id);
+    res
+      .status(200)
+      .header("Authorization", `Bearer ${token}`)
+      .json(updatedUser);
     const createdAt = updatedUser.updatedAt; // Assuming createdAt is a Date object in your Mongoose schema
     const watCreatedAt = convertToWAT(createdAt);
     const location = await getLocation(clientIp);
@@ -334,4 +361,11 @@ const generateToken = (id) => {
     { expiresIn: "12h" }
   );
 };
-module.exports = { register_users, login_users, landing_page, updateUser };
+module.exports = {
+  register_users,
+  login_users,
+  landing_page,
+  updateUser,
+  getUser,
+  getallusers,
+};

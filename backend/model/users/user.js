@@ -14,7 +14,7 @@ const USERS = mongoose.Schema(
     },
     userName: {
       type: String,
-      required: [true, "please add a last name "],
+      required: [true, "please add a user name "],
       unique: true,
       uniqueCaseInsensitive:
         "Username must be unique. This username already exists.",
@@ -43,6 +43,7 @@ const USERS = mongoose.Schema(
     referredBy: {
       type: String,
     },
+  pictureUrl:{type:String}
   },
 
   {
