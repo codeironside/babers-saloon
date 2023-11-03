@@ -131,7 +131,7 @@ const create_shops = asynchandler(async (req, res) => {
 
       const updatedUser = await USER.findByIdAndUpdate(
         id,
-        { role },
+        {$set :{ role :role}},
         { new: true }
       );
 
@@ -189,7 +189,7 @@ const login_shops = asynchandler(async (req, res) => {
       );
     }
   } catch (error) {
-    throw new Error("internal server error");
+    throw new Error(`${error}`);
   }
 });
 // access private
@@ -201,12 +201,17 @@ const getallshops = asynchandler(async (req, res) => {
   const pageSize = parseInt(req.query.pageSize) || 10;
   console.log(page, "   ", pageSize);
   try {
+    const user = await USER.findById(id);
+    if (!user._id === "superadmin" || !process.env.role === "superadmin") {
+      throw new Error("not authorized");
+    }
     const totalCount = await SHOPS.countDocuments();
     const totalPages = Math.ceil(totalCount / pageSize);
     const shops = await SHOPS.find()
       .skip((page - 1) * pageSize)
       .limit(pageSize);
-    res.json({
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
       data: shops,
       page: page,
       totalPages: totalPages,
@@ -216,7 +221,7 @@ const getallshops = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.log(error);
-    throw new Error("Internal server error");
+    throw new Error(`${error}`);
   }
 });
 
@@ -232,7 +237,7 @@ const getallshopone = asynchandler(async (req, res) => {
   try {
     const totalCount = await SHOPS.countDocuments({ owner: id }); // Assuming user field represents the user's ID
     const totalPages = Math.ceil(totalCount / pageSize);
-    const shops = await SHOPS.find({ user: userId })
+    const shops = await SHOPS.find({ owner: id })
       .skip((page - 1) * pageSize)
       .limit(pageSize);
     // Get the current time
@@ -244,7 +249,7 @@ const getallshopone = asynchandler(async (req, res) => {
     // Format the time as a string
     const currentTime = `${hours}:${minutes}:${seconds}`;
     const token = generateToken(id);
-    res.json({
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
       data: shops,
       page: page,
       totalPages: totalPages,
@@ -254,7 +259,7 @@ const getallshopone = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.log(error);
-    throw new Error("Internal server error");
+    throw new Error(`${error}`);
   }
 });
 
@@ -265,7 +270,7 @@ const getallshopone = asynchandler(async (req, res) => {
 const updateShops = asynchandler(async (req, res) => {
   const { shopId } = req.params; // Get the shop ID from the route parameters
   const clientIp = req.ip;
-  
+
   const updateData = req.body; // Get the updated data from the request body
 
   try {
@@ -311,8 +316,7 @@ const updateShops = asynchandler(async (req, res) => {
       `User with id ${id} updated shop with id: ${shopId} at ${updatedShop.updatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
     );
   } catch (error) {
-    console.error(error);
-    throw new Error("Server Error");
+    throw new Error(`${error}`)
   }
 });
 //update working hours
@@ -414,7 +418,7 @@ const updateWorkingHours = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw new Error("Server Error");
+    throw new Error(`${error}`);
   }
 });
 
@@ -436,6 +440,47 @@ const getLocation = asynchandler(async (ip) => {
   } catch (error) {
     console.log(error);
     return null;
+  }
+});
+//update shopowner
+//access private
+const updateapproval = asynchandler(async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const { id } = req.auth;
+    const { shop_id, status } = req.auth;
+    const role = await USER.findById(id);
+    if (!(role._role === "superadmin") || !(process.env.role === "superadmin"))
+      throw new Error("not authorized");
+    const updatedUser = await USER.findByIdAndUpdate(
+      shop_id,
+      { $set: { approved: status } },
+      { new: true }
+    );
+
+    if (!updatedUser || updatedUser.blog_owner === false) {
+      throw new Error("User not found or blog_owner is already false");
+    }
+    const totalCount = await SHOPS.countDocuments();
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const shops = await SHOPS.find()
+      .skip((page - 1) * pageSize)
+      .limit(pageSize);
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      data: shops,
+      page: page,
+      totalPages: totalPages,
+    });
+    logger.info(
+      `admin with id ${id}, updated shop with id ${shop_id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+    );
+
+  
+
+  } catch (error) {
+    throw new Error(`${error}`);
   }
 });
 const generateToken = (id) => {

@@ -33,6 +33,7 @@ const USERS = mongoose.Schema(
       required: [true, "please specify a role"],
       default: "USER",
     },
+    blog_owner: { type: Boolean, default: false },
     banned_from_forum: {
       type: Boolean,
       default: false,
@@ -43,7 +44,7 @@ const USERS = mongoose.Schema(
     referredBy: {
       type: String,
     },
-  pictureUrl:{type:String}
+    pictureUrl: { type: String },
   },
 
   {

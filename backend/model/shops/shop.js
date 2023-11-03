@@ -63,6 +63,14 @@ const SHOPS = new mongoose.Schema(
       type: String,
       required: [true, "please include a contact email"],
     },
+    approved : {
+      type:Boolean,
+      default:false
+    },
+    subscribed:{
+      type:Boolean,
+      default:false
+    }
   },
   {
     timestamps: true,
