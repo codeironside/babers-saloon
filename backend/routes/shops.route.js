@@ -17,6 +17,7 @@ Router.route('/updateS/:shopId').put(protect, updateShops)
 //access private
 Router.route('/getallone').get(protect, getallshopone)
 
+
 //access private
 Router.route('/updateH/:shopId').put(protect, updateWorkingHours)
 

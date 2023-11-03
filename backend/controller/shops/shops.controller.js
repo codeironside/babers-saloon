@@ -178,11 +178,14 @@ const login_shops = asynchandler(async (req, res) => {
 
     // Format the time as a string
     const currentTime = `${hours}:${minutes}:${seconds}`;
+    let owner =false
+    if(id===shop._id) owner = true ;
     const token = generateToken(shop._id);
     if (shop) {
       res.status(200).header("Authorization", `Bearer ${token}`).json({
         successful: true,
         data: shop,
+        owner:owner
       });
       logger.info(
         `User with id ${id} logged in a shop with id: ${SHOP_ID} at ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
@@ -224,6 +227,7 @@ const getallshops = asynchandler(async (req, res) => {
     throw new Error(`${error}`);
   }
 });
+
 
 //desc get a shop owbers product
 //acess private
@@ -557,5 +561,6 @@ module.exports = {
   updateWorkingHours,
   updateapproval,
   updatesubscription,
-  searchShops
+  searchShops,
+
 };
