@@ -1,20 +1,20 @@
 const express = require('express')
 const Router= express.Router()
 const {protect} = require('../middleware/authmiddleware')
-const { create_shops, getallshops, updateShops, getallshopone, login_shops, updateWorkingHours } = require('../controller/shops/shops.controller')
+const { create_shops, getallshops, updateShops, getallshopone, login_shops, updateWorkingHours, getallblogs } = require('../controller/blog/blog')
 
 //access private
-Router.route('/register').post(protect,create_shops )
-//ccess public
-Router.route("/getall").get(getallshops)
+Router.route('/create').post(protect,create_blog )
 //acess private
-Router.route('/login').get(protect, login_shops)
+Router.route('/createcomment').post(protect,create_comment)
+//ccess private
+Router.route("/getall").get(protect,getallblogs)
+//acess private
+Router.route("/getblog").get(protect,getallblogsowner)
 
 //access private
-Router.route('/updateS/:shopId').put(protect, updateShops)
-//access private
-Router.route('/getallone').get(protect, getallshopone)
+Router.route('/getone').get(protect, getblog)
 
 //access private
-Router.route('/updateH/:shopId').put(protect, updateWorkingHours)
+Router.route('/updateblog/:blog_id').put(protect, updateBlogOwner,)
 module.exports= Router

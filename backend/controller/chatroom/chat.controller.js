@@ -1,22 +1,85 @@
-const socketIo = require('socket.io');
-const asynchandler = require('express-async-handler')
-const { initialize } = require('./chatroom');
-const users = require('../../model/users/user')
+const asynchandler = require("express-async-handler");
+const CHAT = require("../../model/chat/chat");
+const users = require("../../model/users/user");
 
-const chatlogic =async(req,res,io)=>{
-    try {
-        const { id } = req.auth;
-        const { message } = req.body;
-        console.log(message)
-        const name = await users.findById(id); // Assuming you have a findById method in your userModel
-        const newMessage = { name: name.firstName, message: message };
-        // chatHistory.push(newMessage); // Example storage of chat history, replace with your database storage logic
-        io.emit('chat message', newMessage);
-        return res.status(200).json({ success: true, message: 'Message sent successfully' });
-      } catch (error) {
-        console.error('Error sending message:', error);
-        return res.status(500).json({ success: false, error: 'Internal Server Error' });
-      }
-}
+const chatlogic = asynchandler(async (req, res, io) => {
+  try {
+    const { id } = req.auth;
+    const { chat } = req.body;
+    const name = await users.findById(id); // Assuming
+    if (!name.banned_from_forum) {
+      ("you have been banned from this forum");
+    }
+    const chatCreate = await CHAT.create({
+      chat,
+      chat_owner: name._id,
+      userName: name.userName,
+    });
+    if (!chatCreate) {
+      throw new Error("error sending your message");
+    }
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      successful:true, 
+ 
+    });
+        logger.info(
+      `user with id ${id},send a message ${chatCreate._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+    );
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+});
+const getallchats = asynchandler(async (req, res, io) => {
+  try {
+    const { id } = req.auth;
+    if(!id) throw new error('not a user')
+    const name = await users.findById(id); // Assuming
+    if (!name.banned_from_forum) {
+      ("you have been banned from this forum");
+    }
+    const allChats = await CHAT.find().sort({ createdAt: -1 });
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      successful:true,
+      data:allchats 
+ 
+    });
+        logger.info(
+      `user with id ${id},send a message ${chatCreate._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+    );
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+});
+const deletechat = asynchandler(async (req, res, io) => {
+  try {
+    const { id } = req.auth;
+    const { chatId } = req.params;
+    if(!id) throw new error('not a user');
+    const name = await users.findById(id); // Assuming
+    const deletedChat = await CHAT.findByIdAndDelete(chatId);
+    if (!deletedChat) {
+      throw new Error("Chat not found");
+    }
+    res.status(200).json({
+      message: "Chat deleted successfully",
+    });
+    logger.info(
+      `Chat with id ${chatId} has been deleted by admin ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+    );
 
-module.exports = {chatlogic};
+  }catch (error) {
+    throw new Error(`${error}`);
+  }
+});
+const generateToken = (id) => {
+  return jwt.sign(
+    {
+      id,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "12h" }
+  );
+};
+module.exports = { chatlogic,getallchats,deletechat };

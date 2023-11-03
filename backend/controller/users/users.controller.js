@@ -220,6 +220,7 @@ const landing_page = asynchandler(async (req, res) => {
 //get one user
 //access private for user
 const getUser = asynchandler(async (req, res) => {
+  try{
   const { id } = req.auth;
 
   const user = await USER.findById(id);
@@ -247,7 +248,9 @@ const getUser = asynchandler(async (req, res) => {
   }else{
     throw new Error('unauthorized')
   }
-  
+}catch(error){
+  throw new Error(`${error}`)
+}
 });
 //desc get all users for admin
 //access private for admins only
@@ -350,6 +353,40 @@ const getLocation = asynchandler(async (ip) => {
   } catch (error) {
     console.log(error);
     return null;
+  }
+});
+//update subscription
+//access private
+const forum_status = asynchandler(async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const { id } = req.auth;
+    const { user_id } = req.params;
+    const { status } = req.body;
+    const role = await USER.findById(id);
+    if (!(role._role === "superadmin") || !(process.env.role === "superadmin"))
+      throw new Error("not authorized");
+    const updatedUser = await USER.findByIdAndUpdate(
+      user_id,
+      { $set: { banned_from_forum: status } },
+      { new: true }
+    );
+
+    if (!updatedUser ) {
+      throw new Error("User not found or blog_owner is already false");
+    }
+    
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      successful:true, 
+ 
+    });
+    logger.info(
+      `admin with id ${id}, changed user with ${user_id} forum status - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+    );
+  } catch (error) {
+    throw new Error(`${error}`);
   }
 });
 

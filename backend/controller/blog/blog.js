@@ -16,8 +16,8 @@ const create_blog = asynchandler(async (req, res) => {
     if (!id) throw new Error("Not a user");
     if (!blog_title || !category || !content)
       throw new Error("body can not be empty");
-    const exist = await BLOG.findOne({blog_title:blog_title})
-    if(exist) throw new Error('title already exist')
+    const exist = await BLOG.findOne({ blog_title: blog_title });
+    if (exist) throw new Error("title already exist");
     const user = await USER.findById(id);
     const blog = await BLOG.create({
       blog_title,
@@ -55,8 +55,7 @@ const create_comment = asynchandler(async (req, res) => {
     const { id } = req.auth;
     const { blog_id, content } = req.body;
     if (!id) throw new Error("Not a user");
-    if (!blog_id ||!content)
-      throw new Error("body can not be empty");
+    if (!blog_id || !content) throw new Error("body can not be empty");
     const user = await USER.findById(id);
     const blog = await comment.create({
       blog_id,
@@ -64,7 +63,7 @@ const create_comment = asynchandler(async (req, res) => {
       owner_name: user.userName,
       content,
     });
-    const Blogs = await BLOG.findById(blog_id)
+    const Blogs = await BLOG.findById(blog_id);
     const comments = await comment.find({ blog_id: blog._id });
     const commentsCount = comments.length;
     const token = generateToken(id);
@@ -89,7 +88,7 @@ const getallblogs = asynchandler(async (req, res) => {
   const { id } = req.auth;
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
- 
+
   try {
     const user = await USER.findById(id);
     if (user._role === "superadmin" || process.env.role === "superadmin") {
@@ -99,10 +98,13 @@ const getallblogs = asynchandler(async (req, res) => {
         .skip((page - 1) * pageSize)
         .limit(pageSize)
         .sort({ createdAt: -1 });
+      let blogDict = {};
 
       for (const blog of blogs) {
         const comments = await comment.find({ blog_id: blog._id });
+
         blog.comments = comments;
+        blogDict[blog] = comments;
       }
 
       const totalCount = await BLOG.countDocuments();
@@ -110,7 +112,8 @@ const getallblogs = asynchandler(async (req, res) => {
 
       const token = generateToken(id);
       res.status(200).header("Authorization", `Bearer ${token}`).json({
-        data: blogs,
+        data: blogDict,
+
         page: page,
         totalPages: totalPages,
       });
@@ -144,11 +147,14 @@ const getallblogsowner = asynchandler(async (req, res) => {
       .limit(pageSize)
       .sort({ createdAt: -1 });
 
-    for (const blog of blogs) {
-      const reviews = await comment.find({ blog_id: shop._id });
-      shop.reviews = reviews;
-    }
+      let blogDict = {};
 
+      for (const blog of blogs) {
+        const comments = await comment.find({ blog_id: blog._id });
+
+        blog.comments = comments;
+        blogDict[blog] = comments;
+      }
     const totalCount = await BLOG.countDocuments({ owner: id });
     const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -160,12 +166,46 @@ const getallblogsowner = asynchandler(async (req, res) => {
     const currentTime = `${hours}:${minutes}:${seconds}`;
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      data: shops,
+      data: blogDict,
       page: page,
       totalPages: totalPages,
     });
     logger.info(
-      `user with id ${id}, fetched all his products - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+      `user with id ${id}, fetched all his blogs - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+    );
+  } catch (error) {
+    console.log(error);
+    throw new Error(`${error}`);
+  }
+});
+//desc get one blog
+//acess private
+//rouyte
+const getblog = asynchandler(async (req, res) => {
+  const { blog_id } = req.body;
+  const { id } = req.auth; // Assuming you are passing userId as a route parameter
+
+  try {
+    if (!id) throw new Error("Not a user");
+
+    const blogs = await BLOG.findById(blog_id);
+
+    const reviews = await comment.find({ blog_id: blogs._id });
+    let dict ={}
+    dict[blogs]=reviews
+
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+
+    const currentTime = `${hours}:${minutes}:${seconds}`;
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      data: dict,
+    });
+    logger.info(
+      `user with id ${id}, fetched a blog with id ${blogs._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
     );
   } catch (error) {
     console.log(error);
@@ -177,9 +217,11 @@ const getallblogsowner = asynchandler(async (req, res) => {
 const updateBlogOwner = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
+
     const page = parseInt(req.query.page) || 1;
-  const pageSize = parseInt(req.query.pageSize) || 10;
-    const { blog_id, status } = req.auth;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const { blog_id } = req.params;
+    const { status } = req.body;
     const role = await USER.findById(id);
     if (!(role._role === "superadmin") || !(process.env.role === "superadmin"))
       throw new Error("not authorized");
@@ -193,25 +235,25 @@ const updateBlogOwner = asynchandler(async (req, res) => {
       throw new Error("User not found or blog_owner is already false");
     }
     const blogs = await BLOG.find()
-    .skip((page - 1) * pageSize)
-    .limit(pageSize)
-    .sort({ createdAt: -1 });
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .sort({ createdAt: -1 });
 
-  for (const blog of blogs) {
-    const comments = await comment.find({ blog_id: blog._id });
-    blog.comments = comments;
-  }
+    for (const blog of blogs) {
+      const comments = await comment.find({ blog_id: blog._id });
+      blog.comments = comments;
+    }
 
-  const totalCount = await BLOG.countDocuments();
-  const totalPages = Math.ceil(totalCount / pageSize);
+    const totalCount = await BLOG.countDocuments();
+    const totalPages = Math.ceil(totalCount / pageSize);
 
-  const token = generateToken(id);
-  res.status(200).header("Authorization", `Bearer ${token}`).json({
-    data: blogs,
-    page: page,
-    totalPages: totalPages,
-  });
-    
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      data: blogs,
+      page: page,
+      totalPages: totalPages,
+    });
+
     logger.info(
       `admin with id ${id}, updated blog with id ${blog_id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
     );
@@ -250,10 +292,10 @@ const generateToken = (id) => {
   );
 };
 module.exports = {
-  create_shops,
-  getallshops,
-  updateShops,
-  login_shops,
-  getallshopone,
-  updateWorkingHours,
+  create_blog,
+  create_comment,
+  updateBlogOwner,
+  getallblogs,
+  getallblogsowner,
+  getblog,
 };

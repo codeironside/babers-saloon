@@ -131,7 +131,7 @@ const create_shops = asynchandler(async (req, res) => {
 
       const updatedUser = await USER.findByIdAndUpdate(
         id,
-        {$set :{ role :role}},
+        { $set: { role: role } },
         { new: true }
       );
 
@@ -316,7 +316,7 @@ const updateShops = asynchandler(async (req, res) => {
       `User with id ${id} updated shop with id: ${shopId} at ${updatedShop.updatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
     );
   } catch (error) {
-    throw new Error(`${error}`)
+    throw new Error(`${error}`);
   }
 });
 //update working hours
@@ -449,7 +449,8 @@ const updateapproval = asynchandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
     const { id } = req.auth;
-    const { shop_id, status } = req.auth;
+    const { shop_id } = req.params;
+    const { status } = req.body;
     const role = await USER.findById(id);
     if (!(role._role === "superadmin") || !(process.env.role === "superadmin"))
       throw new Error("not authorized");
@@ -459,7 +460,7 @@ const updateapproval = asynchandler(async (req, res) => {
       { new: true }
     );
 
-    if (!updatedUser || updatedUser.blog_owner === false) {
+    if (!updatedUser) {
       throw new Error("User not found or blog_owner is already false");
     }
     const totalCount = await SHOPS.countDocuments();
@@ -476,9 +477,45 @@ const updateapproval = asynchandler(async (req, res) => {
     logger.info(
       `admin with id ${id}, updated shop with id ${shop_id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
     );
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+});
+//update subscription
+//access private
+const updatesubscription = asynchandler(async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const { id } = req.auth;
+    const { shop_id } = req.params;
+    const { status } = req.body;
+    const role = await USER.findById(id);
+    if (!(role._role === "superadmin") || !(process.env.role === "superadmin"))
+      throw new Error("not authorized");
+    const updatedUser = await USER.findByIdAndUpdate(
+      shop_id,
+      { $set: { subscribed: status } },
+      { new: true }
+    );
 
-  
-
+    if (!updatedUser) {
+      throw new Error("User not found ");
+    }
+    const totalCount = await SHOPS.countDocuments();
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const shops = await SHOPS.find()
+      .skip((page - 1) * pageSize)
+      .limit(pageSize);
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      data: shops,
+      page: page,
+      totalPages: totalPages,
+    });
+    logger.info(
+      `admin with id ${id}, updated shop with id ${shop_id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+    );
   } catch (error) {
     throw new Error(`${error}`);
   }
@@ -499,4 +536,6 @@ module.exports = {
   login_shops,
   getallshopone,
   updateWorkingHours,
+  updateapproval,
+  updatesubscription,
 };
