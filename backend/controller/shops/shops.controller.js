@@ -199,7 +199,7 @@ const login_shops = asynchandler(async (req, res) => {
 const getallshops = asynchandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
-  console.log(page, "   ", pageSize);
+  const {id }=req.auth;
   try {
     const user = await USER.findById(id);
     if (!user._id === "superadmin" || !process.env.role === "superadmin") {
@@ -520,6 +520,25 @@ const updatesubscription = asynchandler(async (req, res) => {
     throw new Error(`${error}`);
   }
 });
+const searchShops = asynchandler(async (req, res) => {
+  const query = req.query.query;
+  try {
+    const shopResults = await SHOPS.find({ $text: { $search: query } }).sort({ createdAt: -1 });
+
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      data: shopResults,
+    });
+
+    logger.info(
+      `Shop search results fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+    );
+  } catch (error) {
+    console.error(error);
+    throw new Error(`${error}`);
+  }
+});
+
 const generateToken = (id) => {
   return jwt.sign(
     {
@@ -538,4 +557,5 @@ module.exports = {
   updateWorkingHours,
   updateapproval,
   updatesubscription,
+  searchShops
 };

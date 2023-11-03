@@ -207,13 +207,35 @@ const register_users = asynchandler(async (req, res) => {
 //route /users/landing_page
 //desc landing user page
 const landing_page = asynchandler(async (req, res) => {
-  const { id } = req.auth;
-  if (id) {
-    const User = await USER.findById({ _id: id });
-    const token = generateToken(User._id);
-    res.status(200).header("Authorization", `Bearer ${token}`).json({
-      data: User,
+  try {
+    const shops = await SHOPS.find().sort({ createdAt: -1 });
+    const blogs = await BLOG.find().sort({ createdAt: -1 });
+
+    let blogDict = {};
+    for (const blog of blogs) {
+      const comments = await COMMENT.find({ blog_id: blog._id });
+      blog.comments = comments;
+      blogDict[blog] = comments;
+    }
+
+    const sortedShops = shops.sort((a, b) => b.createdAt - a.createdAt);
+    const sortedBlogs = Object.keys(blogDict).sort((a, b) => b.createdAt - a.createdAt);
+
+    // const token = generateToken(id);
+    // res.status(200).header("Authorization", `Bearer ${token}`)
+    res.status(200).json({
+      data: {
+        shops: sortedShops,
+        blogs: sortedBlogs,
+      },
     });
+
+    logger.info(
+      `Landing page data fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+    );
+  } catch (error) {
+    console.error(error);
+    throw new Error(`${error}`);
   }
 });
 
@@ -399,6 +421,30 @@ const generateToken = (id) => {
     { expiresIn: "12h" }
   );
 };
+
+const searchItems = asynchandler(async (req, res) => {
+  const query = req.query.query;
+  try {
+    const shopResults = await SHOPS.find({ $text: { $search: query } }).sort({ createdAt: -1 });
+    const blogResults = await BLOG.find({ $text: { $search: query } }).sort({ createdAt: -1 });
+
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      data: {
+        shops: shopResults,
+        blogs: blogResults,
+      },
+    });
+
+    logger.info(
+      `Search results fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+    );
+  } catch (error) {
+    console.error(error);
+    throw new Error(`${error}`);
+  }
+});
+
 module.exports = {
   register_users,
   login_users,
@@ -406,4 +452,6 @@ module.exports = {
   updateUser,
   getUser,
   getallusers,
+  forum_status,
+  searchItems
 };

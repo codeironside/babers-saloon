@@ -10,7 +10,7 @@ Router.route("/send-message").post(protect, chatlogic)
 //get all
 Router.route("/getall").post(protect, getallchats)
 //access private
-Router.route("/getall").post(protect, deletechat)
+Router.route("/getall").delete(protect, deletechat)
 
 
 module.exports=Router

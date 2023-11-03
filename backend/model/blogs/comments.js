@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const BLOG = new mongoose.Schema(
+const COMMENT = new mongoose.Schema(
   {
     owner_id: {
       type: mongoose.Schema.Types.ObjectId,

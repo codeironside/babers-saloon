@@ -1,8 +1,8 @@
 const asynchandler = require("express-async-handler");
 const logger = require("../../utils/logger");
 const USER = require("../../model/users/user.js");
-const BLOG = require("../../model/blog/blog.js");
-const comment = require("../../model/blog/comment.js");
+const BLOG = require("../../model/blogs/blog.js");
+const comment = require("../../model/blogs/comments.js");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 
@@ -262,6 +262,25 @@ const updateBlogOwner = asynchandler(async (req, res) => {
     throw new Error("Server Error");
   }
 });
+const searchBlogs = asynchandler(async (req, res) => {
+  const query = req.query.query;
+  try {
+    const blogResults = await BLOG.find({ $text: { $search: query } }).sort({ createdAt: -1 });
+
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      data: blogResults,
+    });
+
+    logger.info(
+      `Blog search results fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+    );
+  } catch (error) {
+    console.error(error);
+    throw new Error(`${error}`);
+  }
+});
+
 const getLocation = asynchandler(async (ip) => {
   try {
     // Set endpoint and your access key
@@ -298,4 +317,5 @@ module.exports = {
   getallblogs,
   getallblogsowner,
   getblog,
+  searchBlogs
 };

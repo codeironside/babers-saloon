@@ -13,25 +13,6 @@ const connectDB = require("./config/db");
 const logger = require("./utils/logger");
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
-
-// ... Configure Express middleware, such as body parser, static files, and views ...
-
-// Socket.IO connection
-io.on('connection', (socket) => {
-  console.log('a user connected');
-
-  // Handle socket events here
-  socket.on('chat message', (msg) => {
-    // Handle incoming chat messages
-    io.emit('chat message', msg);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('user disconnected');
-  });
-});
 
 
 const port = process.env.PORT || 5087;
@@ -54,12 +35,13 @@ app.use(express.urlencoded({ extended: false }));
 app.use("/users", require("./routes/users"));
 app.use("/shops", require("./routes/shops.route"));
 app.use("/chats", require("./routes/chat"));
+app.use("/blogs", require("./routes/blog"));
 
 // Error handling middleware
 app.use(errorHandler);
 
 
-server.listen(port, () => {
+app.listen(port, () => {
   console.log(`Server running on port ${port}`);
   logger.info('Server running on development');
 });

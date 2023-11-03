@@ -6,7 +6,7 @@ const {   create_blog,
     updateBlogOwner,
     getallblogs,
     getallblogsowner,
-    getblog,} = require('../controller/blog/blog')
+    getblog,searchBlogs} = require('../controller/blog/blog')
 
 //access private
 Router.route('/create').post(protect,create_blog )
@@ -19,6 +19,8 @@ Router.route("/getblog").get(protect,getallblogsowner)
 
 //access private
 Router.route('/getone').get(protect, getblog)
+//access public
+Router.route('/search').get(searchBlogs)
 
 //access private
 Router.route('/updateblog/:blog_id').put(protect, updateBlogOwner,)
