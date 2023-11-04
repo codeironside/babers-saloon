@@ -40,6 +40,7 @@ const USERS = mongoose.Schema(
     },
     referCode: {
       type: String,
+      unique:true
     },
     referredBy: {
       type: String,

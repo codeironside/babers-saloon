@@ -61,28 +61,21 @@ const login_users = asynchandler(async (req, res) => {
     loginAttempts.delete(clientIp);
 
     const referredUsers = await USER.find(
-      { referredBy: user.referCode},
+      { referredBy: user.referCode },
       "firstName lastName userName pictureUrl"
     );
-      console.log(user.referCode)
+    console.log(user.referCode);
     const referralCount = referredUsers.length;
-    const token = generateToken(user._id); // Replace with your actual token
-
-    res
-      .status(200)
-      .header("Authorization", `Bearer ${token}`)
-      .json({
-        status: 200,
-        user: {
-          _id: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          userName: user.userName,
-          pictureUrl: user.pictureUrl,
-        },
-        referralCount: referralCount,
-        referredUsers: referredUsers,
-      });
+    const token = generateToken(user._id);
+    const userWithoutPassword = await USER.findById(user.id).select(
+      "-password"
+    );
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      status: 200,
+      user: userWithoutPassword,
+      referralCount: referralCount,
+      referredUsers: referredUsers,
+    });
     // Log successful login
     const location = await getLocation(clientIp);
     logger.info(
@@ -154,8 +147,8 @@ const register_users = asynchandler(async (req, res) => {
   if (findemail) {
     throw new Error("user already exists");
   }
-  const exist = await USER.findOne({userName:userName})
-  if(exist) throw new Error('user Name already exist')
+  const exist = await USER.findOne({ userName: userName });
+  if (exist) throw new Error("user Name already exist");
   const salt = await bcrypt.genSalt(10);
   const hashedpassword = await bcrypt.hash(password, salt);
 
@@ -167,15 +160,17 @@ const register_users = asynchandler(async (req, res) => {
     password: hashedpassword,
     userName,
     phoneNumber,
-    referredby: referralCode, // Add the referral code to the model
+    referredBy: referralCode, // Add the referral code to the model
   });
-  const codeone = createUsers._id.toString().slice(2, 4);
+  const codeone = createUsers._id.toString().slice(3, 7);
   const codetwo = firstName.toString().slice(0, 3);
-  const referrCode = `REF-${codeone}${codetwo}`;
+  const codethree =firstName.toString().slice(0, 2);
+  const codefour =userName.toString().slice(0, 2);
+  const referrCode = `REF-${codeone}${codetwo}${codethree}${codefour}${codetwo}`;
 
   const updatereferral = await USER.findByIdAndUpdate(
     createUsers._id,
-    { referCode: referrCode },
+    { $set: { referCode: referrCode } },
     { new: true }
   );
   const location = await getLocation(ip);
@@ -219,7 +214,9 @@ const landing_page = asynchandler(async (req, res) => {
     }
 
     const sortedShops = shops.sort((a, b) => b.createdAt - a.createdAt);
-    const sortedBlogs = Object.keys(blogDict).sort((a, b) => b.createdAt - a.createdAt);
+    const sortedBlogs = Object.keys(blogDict).sort(
+      (a, b) => b.createdAt - a.createdAt
+    );
 
     // const token = generateToken(id);
     // res.status(200).header("Authorization", `Bearer ${token}`)
@@ -242,37 +239,37 @@ const landing_page = asynchandler(async (req, res) => {
 //get one user
 //access private for user
 const getUser = asynchandler(async (req, res) => {
-  try{
-  const { id } = req.auth;
+  try {
+    const { id } = req.auth;
 
-  const user = await USER.findById(id);
-  if (id === user._id || process.env.role === "superadmin") {
-    if (!user) {
-      throw new Error("User not found");
+    const user = await USER.findById(id);
+    if (id === user._id || process.env.role === "superadmin") {
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      const referredUsers = await USER.find(
+        { referredBy: user.referCode },
+        "firstName lastName userName pictureUrl"
+      );
+      const referralCount = referredUsers.length;
+
+      res.status(200).json({
+        status: 200,
+        user: user,
+        referralCount: referralCount,
+        referredUsers: referredUsers,
+      });
+
+      logger.info(
+        `User with id ${userId} information was fetched successfully. Referred users count: ${referralCount}`
+      );
+    } else {
+      throw new Error("unauthorized");
     }
-  
-    const referredUsers = await USER.find(
-      { referredBy: user.referCode },
-      "firstName lastName userName pictureUrl"
-    );
-    const referralCount = referredUsers.length;
-  
-    res.status(200).json({
-      status: 200,
-      user: user,
-      referralCount: referralCount,
-      referredUsers: referredUsers,
-    });
-  
-    logger.info(
-      `User with id ${userId} information was fetched successfully. Referred users count: ${referralCount}`
-    );
-  }else{
-    throw new Error('unauthorized')
+  } catch (error) {
+    throw new Error(`${error}`);
   }
-}catch(error){
-  throw new Error(`${error}`)
-}
 });
 //desc get all users for admin
 //access private for admins only
@@ -284,30 +281,63 @@ const getallusers = asynchandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
   console.log(page, "   ", pageSize);
-  const {id}=req.auth
-   const user = await USER.findById(id);
+  const { id } = req.auth;
+  const user = await USER.findById(id);
   try {
-    if (user.role==='superadmin'||process.env.role === "superadmin") {
-      const totalCount = await USER.countDocuments();
-      const totalPages = Math.ceil(totalCount / pageSize);
-      const shops = await USER.find()
+    if (user.role === "superadmin" || process.env.role === "superadmin") {
+      const users = await USER.find()
         .skip((page - 1) * pageSize)
         .limit(pageSize);
-      res.json({
-        data: shops,
-        page: page,
-        totalPages: totalPages,
+
+      const totalCount = await USER.countDocuments();
+
+      const referredUsers = await USER.aggregate([
+        {
+          $match: {
+            referredBy: { $exists: true },
+          },
+        },
+        {
+          $group: {
+            _id: "$referredBy",
+            count: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const usersWithReferrals = users.map((user) => {
+        const referral = referredUsers.find(
+          (referral) => referral._id === user._id.toString()
+        );
+        const referralCount = referral ? referral.count : 0;
+        return {
+          ...user.toObject(),
+          referredUsers: referralCount,
+        };
       });
+
+      const usersWithoutReferrals = await USER.find({
+        referredBy: { $exists: false },
+      });
+
+      const token = generateToken(id);
+      res
+        .status(200)
+        .header("Authorization", `Bearer ${token}`)
+        .json({
+          data: [...usersWithReferrals,"rf", ...usersWithoutReferrals],
+          page: page,
+          totalPages: Math.ceil(totalCount / pageSize),
+        })
       logger.info(
         `shops were fetched ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
       );
-    }else{
-      throw new Error('not authorized')
+    } else {
+      throw new Error("not authorized");
     }
- 
   } catch (error) {
     console.log(error);
-    throw new Error("Internal server error");
+    throw new Error(`${error}`);
   }
 });
 
@@ -395,14 +425,13 @@ const forum_status = asynchandler(async (req, res) => {
       { new: true }
     );
 
-    if (!updatedUser ) {
+    if (!updatedUser) {
       throw new Error("User not found or blog_owner is already false");
     }
-    
+
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      successful:true, 
- 
+      successful: true,
     });
     logger.info(
       `admin with id ${id}, changed user with ${user_id} forum status - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
@@ -425,16 +454,23 @@ const generateToken = (id) => {
 const searchItems = asynchandler(async (req, res) => {
   const query = req.query.query;
   try {
-    const shopResults = await SHOPS.find({ $text: { $search: query } }).sort({ createdAt: -1 });
-    const blogResults = await BLOG.find({ $text: { $search: query } }).sort({ createdAt: -1 });
+    const shopResults = await SHOPS.find({ $text: { $search: query } }).sort({
+      createdAt: -1,
+    });
+    const blogResults = await BLOG.find({ $text: { $search: query } }).sort({
+      createdAt: -1,
+    });
 
     const token = generateToken(id);
-    res.status(200).header("Authorization", `Bearer ${token}`).json({
-      data: {
-        shops: shopResults,
-        blogs: blogResults,
-      },
-    });
+    res
+      .status(200)
+      .header("Authorization", `Bearer ${token}`)
+      .json({
+        data: {
+          shops: shopResults,
+          blogs: blogResults,
+        },
+      });
 
     logger.info(
       `Search results fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
@@ -453,5 +489,5 @@ module.exports = {
   getUser,
   getallusers,
   forum_status,
-  searchItems
+  searchItems,
 };

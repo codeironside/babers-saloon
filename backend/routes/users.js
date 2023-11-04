@@ -20,7 +20,7 @@ Router.route('/getone').get(protect,getUser)
 //access public
 //search
 Router.route('/search').get(searchItems)
-//get all
+//get all yses
 Router.route('/getall').get(protect,getallusers)
-
+ 
 module.exports=Router
