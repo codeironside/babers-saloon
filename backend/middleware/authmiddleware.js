@@ -23,7 +23,7 @@ const protect = asyncHandler(async (req, res, next) => {
       if (timeElapsedInSeconds > 12 * 60 * 60) {
         // Token has expired
         res.status(401);
-        throw new Error("Token has expired");
+        throw new Error("Session expired");
       }
 
       // Get user from the token
@@ -32,7 +32,11 @@ const protect = asyncHandler(async (req, res, next) => {
       next();
     } catch (error) {
       console.error(error);
-      throw new Error("Not authorized");
+      if (error.name === 'TokenExpiredError') {
+        throw new Error("Session expired");
+      } else {
+        throw new Error("Not authorized");
+      }
     }
   } else {
     throw new Error("Not authorized");

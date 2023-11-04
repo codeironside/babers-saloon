@@ -32,5 +32,10 @@ const BLOG = new mongoose.Schema(
     timestamps: true,
   }
 );
+BLOG.index({ blog_title: 'text' });
 
-module.exports = mongoose.model("BLOG", BLOG);
+const BlogModel = mongoose.model("BLOG", BLOG);
+
+BlogModel.ensureIndexes();
+
+module.exports = BlogModel;

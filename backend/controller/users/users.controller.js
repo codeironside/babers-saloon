@@ -2,6 +2,9 @@ const asynchandler = require("express-async-handler");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const USER = require("../../model/users/user");
+const SHOPS = require("../../model/shops/shop");
+const COMMENT = require("../../model/blogs/comments");
+const BLOGS = require("../../model/blogs/blog");
 const logger = require("../../utils/logger");
 const { DateTime } = require("luxon");
 const { convertToWAT } = require("../../utils/datetime");
@@ -45,7 +48,7 @@ const login_users = asynchandler(async (req, res) => {
         res.statusCode
       } - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${
         req.ip
-      } - ${req.session.id} - with IP: ${req.clientIp} from ${location}`
+      }  - with IP: ${req.clientIp} from ${req.ip}`
     );
     throw new Error("fields can not be empty");
   }
@@ -64,7 +67,6 @@ const login_users = asynchandler(async (req, res) => {
       { referredBy: user.referCode },
       "firstName lastName userName pictureUrl"
     );
-    console.log(user.referCode);
     const referralCount = referredUsers.length;
     const token = generateToken(user._id);
     const userWithoutPassword = await USER.findById(user.id).select(
@@ -83,9 +85,7 @@ const login_users = asynchandler(async (req, res) => {
         user._id
       } logged in at ${currentDateTimeWAT.toString()} - ${res.statusCode} - ${
         res.statusMessage
-      } - ${req.originalUrl} - ${req.method} - ${req.ip} - ${
-        req.session.id
-      } - with IP: ${req.clientIp} from ${location}`
+      } - ${req.originalUrl} - ${req.method} - ${req.ip}`
     );
   } else {
     // Failed login attempt
@@ -110,7 +110,7 @@ const login_users = asynchandler(async (req, res) => {
         res.statusCode
       } - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${
         req.ip
-      } - ${req.session.id} - with IP: ${req.clientIp} from ${location}`
+      } -  - with IP: ${req.clientIp} from ${req.ip}`
     );
     throw new Error("invalid credentials");
   }
@@ -149,6 +149,8 @@ const register_users = asynchandler(async (req, res) => {
   }
   const exist = await USER.findOne({ userName: userName });
   if (exist) throw new Error("user Name already exist");
+  const re = await USER.find({ referCode: referralCode });
+  if (re) throw new Error("invalid coupon");
   const salt = await bcrypt.genSalt(10);
   const hashedpassword = await bcrypt.hash(password, salt);
 
@@ -203,32 +205,32 @@ const register_users = asynchandler(async (req, res) => {
 //desc landing user page
 const landing_page = asynchandler(async (req, res) => {
   try {
-    const shops = await SHOPS.find().sort({ createdAt: -1 });
-    const blogs = await BLOG.find().sort({ createdAt: -1 });
+    const shops = await SHOPS.find({ approved: true });
+    const blogs = await BLOGS.find({ approved: true });
 
     let blogDict = {};
     for (const blog of blogs) {
-      const comments = await COMMENT.find({ blog_id: blog._id });
-      blog.comments = comments;
-      blogDict[blog] = comments;
+      const commentCount = await COMMENT.countDocuments({ blog_id: blog._id });
+      blog.commentCount = commentCount;
+      blogDict[blog] = commentCount;
     }
 
-    const sortedShops = shops.sort((a, b) => b.createdAt - a.createdAt);
-    const sortedBlogs = Object.keys(blogDict).sort(
-      (a, b) => b.createdAt - a.createdAt
-    );
+    const sortedShops = shops.map((shop) => ({ ...shop._doc, type: "shop" }));
+    const sortedBlogs = Object.keys(blogDict).map((blog) => ({
+      ...blog,
+      type: "blog",
+    }));
 
-    // const token = generateToken(id);
-    // res.status(200).header("Authorization", `Bearer ${token}`)
+    const combinedData = [...sortedShops, ...sortedBlogs];
+
+    combinedData.sort((a, b) => b.createdAt - a.createdAt);
+
     res.status(200).json({
-      data: {
-        shops: sortedShops,
-        blogs: sortedBlogs,
-      },
+      data: combinedData,
     });
 
     logger.info(
-      `Landing page data fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+      `Landing page data fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
     );
   } catch (error) {
     console.error(error);
@@ -241,11 +243,11 @@ const landing_page = asynchandler(async (req, res) => {
 const getUser = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
-    const {user_id}=req.body
-    let owner = false
+    const { user_id } = req.body;
+    let owner = false;
     const user = await USER.findById(user_id);
     if (id === user._id || process.env.role === "superadmin") {
-      owner=true
+      owner = true;
       if (!user) {
         throw new Error("User not found");
       }
@@ -255,7 +257,7 @@ const getUser = asynchandler(async (req, res) => {
         "firstName lastName userName pictureUrl"
       );
       const referralCount = referredUsers.length;
-const token = generateToken(id)
+      const token = generateToken(id);
       res.status(202).header("Authorization", `Bearer ${token}`).json({
         status: 200,
         user: user,
@@ -294,12 +296,12 @@ const getallusers = asynchandler(async (req, res) => {
           $group: {
             _id: "$referredBy",
             count: { $sum: 1 },
-          }
-        }
+          },
+        },
       ]);
 
-      const usersWithReferrals = allUsers.map(user => {
-        const referral = referredUsers.find(u => u._id === user.referCode);
+      const usersWithReferrals = allUsers.map((user) => {
+        const referral = referredUsers.find((u) => u._id === user.referCode);
         return {
           ...user._doc,
           referralCount: referral ? referral.count : 0,
@@ -308,12 +310,15 @@ const getallusers = asynchandler(async (req, res) => {
 
       const totalCount = await USER.countDocuments();
 
-      const token = generateToken(id)
-      res.status(200).header("Authorization", `Bearer ${token}`).json({
-        data: usersWithReferrals,
-        page: page,
-        totalPages: Math.ceil(totalCount / pageSize),
-      });
+      const token = generateToken(id);
+      res
+        .status(200)
+        .header("Authorization", `Bearer ${token}`)
+        .json({
+          data: usersWithReferrals,
+          page: page,
+          totalPages: Math.ceil(totalCount / pageSize),
+        });
 
       logger.info(
         `users were fetched- ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
@@ -326,7 +331,6 @@ const getallusers = asynchandler(async (req, res) => {
     throw new Error(`${error}`);
   }
 });
-
 
 // Controller function to update a user
 //route /user/updateac
@@ -346,11 +350,15 @@ const updateUser = async (req, res) => {
     if (!updateData) {
       throw new Error("body is empty");
     }
-    const updatUser = await USER.findById(id);
-    if (updateData.userName === updatUser.userName) {
+    const updatUser = await USER.findById(userId);
+    console.log(updatUser._id);
+    if (
+      !(userId === updatUser._id.toString()) ||
+      !(process.env.role === "superadmin")
+    ) {
       throw new Error("not allowed");
     }
-    const updatedUser = await USER.findByIdAndUpdate(id, updateData, {
+    const updatedUser = await USER.findByIdAndUpdate(userId, updateData, {
       new: true, // Return the updated user document
     });
 
@@ -358,7 +366,7 @@ const updateUser = async (req, res) => {
       throw new Error("user not found ");
     }
 
-    const token = generateToken(shop._id);
+    const token = generateToken(id);
     res
       .status(200)
       .header("Authorization", `Bearer ${token}`)
@@ -367,7 +375,7 @@ const updateUser = async (req, res) => {
     const watCreatedAt = convertToWAT(createdAt);
     const location = await getLocation(clientIp);
     logger.info(
-      `user with id ${userId},updated profile ${watCreatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}  - from ${location}`
+      `user with id ${userId},updated profile ${watCreatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}  - from ${req.ip}`
     );
   } catch (error) {
     console.error(error);
@@ -398,20 +406,20 @@ const getLocation = asynchandler(async (ip) => {
 //access private
 const forum_status = asynchandler(async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.pageSize) || 10;
     const { id } = req.auth;
-    const { user_id } = req.params;
+    const { userId } = req.params;
     const { status } = req.body;
     const role = await USER.findById(id);
-    if (!(role._role === "superadmin") || !(process.env.role === "superadmin"))
+    if (
+      role._role === "superadmin" ||
+      !(process.env.role.toString() === "superadmin")
+    )
       throw new Error("not authorized");
     const updatedUser = await USER.findByIdAndUpdate(
-      user_id,
+      userId,
       { $set: { banned_from_forum: status } },
       { new: true }
     );
-
     if (!updatedUser) {
       throw new Error("User not found or blog_owner is already false");
     }
@@ -421,7 +429,7 @@ const forum_status = asynchandler(async (req, res) => {
       successful: true,
     });
     logger.info(
-      `admin with id ${id}, changed user with ${user_id} forum status - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+      `admin with id ${id}, changed user with ${userId} forum status - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip} `
     );
   } catch (error) {
     throw new Error(`${error}`);
@@ -437,30 +445,24 @@ const generateToken = (id) => {
     { expiresIn: "12h" }
   );
 };
-
 const searchItems = asynchandler(async (req, res) => {
   const query = req.query.query;
   try {
-    const shopResults = await SHOPS.find({ $text: { $search: query } }).sort({
-      createdAt: -1,
-    });
-    const blogResults = await BLOG.find({ $text: { $search: query } }).sort({
-      createdAt: -1,
-    });
+    const shopResults = await SHOPS.find({ $text: { $search: query } });
+    const blogResults = await BLOGS.find({ $text: { $search: query } });
 
-    const token = generateToken(id);
-    res
-      .status(200)
-      .header("Authorization", `Bearer ${token}`)
-      .json({
-        data: {
-          shops: shopResults,
-          blogs: blogResults,
-        },
-      });
+    // Combine and sort the results
+    const combinedResults = [...shopResults, ...blogResults].sort(
+      (a, b) => b.createdAt - a.createdAt
+    );
+
+    // const token = generateToken(id);.header("Authorization", `Bearer ${token}`)
+    res.status(200).json({
+      data: combinedResults,
+    });
 
     logger.info(
-      `Search results fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+      `Search results fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
     );
   } catch (error) {
     console.error(error);

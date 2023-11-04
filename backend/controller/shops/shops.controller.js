@@ -8,7 +8,7 @@ const mongoose = require("mongoose");
 
 //access privare
 //route /shops/register/
-// route for creating shops
+// route for creating shops. more
 const create_shops = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
@@ -146,7 +146,7 @@ const create_shops = asynchandler(async (req, res) => {
           SHOP_ID: createShops._id,
         });
         logger.info(
-          `User with id ${id} created a shop with id: ${createShops._id} at ${createShops.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+          `User with id ${id} created a shop with id: ${createShops._id} at ${createShops.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
         );
       }
     }

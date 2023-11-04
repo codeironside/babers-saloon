@@ -76,5 +76,10 @@ const SHOPS = new mongoose.Schema(
     timestamps: true,
   }
 );
+SHOPS.index({ shop_name: 'text' });
 
-module.exports = mongoose.model("SHOPS", SHOPS);
+const ShopsModel = mongoose.model("SHOPS", SHOPS);
+
+ShopsModel.ensureIndexes();
+
+module.exports = ShopsModel;
