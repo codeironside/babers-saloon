@@ -8,7 +8,7 @@ const mongoose = require("mongoose");
 
 //access privare
 //route /shops/register/
-// route for creating shops. more
+// route for creating shops.
 const create_shops = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
@@ -160,6 +160,35 @@ const create_shops = asynchandler(async (req, res) => {
 //route /shops/login
 //access private
 const login_shops = asynchandler(async (req, res) => {
+  const { SHOP_ID } = req.body;
+  if (!SHOP_ID) {
+    throw new Error("no shops found");
+  }
+  try {
+    const shop = await SHOPS.findById(SHOP_ID);
+    // Get the current time
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+
+    // Format the time as a string
+    const currentTime = `${hours}:${minutes}:${seconds}`;
+    if (shop) {
+      res.status(200).json({
+        successful: true,
+        data: shop,
+      });
+      logger.info(
+        `shop with id ${SHOP_ID} was fetched at ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+      );
+    }
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+});
+//access get one shop for registered users and shop i
+const getshop = asynchandler(async (req, res) => {
   const { id } = req.auth;
   const { SHOP_ID } = req.body;
   if (!id) {
@@ -178,18 +207,20 @@ const login_shops = asynchandler(async (req, res) => {
 
     // Format the time as a string
     const currentTime = `${hours}:${minutes}:${seconds}`;
-    let owner =false
-    if(id===shop._id) owner = true ;
-    const token = generateToken(shop._id);
-    if (shop) {
-      res.status(200).header("Authorization", `Bearer ${token}`).json({
-        successful: true,
-        data: shop,
-        owner:owner
-      });
-      logger.info(
-        `User with id ${id} logged in a shop with id: ${SHOP_ID} at ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
-      );
+    let owner = false;
+    if ((id === shop.owner, toString())) {
+      const token = generateToken(shop._id);
+      owner = true;
+      if (shop) {
+        res.status(200).header("Authorization", `Bearer ${token}`).json({
+          successful: true,
+          data: shop,
+          owner: owner,
+        });
+        logger.info(
+          `User with id ${id} logged in a shop with id: ${SHOP_ID} at ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+        );
+      }
     }
   } catch (error) {
     throw new Error(`${error}`);
@@ -202,32 +233,71 @@ const login_shops = asynchandler(async (req, res) => {
 const getallshops = asynchandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
-  const {id }=req.auth;
+  const { id } = req.auth;
   try {
     const user = await USER.findById(id);
-    if (!user._id === "superadmin" || !process.env.role === "superadmin") {
+    if (
+      !(
+        user.role === "superadmin" ||
+        process.env.role.toString() === "superadmin"
+      )
+    ) {
       throw new Error("not authorized");
     }
+    let owner = false;
+    const shop = await SHOPS.findOne({ owner: id });
+    if ((id === shop.owner, toString())) {
+      const token = generateToken(shop._id);
+      owner = true;
+      const totalCount = await SHOPS.countDocuments();
+      const totalPages = Math.ceil(totalCount / pageSize);
+      const shops = await SHOPS.find()
+        .skip((page - 1) * pageSize)
+        .limit(pageSize);
+      res.status(200).header("Authorization", `Bearer ${token}`).json({
+        owner: owner,
+        data: shops,
+        page: page,
+        totalPages: totalPages,
+      });
+      logger.info(
+        `shops were fetched by${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+      );
+    }
+  } catch (error) {
+    console.log(error);
+    throw new Error(`${error}`);
+  }
+});
+// access public
+// desc list all shops
+// route /shops/al
+
+const getall = asynchandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+  try {
+    owner = false;
     const totalCount = await SHOPS.countDocuments();
     const totalPages = Math.ceil(totalCount / pageSize);
     const shops = await SHOPS.find()
       .skip((page - 1) * pageSize)
       .limit(pageSize);
-    const token = generateToken(id);
-    res.status(200).header("Authorization", `Bearer ${token}`).json({
+    res.status(200).json({
+      owner: owner,
       data: shops,
       page: page,
       totalPages: totalPages,
     });
+
     logger.info(
-      `shops were fetched ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+      `shops were fetched  - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
     );
   } catch (error) {
     console.log(error);
     throw new Error(`${error}`);
   }
 });
-
 
 //desc get a shop owbers product
 //acess private
@@ -259,7 +329,7 @@ const getallshopone = asynchandler(async (req, res) => {
       totalPages: totalPages,
     });
     logger.info(
-      `user with id ${id},fectched all his products - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+      `user with id ${id},fectched all his products - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip} `
     );
   } catch (error) {
     console.log(error);
@@ -276,7 +346,7 @@ const updateShops = asynchandler(async (req, res) => {
   const clientIp = req.ip;
 
   const updateData = req.body; // Get the updated data from the request body
-
+  const { id } = req.auth;
   try {
     if (!shopId) {
       throw new Error("Shop ID is empty");
@@ -293,7 +363,12 @@ const updateShops = asynchandler(async (req, res) => {
     }
 
     // Check if the authenticated user is the owner of the shop
-    if (shop.owner.toString() !== id) {
+    if (
+      !(
+        shop.owner.toString() === id ||
+        process.env.role.toString() === "superadmin"
+      )
+    ) {
       throw new Error("Not authorized");
     }
 
@@ -307,13 +382,13 @@ const updateShops = asynchandler(async (req, res) => {
 
     const location = await getLocation(clientIp);
     const workingHours = await working_hours.findOne({
-      shopId: new mongoose.Types.ObjectId(shopId),
+      shopId: shopId,
     });
     const token = generateToken(id);
     res.status(202).header("Authorization", `Bearer ${token}`).json({
       successful: true,
       data: updatedShop,
-      workingHours,
+      workingHours: workingHours,
     });
 
     logger.info(
@@ -362,7 +437,12 @@ const updateWorkingHours = asynchandler(async (req, res) => {
     }
     // Check if the authenticated user is the owner of the associated shop
     const shop = await SHOPS.findById(shopId);
-    if (!shop || shop.owner.toString() !== id) {
+    if (
+      !(
+        shop.owner.toString() === id ||
+        process.env.role.toString() === "superadmin"
+      )
+    ) {
       throw new Error("Not authorized");
     }
     const workingHoursData = {
@@ -453,13 +533,14 @@ const updateapproval = asynchandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
     const { id } = req.auth;
-    const { shop_id } = req.params;
+    const { shopId } = req.params;
     const { status } = req.body;
-    const role = await USER.findById(id);
-    if (!(role._role === "superadmin") || !(process.env.role === "superadmin"))
+    const shop = await SHOPS.findById(shopId);
+    const user = await USER.findById(id)
+    if (!(shop.owner.toString() === id || process.env.role.toString() === "superadmin"||user.role==='superadmin'))
       throw new Error("not authorized");
-    const updatedUser = await USER.findByIdAndUpdate(
-      shop_id,
+    const updatedUser = await SHOPS.findByIdAndUpdate(
+      shopId,
       { $set: { approved: status } },
       { new: true }
     );
@@ -467,21 +548,15 @@ const updateapproval = asynchandler(async (req, res) => {
     if (!updatedUser) {
       throw new Error("User not found or blog_owner is already false");
     }
-    const totalCount = await SHOPS.countDocuments();
-    const totalPages = Math.ceil(totalCount / pageSize);
-    const shops = await SHOPS.find()
-      .skip((page - 1) * pageSize)
-      .limit(pageSize);
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      data: shops,
-      page: page,
-      totalPages: totalPages,
+      data: updatedUser
     });
     logger.info(
-      `admin with id ${id}, updated shop with id ${shop_id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+      `shop with id ${shopId} was updated by user with id ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip} `
     );
   } catch (error) {
+    console.log(error)
     throw new Error(`${error}`);
   }
 });
@@ -492,13 +567,14 @@ const updatesubscription = asynchandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
     const { id } = req.auth;
-    const { shop_id } = req.params;
+    const { shopId } = req.params;
     const { status } = req.body;
-    const role = await USER.findById(id);
-    if (!(role._role === "superadmin") || !(process.env.role === "superadmin"))
+    const shop = await SHOPS.findById(shopId);
+    const user = await USER.findById(id)
+    if (!(shop.owner.toString() === id || process.env.role.toString() === "superadmin"||user.role==='superadmin'))
       throw new Error("not authorized");
-    const updatedUser = await USER.findByIdAndUpdate(
-      shop_id,
+    const updatedUser = await SHOPS.findByIdAndUpdate(
+      shopId,
       { $set: { subscribed: status } },
       { new: true }
     );
@@ -506,19 +582,13 @@ const updatesubscription = asynchandler(async (req, res) => {
     if (!updatedUser) {
       throw new Error("User not found ");
     }
-    const totalCount = await SHOPS.countDocuments();
-    const totalPages = Math.ceil(totalCount / pageSize);
-    const shops = await SHOPS.find()
-      .skip((page - 1) * pageSize)
-      .limit(pageSize);
+  
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      data: shops,
-      page: page,
-      totalPages: totalPages,
+      data: updatedUser
     });
     logger.info(
-      `admin with id ${id}, updated shop with id ${shop_id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+      `admin with id ${id}, updated shop with id ${shopId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
     );
   } catch (error) {
     throw new Error(`${error}`);
@@ -527,15 +597,15 @@ const updatesubscription = asynchandler(async (req, res) => {
 const searchShops = asynchandler(async (req, res) => {
   const query = req.query.query;
   try {
-    const shopResults = await SHOPS.find({ $text: { $search: query } }).sort({ createdAt: -1 });
-
-    const token = generateToken(id);
-    res.status(200).header("Authorization", `Bearer ${token}`).json({
+    const shopResults = await SHOPS.find({ $text: { $search: query } }).sort({
+      createdAt: -1,
+    });
+    res.status(200).json({
       data: shopResults,
     });
 
     logger.info(
-      `Shop search results fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+      `Shop search results fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
     );
   } catch (error) {
     console.error(error);
@@ -562,5 +632,6 @@ module.exports = {
   updateapproval,
   updatesubscription,
   searchShops,
-
+  getshop,
+  getall,
 };

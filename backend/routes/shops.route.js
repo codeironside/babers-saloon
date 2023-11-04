@@ -1,14 +1,16 @@
 const express = require('express')
 const Router= express.Router()
 const {protect} = require('../middleware/authmiddleware')
-const { create_shops, getallshops, updateShops, getallshopone, login_shops, updateWorkingHours,updateapproval, updatesubscription,searchShops } = require('../controller/shops/shops.controller')
+const { create_shops, getallshops, updateShops, getallshopone, login_shops, updateWorkingHours,updateapproval, updatesubscription,searchShops,getshop,getall } = require('../controller/shops/shops.controller')
 
 //access private
 Router.route('/register').post(protect,create_shops )
 //ccess privare
 Router.route("/getall").get(protect,getallshops)
-//acess private
-Router.route('/login').get(protect, login_shops)
+//ccess public
+Router.route("/all").get(getall)
+//acess private for a guesst
+Router.route('/login').get(login_shops)
 //access public
 Router.route('/search').get(searchShops)
 
@@ -16,6 +18,8 @@ Router.route('/search').get(searchShops)
 Router.route('/updateS/:shopId').put(protect, updateShops)
 //access private
 Router.route('/getallone').get(protect, getallshopone)
+//access private for users and shop owners
+Router.route('/getone').get(protect,getshop)
 
 
 //access private
