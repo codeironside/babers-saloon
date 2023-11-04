@@ -241,9 +241,11 @@ const landing_page = asynchandler(async (req, res) => {
 const getUser = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
-
-    const user = await USER.findById(id);
+    const {user_id}=req.body
+    let owner = false
+    const user = await USER.findById(user_id);
     if (id === user._id || process.env.role === "superadmin") {
+      owner=true
       if (!user) {
         throw new Error("User not found");
       }
@@ -253,8 +255,8 @@ const getUser = asynchandler(async (req, res) => {
         "firstName lastName userName pictureUrl"
       );
       const referralCount = referredUsers.length;
-
-      res.status(200).json({
+const token = generateToken(id)
+      res.status(202).header("Authorization", `Bearer ${token}`).json({
         status: 200,
         user: user,
         referralCount: referralCount,
