@@ -164,8 +164,8 @@ const register_users = asynchandler(async (req, res) => {
   });
   const codeone = createUsers._id.toString().slice(3, 7);
   const codetwo = firstName.toString().slice(0, 3);
-  const codethree =firstName.toString().slice(0, 2);
-  const codefour =userName.toString().slice(0, 2);
+  const codethree = firstName.toString().slice(0, 2);
+  const codefour = userName.toString().slice(0, 2);
   const referrCode = `REF-${codeone}${codetwo}${codethree}${codefour}${codetwo}`;
 
   const updatereferral = await USER.findByIdAndUpdate(
@@ -276,7 +276,6 @@ const getUser = asynchandler(async (req, res) => {
 //access private
 // desc list all shops
 // route /shops/al
-
 const getallusers = asynchandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
@@ -285,52 +284,37 @@ const getallusers = asynchandler(async (req, res) => {
   const user = await USER.findById(id);
   try {
     if (user.role === "superadmin" || process.env.role === "superadmin") {
-      const users = await USER.find()
+      const allUsers = await USER.find()
         .skip((page - 1) * pageSize)
         .limit(pageSize);
-
-      const totalCount = await USER.countDocuments();
-
       const referredUsers = await USER.aggregate([
-        {
-          $match: {
-            referredBy: { $exists: true },
-          },
-        },
         {
           $group: {
             _id: "$referredBy",
             count: { $sum: 1 },
-          },
-        },
+          }
+        }
       ]);
 
-      const usersWithReferrals = users.map((user) => {
-        const referral = referredUsers.find(
-          (referral) => referral._id === user._id.toString()
-        );
-        const referralCount = referral ? referral.count : 0;
+      const usersWithReferrals = allUsers.map(user => {
+        const referral = referredUsers.find(u => u._id === user.referCode);
         return {
-          ...user.toObject(),
-          referredUsers: referralCount,
+          ...user._doc,
+          referralCount: referral ? referral.count : 0,
         };
       });
 
-      const usersWithoutReferrals = await USER.find({
-        referredBy: { $exists: false },
+      const totalCount = await USER.countDocuments();
+
+      const token = generateToken(id)
+      res.status(200).header("Authorization", `Bearer ${token}`).json({
+        data: usersWithReferrals,
+        page: page,
+        totalPages: Math.ceil(totalCount / pageSize),
       });
 
-      const token = generateToken(id);
-      res
-        .status(200)
-        .header("Authorization", `Bearer ${token}`)
-        .json({
-          data: [...usersWithReferrals,"rf", ...usersWithoutReferrals],
-          page: page,
-          totalPages: Math.ceil(totalCount / pageSize),
-        })
       logger.info(
-        `shops were fetched ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+        `users were fetched- ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
       );
     } else {
       throw new Error("not authorized");
@@ -340,6 +324,7 @@ const getallusers = asynchandler(async (req, res) => {
     throw new Error(`${error}`);
   }
 });
+
 
 // Controller function to update a user
 //route /user/updateac
