@@ -18,10 +18,13 @@ const BLOG = new mongoose.Schema(
       type: String,
       required: [true, "please add a category"],
     },
+    media_url: {
+      type: String,
+    },
     content: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       required: [true, "please add a content"],
-      ref: "USER",
+      unique:true
     },
     approved :{
       type:Boolean,

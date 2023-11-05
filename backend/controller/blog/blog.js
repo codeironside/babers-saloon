@@ -12,12 +12,14 @@ const mongoose = require("mongoose");
 const create_blog = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
-    const { blog_title, category, content } = req.body;
+    const { blog_title, category, content, media_url } = req.body;
     if (!id) throw new Error("Not a user");
     if (!blog_title || !category || !content)
       throw new Error("body can not be empty");
     const exist = await BLOG.findOne({ blog_title: blog_title });
+    const contentexist = await BLOG.findOne({ content: content });
     if (exist) throw new Error("title already exist");
+    if (contentexist) throw new Error("content already exist");
     const user = await USER.findById(id);
     const blog = await BLOG.create({
       blog_title,
@@ -25,6 +27,7 @@ const create_blog = asynchandler(async (req, res) => {
       owner_name: user.userName,
       category,
       content,
+      media_url,
     });
     const comments = await comment.find({ blog_id: blog._id });
     const commentsCount = comments.length;
@@ -40,7 +43,7 @@ const create_blog = asynchandler(async (req, res) => {
       .header("Authorization", `Bearer ${token}`)
       .json({ blog, comments, commentsCount });
     logger.info(
-      `User with id ${id} created a blog with id: ${blog._id} at ${blog.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+      `User with id ${id} created a blog with id: ${blog._id} at ${blog.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
     );
   } catch (error) {
     console.error(error);
@@ -64,7 +67,8 @@ const create_comment = asynchandler(async (req, res) => {
       content,
     });
     const Blogs = await BLOG.findById(blog_id);
-    const comments = await comment.find({ blog_id: blog._id });
+    const comments = await comment.find({ blog_id: blog_id });
+
     const commentsCount = comments.length;
     const token = generateToken(id);
     res
@@ -72,7 +76,7 @@ const create_comment = asynchandler(async (req, res) => {
       .header("Authorization", `Bearer ${token}`)
       .json({ Blogs, comments, commentsCount });
     logger.info(
-      `User with id ${id} created a blog with id: ${blog._id} at ${blog.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+      `User with id ${id} created a commen with id: ${blog._id} at ${blog.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
     );
   } catch (error) {
     console.error(error);
@@ -98,13 +102,12 @@ const getallblogs = asynchandler(async (req, res) => {
         .skip((page - 1) * pageSize)
         .limit(pageSize)
         .sort({ createdAt: -1 });
-      let blogDict = {};
+      let blogsArray = [];
 
       for (const blog of blogs) {
         const comments = await comment.find({ blog_id: blog._id });
-
         blog.comments = comments;
-        blogDict[blog] = comments;
+        blogsArray.push(blog);
       }
 
       const totalCount = await BLOG.countDocuments();
@@ -112,14 +115,13 @@ const getallblogs = asynchandler(async (req, res) => {
 
       const token = generateToken(id);
       res.status(200).header("Authorization", `Bearer ${token}`).json({
-        data: blogDict,
-
+        data: blogsArray,
         page: page,
         totalPages: totalPages,
       });
 
       logger.info(
-        `Blogs were fetched ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+        `Blogs were fetched by admin with id:${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
       );
     } else {
       throw new Error("user  not authorized");
@@ -147,31 +149,27 @@ const getallblogsowner = asynchandler(async (req, res) => {
       .limit(pageSize)
       .sort({ createdAt: -1 });
 
-      let blogDict = {};
+      let blogDict = [];
 
       for (const blog of blogs) {
-        const comments = await comment.find({ blog_id: blog._id });
-
-        blog.comments = comments;
-        blogDict[blog] = comments;
+          let blogObject = blog.toObject(); // Convert Mongoose object to plain object
+          const comments = await comment.find({ blog_id: blog._id.toString() });
+          blogObject.comments = comments; // Add comments to the blog object
+          blogDict.push(blogObject); // Push the blog object to the array
       }
-    const totalCount = await BLOG.countDocuments({ owner: id });
-    const totalPages = Math.ceil(totalCount / pageSize);
-
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const seconds = now.getSeconds();
-
-    const currentTime = `${hours}:${minutes}:${seconds}`;
-    const token = generateToken(id);
-    res.status(200).header("Authorization", `Bearer ${token}`).json({
-      data: blogDict,
-      page: page,
-      totalPages: totalPages,
-    });
+      
+      const totalCount = await BLOG.countDocuments({ owner: id });
+      const totalPages = Math.ceil(totalCount / pageSize);
+      const token = generateToken(id);
+      
+      res.status(200).header("Authorization", `Bearer ${token}`).json({
+          data: blogDict,
+          page: page,
+          totalPages: totalPages,
+      });
+      
     logger.info(
-      `user with id ${id}, fetched all his blogs - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+      `user with id ${id}, fetched all his blogs - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip} `
     );
   } catch (error) {
     console.log(error);
@@ -189,24 +187,36 @@ const getblog = asynchandler(async (req, res) => {
     if (!id) throw new Error("Not a user");
 
     const blogs = await BLOG.findById(blog_id);
-
-    const reviews = await comment.find({ blog_id: blogs._id });
-    let dict ={}
-    dict[blogs]=reviews
-
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const seconds = now.getSeconds();
-
-    const currentTime = `${hours}:${minutes}:${seconds}`;
-    const token = generateToken(id);
-    res.status(200).header("Authorization", `Bearer ${token}`).json({
-      data: dict,
-    });
-    logger.info(
-      `user with id ${id}, fetched a blog with id ${blogs._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
-    );
+    let owner = false
+    if(id === blogs.owner_id){
+      owner = true
+      const reviews = await comment.find({ blog_id: blogs._id });
+      let dict = [];
+      dict.comment= reviews;
+  
+      
+      const token = generateToken(id);
+      res.status(200).header("Authorization", `Bearer ${token}`).json({
+        data: dict,
+      });
+      logger.info(
+        `user with id ${id}, fetched a blog with id ${blogs._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+      );
+    }else{
+      const reviews = await comment.find({ blog_id: blogs._id });
+      let dict = [];
+      dict.comment= reviews;
+  
+      
+      const token = generateToken(id);
+      res.status(200).header("Authorization", `Bearer ${token}`).json({
+        data: dict,
+      });
+      logger.info(
+        `user with id ${id}, fetched a blog with id ${blogs._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+      );
+    }
+ 
   } catch (error) {
     console.log(error);
     throw new Error(`${error}`);
@@ -223,7 +233,7 @@ const updateBlogOwner = asynchandler(async (req, res) => {
     const { blog_id } = req.params;
     const { status } = req.body;
     const role = await USER.findById(id);
-    if (!(role._role === "superadmin") || !(process.env.role === "superadmin"))
+    if (!(role._role === "superadmin" || process.env.role === "superadmin"))
       throw new Error("not authorized");
     const updatedUser = await BLOG.findByIdAndUpdate(
       blog_id,
@@ -234,24 +244,10 @@ const updateBlogOwner = asynchandler(async (req, res) => {
     if (!updatedUser || updatedUser.blog_owner === false) {
       throw new Error("User not found or blog_owner is already false");
     }
-    const blogs = await BLOG.find()
-      .skip((page - 1) * pageSize)
-      .limit(pageSize)
-      .sort({ createdAt: -1 });
-
-    for (const blog of blogs) {
-      const comments = await comment.find({ blog_id: blog._id });
-      blog.comments = comments;
-    }
-
-    const totalCount = await BLOG.countDocuments();
-    const totalPages = Math.ceil(totalCount / pageSize);
 
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      data: blogs,
-      page: page,
-      totalPages: totalPages,
+success:true
     });
 
     logger.info(
@@ -259,24 +255,108 @@ const updateBlogOwner = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error("Error updating blog_owner:", error.message);
-    throw new Error("Server Error");
+    throw new Error(`${error}`);
   }
 });
 const searchBlogs = asynchandler(async (req, res) => {
   const query = req.query.query;
   try {
-    const blogResults = await BLOG.find({ $text: { $search: query } }).sort({ createdAt: -1 });
-
-    const token = generateToken(id);
-    res.status(200).header("Authorization", `Bearer ${token}`).json({
+    const blogResults = await BLOG.find({ $text: { $search: query } }).sort({
+      createdAt: -1,
+    });
+    res.status(200).json({
       data: blogResults,
     });
 
     logger.info(
-      `Blog search results fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+      `Blog search results fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${lreq.ip}`
     );
   } catch (error) {
     console.error(error);
+    throw new Error(`${error}`);
+  }
+});
+const getall = asynchandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+  try {
+    owner = false;
+    const totalCount = await BLOG.countDocuments();
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const shops = await BLOG.find()
+      .skip((page - 1) * pageSize)
+      .limit(pageSize);
+    res.status(200).json({
+      owner: owner,
+      data: shops,
+      page: page,
+      totalPages: totalPages,
+    });
+
+    logger.info(
+      `blogs were fetched  - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+    );
+  } catch (error) {
+    console.log(error);
+    throw new Error(`${error}`);
+  }
+});
+// access private
+// desc list all shops
+// route /shops/al
+
+const blogs = asynchandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+  const { id } = req.auth;
+  try {
+    const user = await USER.findById(id);
+    if (
+      !(
+        user.role === "superadmin" ||
+        process.env.role.toString() === "superadmin"
+      )
+    ) {
+      throw new Error("not authorized");
+    }
+    let owner = false;
+    const shop = await BLOG.findOne({ owner: id });
+    if ((id === shop.owner, toString())) {
+      const token = generateToken(shop._id);
+      owner = true;
+      const totalCount = await BLOG.countDocuments();
+      const totalPages = Math.ceil(totalCount / pageSize);
+      const shops = await BLOG.find()
+        .skip((page - 1) * pageSize)
+        .limit(pageSize);
+      res.status(200).header("Authorization", `Bearer ${token}`).json({
+        owner: owner,
+        data: shops,
+        page: page,
+        totalPages: totalPages,
+      });
+      logger.info(
+        `blogs were fetched by${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+      );
+    } else {
+      const token = generateToken(shop._id);
+      const totalCount = await BLOG.countDocuments();
+      const totalPages = Math.ceil(totalCount / pageSize);
+      const shops = await BLOG.find()
+        .skip((page - 1) * pageSize)
+        .limit(pageSize);
+      res.status(200).header("Authorization", `Bearer ${token}`).json({
+        owner: owner,
+        data: shops,
+        page: page,
+        totalPages: totalPages,
+      });
+      logger.info(
+        `blogs were fetched by${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+      );
+    }
+  } catch (error) {
+    console.log(error);
     throw new Error(`${error}`);
   }
 });
@@ -317,5 +397,7 @@ module.exports = {
   getallblogs,
   getallblogsowner,
   getblog,
-  searchBlogs
+  getall,
+  searchBlogs,
+  blogs
 };

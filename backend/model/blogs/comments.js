@@ -15,9 +15,8 @@ const COMMENT = new mongoose.Schema(
     owner_name: { type: String, required: [true, "please add a owner name"] },
  
     content: {
-      type: mongoose.Schema.ObjectId,
-      required: [true, "please add a content"],
-      ref: "USER",
+      type: String,
+      required: [true, "please add a comment"],
     },
   },
   {

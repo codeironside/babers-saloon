@@ -221,6 +221,18 @@ const getshop = asynchandler(async (req, res) => {
           `User with id ${id} logged in a shop with id: ${SHOP_ID} at ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
         );
       }
+    } else {
+      const token = generateToken(shop._id);
+      if (shop) {
+        res.status(200).header("Authorization", `Bearer ${token}`).json({
+          successful: true,
+          data: shop,
+          owner: owner,
+        });
+        logger.info(
+          `User with id ${id} logged in a shop with id: ${SHOP_ID} at ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+        );
+      }
     }
   } catch (error) {
     throw new Error(`${error}`);
@@ -249,6 +261,22 @@ const getallshops = asynchandler(async (req, res) => {
     if ((id === shop.owner, toString())) {
       const token = generateToken(shop._id);
       owner = true;
+      const totalCount = await SHOPS.countDocuments();
+      const totalPages = Math.ceil(totalCount / pageSize);
+      const shops = await SHOPS.find()
+        .skip((page - 1) * pageSize)
+        .limit(pageSize);
+      res.status(200).header("Authorization", `Bearer ${token}`).json({
+        owner: owner,
+        data: shops,
+        page: page,
+        totalPages: totalPages,
+      });
+      logger.info(
+        `shops were fetched by${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+      );
+    } else {
+      const token = generateToken(shop._id);
       const totalCount = await SHOPS.countDocuments();
       const totalPages = Math.ceil(totalCount / pageSize);
       const shops = await SHOPS.find()
@@ -536,8 +564,14 @@ const updateapproval = asynchandler(async (req, res) => {
     const { shopId } = req.params;
     const { status } = req.body;
     const shop = await SHOPS.findById(shopId);
-    const user = await USER.findById(id)
-    if (!(shop.owner.toString() === id || process.env.role.toString() === "superadmin"||user.role==='superadmin'))
+    const user = await USER.findById(id);
+    if (
+      !(
+        shop.owner.toString() === id ||
+        process.env.role.toString() === "superadmin" ||
+        user.role === "superadmin"
+      )
+    )
       throw new Error("not authorized");
     const updatedUser = await SHOPS.findByIdAndUpdate(
       shopId,
@@ -550,13 +584,13 @@ const updateapproval = asynchandler(async (req, res) => {
     }
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      data: updatedUser
+      data: updatedUser,
     });
     logger.info(
       `shop with id ${shopId} was updated by user with id ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip} `
     );
   } catch (error) {
-    console.log(error)
+    console.log(error);
     throw new Error(`${error}`);
   }
 });
@@ -570,8 +604,14 @@ const updatesubscription = asynchandler(async (req, res) => {
     const { shopId } = req.params;
     const { status } = req.body;
     const shop = await SHOPS.findById(shopId);
-    const user = await USER.findById(id)
-    if (!(shop.owner.toString() === id || process.env.role.toString() === "superadmin"||user.role==='superadmin'))
+    const user = await USER.findById(id);
+    if (
+      !(
+        shop.owner.toString() === id ||
+        process.env.role.toString() === "superadmin" ||
+        user.role === "superadmin"
+      )
+    )
       throw new Error("not authorized");
     const updatedUser = await SHOPS.findByIdAndUpdate(
       shopId,
@@ -582,10 +622,10 @@ const updatesubscription = asynchandler(async (req, res) => {
     if (!updatedUser) {
       throw new Error("User not found ");
     }
-  
+
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      data: updatedUser
+      data: updatedUser,
     });
     logger.info(
       `admin with id ${id}, updated shop with id ${shopId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `

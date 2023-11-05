@@ -5,7 +5,8 @@ const {   create_blog,
     create_comment,
     updateBlogOwner,
     getallblogs,
-    getallblogsowner,
+    getall,
+    getallblogsowner,blogs,
     getblog,searchBlogs} = require('../controller/blog/blog')
 
 //access private
@@ -14,6 +15,12 @@ Router.route('/create').post(protect,create_blog )
 Router.route('/createcomment').post(protect,create_comment)
 //ccess private
 Router.route("/getall").get(protect,getallblogs)
+
+//access public
+Router.route("/all").get(getall)
+
+//access private
+Router.route("/blogs").get(protect, blogs)
 //acess private
 Router.route("/getblog").get(protect,getallblogsowner)
 
