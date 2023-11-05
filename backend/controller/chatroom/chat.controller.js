@@ -1,7 +1,7 @@
 const asynchandler = require("express-async-handler");
 const CHAT = require("../../model/chat/chat");
 const users = require("../../model/users/user");
-
+const jwt = require("jsonwebtoken");
 const chatlogic = asynchandler(async (req, res, io) => {
   try {
     const { id } = req.auth;
@@ -20,11 +20,10 @@ const chatlogic = asynchandler(async (req, res, io) => {
     }
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      successful:true, 
- 
+      successful: true,
     });
-        logger.info(
-      `user with id ${id},send a message ${chatCreate._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+    logger.info(
+      `user with id ${id},send a message ${chatCreate._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip} `
     );
   } catch (error) {
     throw new Error(`${error}`);
@@ -33,7 +32,7 @@ const chatlogic = asynchandler(async (req, res, io) => {
 const getallchats = asynchandler(async (req, res, io) => {
   try {
     const { id } = req.auth;
-    if(!id) throw new error('not a user')
+    if (!id) throw new error("not a user");
     const name = await users.findById(id); // Assuming
     if (!name.banned_from_forum) {
       ("you have been banned from this forum");
@@ -41,12 +40,11 @@ const getallchats = asynchandler(async (req, res, io) => {
     const allChats = await CHAT.find().sort({ createdAt: -1 });
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      successful:true,
-      data:allchats 
- 
+      successful: true,
+      data: allChats,
     });
-        logger.info(
-      `user with id ${id},send a message ${chatCreate._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+    logger.info(
+      `chats fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
     );
   } catch (error) {
     throw new Error(`${error}`);
@@ -56,20 +54,27 @@ const deletechat = asynchandler(async (req, res, io) => {
   try {
     const { id } = req.auth;
     const { chatId } = req.params;
-    if(!id) throw new error('not a user');
-    const name = await users.findById(id); // Assuming
+
+    if (!id) throw new error("not a user");
+    const name = await users.findById(id);
+    if (
+      !(
+        name.role === "superadmin" ||
+        process.env.role.toString() === "superadmin"
+      )
+    )
+      throw new Error("not authorized"); // Assuming
     const deletedChat = await CHAT.findByIdAndDelete(chatId);
     if (!deletedChat) {
       throw new Error("Chat not found");
     }
     res.status(200).json({
-      message: "Chat deleted successfully",
+      successful: true,
     });
     logger.info(
       `Chat with id ${chatId} has been deleted by admin ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
     );
-
-  }catch (error) {
+  } catch (error) {
     throw new Error(`${error}`);
   }
 });
@@ -82,4 +87,4 @@ const generateToken = (id) => {
     { expiresIn: "12h" }
   );
 };
-module.exports = { chatlogic,getallchats,deletechat };
+module.exports = { chatlogic, getallchats, deletechat };

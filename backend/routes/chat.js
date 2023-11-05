@@ -8,9 +8,9 @@ const Router = express.Router()
 //send message
 Router.route("/send-message").post(protect, chatlogic)
 //get all
-Router.route("/getall").post(protect, getallchats)
+Router.route("/getall").get(protect, getallchats)
 //access private
-Router.route("/getall").delete(protect, deletechat)
+Router.route("/delete/:chatId").delete(protect, deletechat)
 
 
 module.exports=Router
