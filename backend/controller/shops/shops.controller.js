@@ -634,6 +634,46 @@ const updatesubscription = asynchandler(async (req, res) => {
     throw new Error(`${error}`);
   }
 });
+//update subscription
+//access private
+const updateavalability = asynchandler(async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const { id } = req.auth;
+    const { shopId } = req.params;
+    const { status } = req.body;
+    const shop = await SHOPS.findById(shopId);
+    const user = await USER.findById(id);
+    if (
+      !(
+        shop.owner.toString() === id ||
+        process.env.role.toString() === "superadmin" ||
+        user.role === "superadmin"
+      )
+    )
+      throw new Error("not authorized");
+    const updatedUser = await SHOPS.findByIdAndUpdate(
+      shopId,
+      { $set: { avalabilty: status } },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      throw new Error("User not found ");
+    }
+
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      data: updatedUser,
+    });
+    logger.info(
+      `admin with id ${id}, updated shop with id ${shopId} avalability - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
+    );
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+});
 const searchShops = asynchandler(async (req, res) => {
   const query = req.query.query;
   try {
@@ -674,4 +714,5 @@ module.exports = {
   searchShops,
   getshop,
   getall,
+  updateavalability
 };

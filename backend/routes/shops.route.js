@@ -1,7 +1,7 @@
 const express = require('express')
 const Router= express.Router()
 const {protect} = require('../middleware/authmiddleware')
-const { create_shops, getallshops, updateShops, getallshopone, login_shops, updateWorkingHours,updateapproval, updatesubscription,searchShops,getshop,getall } = require('../controller/shops/shops.controller')
+const { create_shops, getallshops, updateShops, getallshopone, login_shops, updateWorkingHours,updateapproval, updatesubscription,searchShops,getshop,getall, updateavalability } = require('../controller/shops/shops.controller')
 
 //access private
 Router.route('/register').post(protect,create_shops )
@@ -27,6 +27,8 @@ Router.route('/updateH/:shopId').put(protect, updateWorkingHours)
 
 //access private
 Router.route('/updatesub/:shopId').put(protect, updatesubscription)
+//access public
+Router.route('/updatesub/:shopId').put(protect, updateavalability)
 //access private
 Router.route('/updateapp/:shopId').put(protect, updateapproval)
 module.exports= Router

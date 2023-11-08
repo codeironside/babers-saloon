@@ -70,6 +70,10 @@ const SHOPS = new mongoose.Schema(
     subscribed:{
       type:Boolean,
       default:false
+    },
+    availabilty:{
+      type:Boolean,
+      default:false
     }
   },
   {
