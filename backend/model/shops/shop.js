@@ -74,6 +74,10 @@ const SHOPS = new mongoose.Schema(
     availabilty:{
       type:Boolean,
       default:false
+    },
+    type:{
+      type:String,
+      default:'basic',
     }
   },
   {

@@ -45,6 +45,7 @@ const USERS = mongoose.Schema(
     referredBy: {
       type: String,
     },
+    
     pictureUrl: { type: String },
   },
 

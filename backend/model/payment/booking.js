@@ -1,43 +1,45 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const SHOPS = new mongoose.Schema(
+const PaymentSchema = new mongoose.Schema(
   {
     shop_name: {
       type: String,
-      required: [true, "please add a shop name"],
+      required: [true, 'Please add a shop name'],
     },
-    
     user_id: {
-      type:mongoose.Schema.Types.ObjectId ,
-      required: [true, "please add a user id"],
-      ref:'USER'
+      type: mongoose.Schema.Types.ObjectId,
+      required: [true, 'Please add a user id'],
+      ref: 'USER',
     },
     shop_id: {
-      type:mongoose.Schema.Types.ObjectId ,
-      required: [true, "please add a shop id"],
-      ref:'SHOP'
+      type: mongoose.Schema.Types.ObjectId,
+      required: [true, 'Please add a shop id'],
+      ref: 'SHOP',
     },
     quantity: {
       type: String,
-      required: [true, "please add a quantity"],
+      required: [true, 'Please add a quantity'],
     },
-  paid:{
-      type:Boolean,
-      default:false
+
+    amount: {
+      type: Number,
+      required: true,
     },
-  amount:{
-      type:String,
-      default:false
-    }
+    paymentDate: {
+      type: Date,
+      default: Date.now,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['paid', 'pending', 'failed'],
+      default: 'pending',
+    },
   },
   {
     timestamps: true,
   }
 );
-SHOPS.index({ shop_name: 'text' });
 
-const ShopsModel = mongoose.model("SHOPS", SHOPS);
+const PaymentModel = mongoose.model('Payment', PaymentSchema);
 
-ShopsModel.ensureIndexes();
-
-module.exports = ShopsModel;
+module.exports = PaymentModel;
