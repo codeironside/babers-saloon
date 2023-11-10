@@ -1,7 +1,7 @@
 const express = require('express')
 const Router= express.Router()
 const {protect} = require('../middleware/authmiddleware')
-const { createSubscription, adminsubscibtionpanel, getalluserssubscibtion, updateSubscriptionPlan } = require('../controller/payment/payment.controller')
+const { createSubscription, adminsubscibtionpanel, getalluserssubscibtion, updateSubscriptionPlan } = require('../controller/payment/subscribtion.controller')
 
 //access private
 Router.route('/register').post(protect,createSubscription )

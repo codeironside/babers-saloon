@@ -1,45 +1,31 @@
+// Import Mongoose
 const mongoose = require('mongoose');
-
-const PaymentSchema = new mongoose.Schema(
-  {
-    shop_name: {
-      type: String,
-      required: [true, 'Please add a shop name'],
-    },
-    user_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: [true, 'Please add a user id'],
-      ref: 'USER',
-    },
-    shop_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: [true, 'Please add a shop id'],
-      ref: 'SHOP',
-    },
-    quantity: {
-      type: String,
-      required: [true, 'Please add a quantity'],
-    },
-
-    amount: {
-      type: Number,
-      required: true,
-    },
-    paymentDate: {
-      type: Date,
-      default: Date.now,
-    },
-    paymentStatus: {
-      type: String,
-      enum: ['paid', 'pending', 'failed'],
-      default: 'pending',
-    },
+const BookingSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
-  {
-    timestamps: true,
+  service: {
+    type: String,
+    required: true
+  },
+  date: {
+    type: Date,
+    required: true
+  },
+  time: {
+    type: String,
+    required: true
+  },
+  isConfirmed: {
+    type: Boolean,
+    default: false
   }
-);
+});
 
-const PaymentModel = mongoose.model('Payment', PaymentSchema);
+// Create a model from the schema
+const Booking = mongoose.model('Booking', BookingSchema);
 
-module.exports = PaymentModel;
+// Export the model
+module.exports = Booking;
