@@ -7,7 +7,6 @@ const SHOPS = new mongoose.Schema(
       required: [true, "please add a shop name"],
       unique: true,
     },
-    
     shop_address: {
       type: String,
       required: [true, "please add an address"],
@@ -78,12 +77,16 @@ const SHOPS = new mongoose.Schema(
     type:{
       type:String,
       default:'basic',
-    }
+    },
+    servicesOffered: {
+      type: [String], // Array of services offered
+    },
   },
   {
     timestamps: true,
   }
 );
+
 SHOPS.index({ shop_name: 'text' });
 
 const ShopsModel = mongoose.model("SHOPS", SHOPS);

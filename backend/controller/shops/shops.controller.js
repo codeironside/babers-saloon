@@ -693,6 +693,41 @@ const searchShops = asynchandler(async (req, res) => {
   }
 });
 
+// Controller for updating services offered
+const updateServices = asynchandler(async (req, res) => {
+  try {
+    const { shopId } = req.params;
+    const { servicesOffered } = req.body;
+
+    if (!servicesOffered || !Array.isArray(servicesOffered)) {
+    throw new Error('invalid data')
+    }
+
+    const updatedShop = await SHOPS.findByIdAndUpdate(
+      shopId,
+      {$set:{ servicesOffered }},
+      { new: true }
+    );
+
+    if (!updatedShop) {
+    throw new Error('vendor not found')
+    }
+
+    const token = generateToken(updatedShop.owner); // Assuming you have an owner field in ShopsModel
+
+    res.status(200).json({
+      status: 'success',
+      data: updatedShop,
+    });
+
+    logger.info(
+      `Services for shop with id: ${shopId} updated by user with id ${req.auth.id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+    );
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+});
+
 const generateToken = (id) => {
   return jwt.sign(
     {
@@ -714,5 +749,6 @@ module.exports = {
   searchShops,
   getshop,
   getall,
-  updateavalability
+  updateavalability,
+  updateServices
 };
