@@ -10,7 +10,11 @@ const cartSchema = new mongoose.Schema({
     {
       product: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'SHOP', // Reference to the Product schema
+        ref: 'SHOP',
+        required: true,
+      },
+      product_name: {
+        type: String,
         required: true,
       },
       quantity: {
@@ -22,6 +26,10 @@ const cartSchema = new mongoose.Schema({
   totalAmount: {
     type: Number,
     default: 0,
+  },
+  paid: {
+    type: Boolean,
+    default: false,
   },
 }, { timestamps: true });
 

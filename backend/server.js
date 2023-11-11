@@ -38,6 +38,7 @@ app.use("/chats", require("./routes/chat"));
 app.use("/blogs", require("./routes/blog"));
 app.use("/payment", require("./routes/payment"));
 app.use("/booking", require("./routes/booking"));
+app.use("/cart", require("./routes/cart"));
 
 // Error handling middleware
 app.use(errorHandler);

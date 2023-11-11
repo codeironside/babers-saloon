@@ -3,15 +3,15 @@ const Router= express.Router()
 const {protect} = require('../middleware/authmiddleware')
 const { makebooking, updateBooking, getAllBookingsForAdmins,getAllBookingsForVendor } = require('../controller/payment/booking.contoller')
 
-//access private
+// //access private
 Router.route('/create').post(protect,makebooking)
-//ccess privare
+// //ccess privare
 Router.route("/getall").get(protect,getAllBookingsForAdmins)
-//ccess private
+// //ccess private
 Router.route("/getone").get(protect,getAllBookingsForVendor)
 
 
-//access private
+// //access private
 Router.route('/updatebooking/:bookingId').put(protect, updateBooking)
 //access private
 
