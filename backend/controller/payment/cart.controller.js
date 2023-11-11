@@ -13,7 +13,7 @@ const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 const makecart = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
-    const { paid,totalAmount, quantity, shop_id } = req.body;
+    const { paid, totalAmount, amount, quantity, shop_id } = req.body;
     if (!id) throw new Error("not allowed");
     const user = await USER.findById(id);
     if (!user) throw new Error("user not found");
@@ -23,7 +23,8 @@ const makecart = asynchandler(async (req, res) => {
       throw new Error("cart is reserved for only none barbers");
     const book = await cart.create({
       user: user._id,
-     items:{shop: shop._id, product_name: shop.shop_name, quantity},
+      user_name:user.userName,
+      items: { shop: shop._id, product_name: shop.shop_name, quantity, amount },
       totalAmount,
       paid,
     });
@@ -45,60 +46,62 @@ const makecart = asynchandler(async (req, res) => {
 // Controller for updating a booking
 // Controller to update the cart
 const updateCart = asynchandler(async (req, res) => {
-    try {
-      const { id } = req.auth;
-      const { cartId } = req.params;
-      const { product, quantity } = req.body;
-  
-      if (!cartId) {
-        throw new Error("Cart ID is required");
-      }
-  
-      const cart = await Cart.findById(cartId);
-  
-      if (!cart) {
-        throw new Error("Cart not found");
-      }
-  
-      if (id.toString() !== cart.user.toString()) {
-        throw new Error("User cannot edit this cart");
-      }
-  
-      // Check if the product is already in the cart
-      const existingItem = cart.items.find(item => item.product.toString() === product);
-  
-      if (existingItem) {
-        // If the product is found, update the quantity
-        existingItem.quantity += quantity || 1;
-      } else {
-        // If the product is not found, add a new item to the cart
-        cart.items.push({
-          product,
-          quantity: quantity || 1,
-        });
-      }
-  
-      // Recalculate totalAmount based on updated items
-      cart.totalAmount = calculateTotalAmount(cart.items);
-  
-      // Save the updated cart
-      const updatedCart = await cart.save();
-  
-      const token = generateToken(id);
-  
-      res.status(200).header("Authorization", `Bearer ${token}`).json({
-        status: "success",
-        data: updatedCart,
-      });
-  
-      logger.info(
-        `Cart with ID: ${cartId} updated by user with ID ${req.auth.id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
-      );
-    } catch (error) {
-      throw new Error(`${error}`);
+  try {
+    const { id } = req.auth;
+    const { cartId } = req.params;
+    const { product, quantity } = req.body;
+
+    if (!cartId) {
+      throw new Error("Cart ID is required");
     }
-  });
-  
+
+    const cart = await Cart.findById(cartId);
+
+    if (!cart) {
+      throw new Error("Cart not found");
+    }
+
+    if (id.toString() !== cart.user.toString()) {
+      throw new Error("User cannot edit this cart");
+    }
+
+    // Check if the product is already in the cart
+    const existingItem = cart.items.find(
+      (item) => item.product.toString() === product
+    );
+
+    if (existingItem) {
+      // If the product is found, update the quantity
+      existingItem.quantity += quantity || 1;
+    } else {
+      // If the product is not found, add a new item to the cart
+      cart.items.push({
+        product,
+        quantity: quantity || 1,
+      });
+    }
+
+    // Recalculate totalAmount based on updated items
+    cart.totalAmount = calculateTotalAmount(cart.items);
+
+    // Save the updated cart
+    const updatedCart = await cart.save();
+
+    const token = generateToken(id);
+
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      status: "success",
+      data: updatedCart,
+    });
+
+    logger.info(
+      `Cart with ID: ${cartId} updated by user with ID ${req.auth.id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+    );
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+});
+
 // Controller to get all cart for admins
 const getAllcartForAdmins = asynchandler(async (req, res) => {
   try {
@@ -123,56 +126,66 @@ const getAllcartForAdmins = asynchandler(async (req, res) => {
 
 // Controller to get all carts for a vendor
 const getAllCartsForVendor = asynchandler(async (req, res) => {
-    try {
-      const { vendorId } = req.params;
-      const { id } = req.auth;
-  
-      const shop = await SHOPS.findById(vendorId);
-  
-      if (!shop || (id !== shop.owner && process.env.role.toString() !== 'superadmin')) {
-        throw new Error('Not authorized');
-      }
-  
-      const carts = await Cart.find({ 'items.product': vendorId })
-        .populate('user')
-        .populate({
-          path: 'items.product',
-          model: 'SHOP', // Adjust the model name based on your ShopsModel
-        });
-  
-      const token = generateToken(id);
-  
-      res.status(200).header('Authorization', `Bearer ${token}`).json({
-        status: 'success',
-        data: carts,
-      });
-  
-      logger.info(
-        `All carts retrieved for vendor with ID: ${vendorId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
-      );
-    } catch (error) {
-      throw new Error(`${error}`);
+  try {
+    const { vendorId } = req.params;
+    const { id } = req.auth;
+
+    const shop = await SHOPS.findById(vendorId);
+
+    if (
+      !shop ||
+      (id !== shop.owner && process.env.role.toString() !== "superadmin")
+    ) {
+      throw new Error("Not authorized");
     }
-  });
-  
+
+    const carts = await Cart.find({ "items.product": vendorId })
+      .populate("user")
+      .populate({
+        path: "items.product",
+        model: "SHOP", // Adjust the model name based on your ShopsModel
+      });
+
+    const token = generateToken(id);
+
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      status: "success",
+      data: carts,
+    });
+
+    logger.info(
+      `All carts retrieved for vendor with ID: ${vendorId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+    );
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+});
+
 const getAllcartsForuser = asynchandler(async (req, res) => {
-    try {
-      const { vendorId } = req.params;
-  const {id}=req.auth
-  const Shop = await SHOPS.findById(vendorId)
-  if(id!==Shop.owner||process.env.role.toString()!=='superadmin') throw new Error('nor authorized')
-      const bookings = await cart.find({user:id })
-    const token = generateToken(id)
-      res.status(200).header("Authorization",`Bearer ${token}`).json({
-        status: 'success',
-        data: bookings,
-      });
-  
-      logger.info(
-        `All bookings retrieved for vendor with ID: ${vendorId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
-      );
-    } catch (error) {
-      throw new Error(`${error}`);
-    }
-  });
-module.exports = { makecart, updateCart, getAllcartForAdmins,getAllCartsForVendor,getAllcartsForuser };
+  try {
+    const { vendorId } = req.params;
+    const { id } = req.auth;
+    const Shop = await SHOPS.findById(vendorId);
+    if (id !== Shop.owner || process.env.role.toString() !== "superadmin")
+      throw new Error("nor authorized");
+    const bookings = await cart.find({ user: id });
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      status: "success",
+      data: bookings,
+    });
+
+    logger.info(
+      `All bookings retrieved for vendor with ID: ${vendorId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+    );
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+});
+module.exports = {
+  makecart,
+  updateCart,
+  getAllcartForAdmins,
+  getAllCartsForVendor,
+  getAllcartsForuser,
+};

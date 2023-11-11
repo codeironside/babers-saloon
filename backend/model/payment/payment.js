@@ -11,16 +11,15 @@ const PaymentSchema = new mongoose.Schema(
       required: [true, 'Please add a user id'],
       ref: 'USER',
     },
+    user_name: {
+      type: String,
+      required: [true, 'Please add a user name']
+    },
     shop_id: {
       type: mongoose.Schema.Types.ObjectId,
       required: [true, 'Please add a shop id'],
-      ref: 'SHOP',
     },
-    quantity: {
-      type: String,
-      required: [true, 'Please add a quantity'],
-    },
-
+    //      ref: ['Booking',"Cart"],
     amount: {
       type: Number,
       required: true,

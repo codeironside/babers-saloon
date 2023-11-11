@@ -36,9 +36,10 @@ app.use("/users", require("./routes/users"));
 app.use("/shops", require("./routes/shops.route"));
 app.use("/chats", require("./routes/chat"));
 app.use("/blogs", require("./routes/blog"));
-app.use("/payment", require("./routes/payment"));
+app.use("/subscription", require("./routes/subscription"));
 app.use("/booking", require("./routes/booking"));
 app.use("/cart", require("./routes/cart"));
+app.use("/payment", require("./routes/payment"));
 
 // Error handling middleware
 app.use(errorHandler);
