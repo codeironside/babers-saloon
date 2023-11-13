@@ -7,8 +7,11 @@ const crowdfundingSchema = new mongoose.Schema({
   },
   organizer: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', // Reference to the User schema
+    ref: 'USER', // Reference to the User schema
     required: true,
+  },
+  organizer_name:{
+    type:String
   },
   goalAmount: {
     type: Number,
@@ -33,12 +36,14 @@ const crowdfundingSchema = new mongoose.Schema({
     {
       contributor: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // Reference to the User schema
-        required: true,
+        ref: 'USER', // Reference to the User schema
       },
       amount: {
-        type: Number,
-        required: true,
+        type: Number
+      },
+      contributor_name:{
+        type:String,
+
       },
       contributionDate: {
         type: Date,
@@ -46,6 +51,8 @@ const crowdfundingSchema = new mongoose.Schema({
       },
     },
   ],
+},{
+  timestamps:true
 });
 
 const Crowdfunding = mongoose.model('Crowdfunding', crowdfundingSchema);

@@ -189,9 +189,54 @@ const register_users = asynchandler(async (req, res) => {
   let referredUsers;
 
   if (referralCode) {
+    const referrer = await USER.findOne({ referCode: referralCode });
+    if (!referrer) {
+      throw new Error("Invalid referral code");
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const createUsers = await USER.create({
+      firstName,
+      middleName,
+      lastName,
+      email,
+      password: hashedPassword,
+      userName,
+      phoneNumber,
+      referredBy: referralCode,
+    });
+
+    const codeOne = createUsers._id.toString().slice(3, 7);
+    const codeTwo = firstName.toString().slice(0, 3);
+    const codeThree = firstName.toString().slice(0, 2);
+    const codeFour = userName.toString().slice(0, 2);
+    const referrerCode = `REF-${codeOne}${codeTwo}${codeThree}${codeFour}${codeTwo}`;
+
+    const updateReferral = await USER.findByIdAndUpdate(
+      createUsers._id,
+      { $set: { referCode: referrerCode } },
+      { new: true }
+    );
+
+    const location = await getLocation(ip);
+    const token = generateToken(createUsers._id);
+
     referredUsers = await USER.find(
-      { referredBy: referrCode },
+      { referredBy: referrerCode },
       "firstName lastName userName pictureUrl"
+    );
+
+    res.status(202).header("Authorization", `Bearer ${token}`).json({
+      status: "202",
+      message: updateReferral,
+      referralCount: referredUsers.length,
+      referredUsers: referredUsers,
+    });
+
+    logger.info(
+      `User with ID ${createUsers._id} was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - ${req.session.id} - from ${location}`
     );
   } else {
     referredUsers = [];
@@ -203,12 +248,90 @@ const register_users = asynchandler(async (req, res) => {
   res.json(updatereferral._doc);
 });
 
+
 //access  private
 //route /users/landing_page
 //desc landing user page
 const landing_page = asynchandler(async (req, res) => {
   try {
+    const { id } = req.auth;
+
+    const user = await USER.findById(id);
+    if (!user) throw new Error("User not found");
+
     const shops = await SHOPS.find({ approved: true });
+
+    // Define the order of subscription types
+    const subscriptionOrder = ['platinum', 'gold', 'basic'];
+
+    // Sort shops based on subscription type and creation date
+    shops.sort((a, b) => {
+      const aIndex = subscriptionOrder.indexOf(a.subscriptionType);
+      const bIndex = subscriptionOrder.indexOf(b.subscriptionType);
+
+      if (aIndex !== bIndex) {
+        return aIndex - bIndex;
+      }
+
+      // If the subscription type is the same, sort by creation date
+      return b.createdAt - a.createdAt;
+    });
+
+    const blogs = await BLOGS.find({ approved: true });
+
+    let blogDict = {};
+    for (const blog of blogs) {
+      const commentCount = await COMMENT.countDocuments({ blog_id: blog._id });
+      blog.commentCount = commentCount;
+      blogDict[blog] = commentCount;
+    }
+
+    const sortedShops = shops.map((shop) => ({ ...shop._doc, type: "shop" }));
+    const sortedBlogs = Object.keys(blogDict).map((blog) => ({
+      ...blog,
+      type: "blog",
+    }));
+
+    const combinedData = [...sortedShops, ...sortedBlogs];
+
+    combinedData.sort((a, b) => b.createdAt - a.createdAt);
+
+    res.status(200).json({
+      data: combinedData,
+    });
+
+    logger.info(
+      `Landing page data fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+    );
+  } catch (error) {
+    console.error(error);
+    throw new Error(`${error}`);
+  }
+});
+//access  public
+//route /users/landing_page
+//desc landing user page
+const landingpage = asynchandler(async (req, res) => {
+  try {
+
+    const shops = await SHOPS.find({ approved: true });
+
+    // Define the order of subscription types
+    const subscriptionOrder = ['platinum', 'gold', 'basic'];
+
+    // Sort shops based on subscription type and creation date
+    shops.sort((a, b) => {
+      const aIndex = subscriptionOrder.indexOf(a.subscriptionType);
+      const bIndex = subscriptionOrder.indexOf(b.subscriptionType);
+
+      if (aIndex !== bIndex) {
+        return aIndex - bIndex;
+      }
+
+      // If the subscription type is the same, sort by creation date
+      return b.createdAt - a.createdAt;
+    });
+
     const blogs = await BLOGS.find({ approved: true });
 
     let blogDict = {};
@@ -482,4 +605,5 @@ module.exports = {
   getallusers,
   forum_status,
   searchItems,
+  landingpage
 };

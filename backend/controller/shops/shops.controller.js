@@ -12,7 +12,12 @@ const mongoose = require("mongoose");
 const create_shops = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
+
     if (!id) throw new Error("Not a user");
+
+    // Check the user's subscription type
+    const user = await USER.findById(id);
+    if (!user) throw new Error("User not found");
 
     const {
       shop_name,
@@ -31,6 +36,8 @@ const create_shops = asynchandler(async (req, res) => {
       instagram,
       minimum_price,
       maximum_price,
+      instant_booking,
+      category,
       monday_opening_hours,
       monday_closing_hours,
       tuesday_opening_hours,
@@ -45,12 +52,33 @@ const create_shops = asynchandler(async (req, res) => {
       saturday_closing_hours,
       sunday_opening_hours,
       sunday_closing_hours,
-      instant_booking,
-      category,
     } = req.body;
 
     if (!shop_name || !shop_address || !contact_email || !contact_number) {
       throw new Error("Required fields cannot be empty");
+    }
+
+    let maxShopsAllowed;
+
+    // Check the user's subscription type and set maxShopsAllowed
+    switch (user.type) {
+      case "basic":
+        maxShopsAllowed = 5;
+        break;
+      case "gold":
+        maxShopsAllowed = 15;
+        break;
+      case "platinum":
+        maxShopsAllowed = 20;
+        break;
+      default:
+        throw new Error("Invalid subscription type");
+    }
+
+    // Check if the user has exceeded the maximum allowed shops
+    const userShopsCount = await SHOPS.countDocuments({ owner: id });
+    if (userShopsCount >= maxShopsAllowed) {
+      throw new Error(`You have reached the maximum allowed shops (${maxShopsAllowed})`);
     }
 
     const shopExists = await SHOPS.findOne({ shop_name: shop_name });
@@ -58,7 +86,7 @@ const create_shops = asynchandler(async (req, res) => {
       throw new Error("Shop already exists");
     }
 
-    const role = "SHOP_OWNER"; // The updated role value
+    const role = "SHOP_OWNER";
 
     // Create a new shop
     const createShops = await SHOPS.create({
@@ -80,7 +108,8 @@ const create_shops = asynchandler(async (req, res) => {
       minimum_price,
       maximum_price,
       instant_booking,
-      category,
+      category,subscriptionType:user.type
+
     });
 
     if (createShops) {
@@ -155,6 +184,7 @@ const create_shops = asynchandler(async (req, res) => {
     throw new Error(`${error}`);
   }
 });
+
 
 //desc login shops
 //route /shops/login
@@ -693,6 +723,41 @@ const searchShops = asynchandler(async (req, res) => {
   }
 });
 
+// Controller for updating services offered
+const updateServices = asynchandler(async (req, res) => {
+  try {
+    const { shopId } = req.params;
+    const { servicesOffered } = req.body;
+
+    if (!servicesOffered || !Array.isArray(servicesOffered)) {
+    throw new Error('invalid data')
+    }
+
+    const updatedShop = await SHOPS.findByIdAndUpdate(
+      shopId,
+      {$set:{ servicesOffered }},
+      { new: true }
+    );
+
+    if (!updatedShop) {
+    throw new Error('vendor not found')
+    }
+
+    const token = generateToken(updatedShop.owner); // Assuming you have an owner field in ShopsModel
+
+    res.status(200).json({
+      status: 'success',
+      data: updatedShop,
+    });
+
+    logger.info(
+      `Services for shop with id: ${shopId} updated by user with id ${req.auth.id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+    );
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+});
+
 const generateToken = (id) => {
   return jwt.sign(
     {
@@ -714,5 +779,6 @@ module.exports = {
   searchShops,
   getshop,
   getall,
-  updateavalability
+  updateavalability,
+  updateServices
 };

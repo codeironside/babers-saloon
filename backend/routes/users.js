@@ -2,7 +2,7 @@ const express = require("express")
 
 
 const { protect } = require("../middleware/authmiddleware")
-const { register_users, login_users,updateUser, getUser, getallusers, forum_status,searchItems, landing_page } = require("../controller/users/users.controller")
+const { register_users, login_users,updateUser, getUser,landingpage, getallusers, forum_status,searchItems, landing_page } = require("../controller/users/users.controller")
 const Router = express.Router()
 
 
@@ -17,8 +17,10 @@ Router.route('/update/:userId').put(protect, updateUser)
 Router.route('/updatefor/:userId').put(protect, forum_status)
 //get one user
 Router.route('/getone').get(protect,getUser)
-//access publiv
-Router.route('/home').get(landing_page)
+//access private
+Router.route('/home').get(protect, landing_page)
+//access public
+Router.route('/home').get(landingpage)
 //access public
 //search
 Router.route('/search').get(searchItems)

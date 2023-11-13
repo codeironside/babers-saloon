@@ -21,8 +21,6 @@ const protect = asyncHandler(async (req, res, next) => {
 
       // Check if more than 12 hours (12 hours * 60 minutes * 60 seconds)
       if (timeElapsedInSeconds > 12 * 60 * 60) {
-        // Token has expired
-        res.status(401);
         throw new Error("Session expired");
       }
 
@@ -31,7 +29,6 @@ const protect = asyncHandler(async (req, res, next) => {
 
       next();
     } catch (error) {
-      console.error(error);
       if (error.name === 'TokenExpiredError') {
         throw new Error("Session expired");
       } else {

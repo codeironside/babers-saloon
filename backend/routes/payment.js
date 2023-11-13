@@ -1,18 +1,19 @@
 const express = require('express')
 const Router= express.Router()
 const {protect} = require('../middleware/authmiddleware')
-const { createSubscription, adminsubscibtionpanel, getalluserssubscibtion, updateSubscriptionPlan } = require('../controller/payment/subscribtion.controller')
+const { paidproduct, getPaymentsforadmin, getPaymentsforuser,getPaymentsforvendor } = require('../controller/payment/payment.controller')
 
 //access private
-Router.route('/register').post(protect,createSubscription )
+Router.route('/pay').post(protect,paidproduct )
 //ccess privare
-Router.route("/getall").get(protect,adminsubscibtionpanel)
+Router.route("/admin").get(protect, getPaymentsforadmin)
 //ccess private
-Router.route("/getone").get(protect,getalluserssubscibtion)
+Router.route("/user").get(protect,getPaymentsforuser)
+//ccess private
+Router.route("/vendor").get(protect,getPaymentsforvendor)
 
 
-//access private
-Router.route('/updateS/:vendor').put(protect, updateSubscriptionPlan)
-//access private
+
+
 
 module.exports= Router

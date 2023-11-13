@@ -7,7 +7,7 @@ const COMMENT = require("../../model/blogs/comments");
 const logger = require("../../utils/logger");
 const { DateTime } = require("luxon");
 const { convertToWAT } = require("../../utils/datetime");
-const Subscription = require('../../model/payment/subscription')
+const Subscription = require("../../model/payment/subscription");
 const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 
 //desc register users
@@ -15,73 +15,82 @@ const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 //router /users/register
 // Controller for creating a subscription
 const createSubscription = asynchandler(async (req, res) => {
-  try{
-  const { vendor,plan, type,paymentMethod, billingAddress, name,status } = req.body;
-  const startDate = new Date(); // Set the start date as the current date
-  const {id}=req.auth
-  let endDate = new Date(startDate); // Set the end date based on the selected plan
-  const user = await USER.findById(id)
-  if(!user) throw new Error('user not found');
-  const shop = await SHOPS.findById(vendor)
-  if(user._id !== shop.owner.toString() || process.env.role.toString()!=='superadmin'){
-    throw new Error('not authorized')
-  }
-  if (plan === 'monthly') {
-    endDate.setMonth(endDate.getMonth() + 1);
-  } else if (plan === 'yearly') {
-    endDate.setFullYear(endDate.getFullYear() + 1);
-  }
+  try {
+    const { plan, amount,type, paymentMethod, billingAddress, status } =
+      req.body;
+    const startDate = new Date(); // Set the start date as the current date
+    const { id } = req.auth;
+    const endDate = new Date(startDate); // Set the end date based on the selected plan
+    const user = await USER.findById(id);
 
-  if (!vendor || !type || !paymentMethod || !billingAddress || !name || !status) {
-    throw new Error("Vendor, type, payment method, billing address,name , and status are required");
-  }
-
-
-  const newSubscription = await Subscription.create({
-    vendor,
-    plan,
-    type,
-    startDate,
-    endDate,
-    billingDetails: {
-      paymentMethod,
-      billingAddress,
-      name,
-    },
-    shop_name: shop.shop_name
-  });
-
-
-const update = await USER.findByIdAndUpdate(id,{$set:{subscribed:true, type:type}})
-const token = generateToken(id)
-  if (update) {
-    res.status(200)
-        .header("Authorization", `Bearer ${token}`).json({
-      status: "success",
-      data: newSubscription,
+    if (!user) throw new Error("User not found");
+    const find = await Subscription.findOne({user_id:user._id})
+    if(find) throw new Error('cannot create two subscribtion, please update if that is what you wish to do')
+    const newSubscription = await Subscription.create({
+      user_id: user._id,
+     
+      billingDetails: [{
+        name: user.userName,
+        billingAddress: billingAddress,
+        paymentMethod,
+        plan,
+        type,
+        amount,
+        startDate,
+        endDate,
+        status
+      }],
     });
-  }
-  logger.info(
-    `user with id: ${id} paid subscription for his enteprise ${vendor} for plan ${type}, for the duration of a ${plan} from ${startDate}, to ${endDate} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
-  )}catch(error){
-    throw new Error(`${error}`)
+    const update = await USER.findByIdAndUpdate(id, {
+      $set: { subscribed: true, type: type },
+    });
+    if (!update) {
+      throw new Error("error updating user");
+    }
+    // Update the subscription type for all shops
+    const updateShops = await SHOPS.updateMany(
+      { owner: user._id },
+      { subscriptionType: type }
+    );
+    const Token = generateToken(user._id);
+    if (updateShops.nModified === 0) {
+      return res.status(200).header("Authorization", `Bearer ${token}`).json({
+        status: "success",
+        message: newSubscription,
+      });
+    }
+    
+    res.status(200).header("Authorization", `Bearer ${Token}`).json({
+      status: "success",
+      message: newSubscription,
+    });
+
+    logger.info(
+      `Subscription created for user with ID: ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+    );
+  } catch (error) {
+    console.error(error);
+    throw new Error(`${error}`);
   }
 });
 
-
-//access  private
-// get all subscription plan
-const adminsubscibtionpanel = asynchandler(async (req, res) => {
+// Access private
+// get all subscription plans
+const adminSubscriptionPanel = asynchandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
-  console.log(page, "   ", pageSize);
   const { id } = req.auth;
   const user = await USER.findById(id);
+
   try {
-    if (user._id.toString() === id || process.env.role.toString() === "superadmin") {
+    if (user.role==='superadmin'|| process.env.role.toString() === "superadmin") {
+      // Calculate total count of subscriptions
+      const totalCount = await Subscription.countDocuments();
+
+      // Fetch subscriptions for the specified page and pageSize
       const allUsers = await Subscription.find()
         .skip((page - 1) * pageSize)
-        .limit(pageSize);;
+        .limit(pageSize);
 
       const token = generateToken(id);
       res
@@ -94,76 +103,117 @@ const adminsubscibtionpanel = asynchandler(async (req, res) => {
         });
 
       logger.info(
-        `subscriptions for users were fetched for admin with id::${id}- ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+        `Subscriptions  were fetched for admin with id: ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
       );
     } else {
-      throw new Error("not authorized");
+      throw new Error("Not authorized");
     }
   } catch (error) {
-    console.log(error);
+    console.error(error);
     throw new Error(`${error}`);
   }
 });
 
-//update one user
-//access private for user
+
+// Update one user subscription plan
+// Access private for user
+// Update one user subscription plan
+// Access private for user
 const updateSubscriptionPlan = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth; // Get the user ID from the request
-    const { plan,type,status } = req.body; // Get the vendor ID and new plan from the request body
-    const {vendor}=req.params
+    const { plan, type, status,amount, paymentMethod,billingAddress } = req.body; 
+    const { planId } = req.params; // Get the subscription plan ID from the request parameters
 
     const user = await USER.findById(id);
-    if (!user) throw new Error('User not found');
+    if (!user) throw new Error("User not found");
 
-    const shop = await SHOPS.findById(vendor);
-    if (user._id !== shop.owner.toString() || process.env.role.toString() !== 'superadmin') {
-      throw new Error('Not authorized');
+    const subscription = await Subscription.findById(planId);
+    if (!subscription || subscription.user_id.toString() !== id.toString() || process.env.role.toString() !== "superadmin") {
+      throw new Error("who goes you?");
     }
 
-    // Find the current subscription
-    const currentSubscription = await Subscription.findByid(vendor);
-    if (!currentSubscription) throw new Error('Subscription not found');
-    const startDate = new Date();
-    let endDate = new Date(startDate);
-    if (newPlan === 'monthly') {
-      endDate.setMonth(endDate.getMonth() + 1);
-    } else if (newPlan === 'yearly') {
-      endDate.setFullYear(endDate.getFullYear() + 1);
+    const currentDate = new Date();
+    if (subscription.endDate > currentDate) {
+      throw new Error("Cannot cancel an existing subscription. It has not expired yet.");
     }
-    const updatedSubscription = await Subscription.findByIdAndUpdate(currentSubscription._id, {$set:{
-      type: type,
-      startDate: startDate,
-      endDate: endDate,
-      plan:plan,
-      status:status
-    }}, { new: true });
-    const token = generateToken(id)
-    res.status(200)
-    .header("Authorization", `Bearer ${token}`).json({
+
+   const startDate = new Date();
+   let endDate = new Date(startDate);
+   if (plan === "monthly") {
+     endDate.setMonth(endDate.getMonth() + 1);
+   } else if (plan === "yearly") {
+     endDate.setFullYear(endDate.getFullYear() + 1);
+   }
+
+    subscription.billingDetails.push({
+      name:user.userName,
+       billingAddress,
+      paymentMethod,
+      type,
+      startDate,
+      endDate,
+      plan,
+      status,
+      amount,
+    });
+
+    // Update the subscription type for all shops owned by the user
+    const updateShops = await SHOPS.updateMany(
+      { owner: id },
+      { subscriptionType:type }
+    );
+ 
+
+ 
+    const updatedSubscription = await Subscription.findByIdAndUpdate(
+      planId,
+      {
+        $set: {
+          billingDetails: subscription.billingDetails,
+        },
+      },
+      { new: true }
+    );
+    const token = generateToken(id);
+    if (updateShops.nModified === 0) {
+      return res.status(200).header("Authorization", `Bearer ${token}`).json({
+        status: "success",
+        message: newSubscription,
+      });
+    }
+
+    
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
       status: "success",
       data: updatedSubscription,
-    })
+    });
+
     logger.info(
-      `user with id: ${id} updated his subscription for his enteprise ${vendor} for plan ${type}, for the duration of a ${plan} from ${startDate}, to ${endDate} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+      `User with id: ${id} updated their subscription plan for subscription ${planId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
     );
   } catch (error) {
     throw new Error(`${error}`);
   }
 });
 
-//desc get all subscribtion for developers
-const getalluserssubscibtion = asynchandler(async (req, res) => {
+
+// Description: Get all subscriptions for developers
+const getAllUsersSubscription = asynchandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
-  console.log(page, "   ", pageSize);
   const { id } = req.auth;
   const user = await USER.findById(id);
+
   try {
     if (user._id.toString() === id || process.env.role.toString() === "superadmin") {
-      const allUsers = await Subscription.find({shop_id:id})
+      // Calculate total count of subscriptions for the specified user
+      const totalCount = await Subscription.countDocuments({ user_id: id });
+
+      // Fetch subscriptions for the specified user, page, and pageSize
+      const allUsers = await Subscription.find({ user_id: user._id })
         .skip((page - 1) * pageSize)
-        .limit(pageSize);;
+        .limit(pageSize);
 
       const token = generateToken(id);
       res
@@ -176,13 +226,13 @@ const getalluserssubscibtion = asynchandler(async (req, res) => {
         });
 
       logger.info(
-        `subscriptions for users were fetched- ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+        `Subscriptions for user with ID: ${id} were fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
       );
     } else {
-      throw new Error("not authorized");
+      throw new Error("No Subscription for user");
     }
   } catch (error) {
-    console.log(error);
+    console.error(error);
     throw new Error(`${error}`);
   }
 });
@@ -208,7 +258,6 @@ const getLocation = asynchandler(async (ip) => {
     return null;
   }
 });
-
 
 const generateToken = (id) => {
   return jwt.sign(
@@ -245,8 +294,8 @@ const generateToken = (id) => {
 // });
 
 module.exports = {
-  adminsubscibtionpanel,
+  adminSubscriptionPanel,
   updateSubscriptionPlan,
-  getalluserssubscibtion,
-  createSubscription
+  getAllUsersSubscription,
+  createSubscription,
 };
