@@ -140,65 +140,112 @@ const register_users = asynchandler(async (req, res) => {
     !userName ||
     !phoneNumber
   ) {
-    throw new Error("fields cannot be empty");
+    throw new Error("Fields cannot be empty");
   }
 
-  const findemail = await USER.findOne({ email: email });
-  if (findemail) {
-    throw new Error("user already exists");
+  const findEmail = await USER.findOne({ email: email });
+  if (findEmail) {
+    throw new Error("User already exists");
   }
+
   const exist = await USER.findOne({ userName: userName });
-  if (exist) throw new Error("user Name already exist");
-  const re = await USER.find({ referCode: referralCode });
-  if (re) throw new Error("invalid coupon");
-  const salt = await bcrypt.genSalt(10);
-  const hashedpassword = await bcrypt.hash(password, salt);
+  if (exist) throw new Error("Username already exists");
 
-  const createUsers = await USER.create({
-    firstName,
-    middleName,
-    lastName,
-    email,
-    password: hashedpassword,
-    userName,
-    phoneNumber,
-    referredBy: referralCode, // Add the referral code to the model
-  });
-  const codeone = createUsers._id.toString().slice(3, 7);
-  const codetwo = firstName.toString().slice(0, 3);
-  const codethree = firstName.toString().slice(0, 2);
-  const codefour = userName.toString().slice(0, 2);
-  const referrCode = `REF-${codeone}${codetwo}${codethree}${codefour}${codetwo}`;
+  let referredUsers = [];
 
-  const updatereferral = await USER.findByIdAndUpdate(
-    createUsers._id,
-    { $set: { referCode: referrCode } },
-    { new: true }
-  );
-  const location = await getLocation(ip);
-  const token = generateToken(createUsers._id);
-  let referredUsers;
   if (referralCode) {
+    const referrer = await USER.findOne({ referCode: referralCode });
+    if (!referrer) {
+      throw new Error("Invalid referral code");
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const createUsers = await USER.create({
+      firstName,
+      middleName,
+      lastName,
+      email,
+      password: hashedPassword,
+      userName,
+      phoneNumber,
+      referredBy: referralCode,
+    });
+
+    const codeOne = createUsers._id.toString().slice(3, 7);
+    const codeTwo = firstName.toString().slice(0, 3);
+    const codeThree = firstName.toString().slice(0, 2);
+    const codeFour = userName.toString().slice(0, 2);
+    const referrerCode = `REF-${codeOne}${codeTwo}${codeThree}${codeFour}${codeTwo}`;
+
+    const updateReferral = await USER.findByIdAndUpdate(
+      createUsers._id,
+      { $set: { referCode: referrerCode } },
+      { new: true }
+    );
+
+    const location = await getLocation(ip);
+    const token = generateToken(createUsers._id);
+
     referredUsers = await USER.find(
-      { referredBy: referrCode },
+      { referredBy: referrerCode },
       "firstName lastName userName pictureUrl"
     );
-  } else {
-    referredUsers = [];
-  }
-  if (createUsers) {
+
     res.status(202).header("Authorization", `Bearer ${token}`).json({
       status: "202",
-      message: updatereferral,
+      message: updateReferral,
       referralCount: referredUsers.length,
       referredUsers: referredUsers,
     });
 
     logger.info(
-      `user with id ${createUsers._id}, was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - ${req.session.id} - from ${location}`
+      `User with ID ${createUsers._id} was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - ${req.session.id} - from ${location}`
+    );
+  } else {
+    // Continue the registration process without referral code
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const createUsers = await USER.create({
+      firstName,
+      middleName,
+      lastName,
+      email,
+      password: hashedPassword,
+      userName,
+      phoneNumber,
+    });
+
+    const codeOne = createUsers._id.toString().slice(3, 7);
+    const codeTwo = firstName.toString().slice(0, 3);
+    const codeThree = firstName.toString().slice(0, 2);
+    const codeFour = userName.toString().slice(0, 2);
+    const referrerCode = `REF-${codeOne}${codeTwo}${codeThree}${codeFour}${codeTwo}`;
+
+    const updateReferral = await USER.findByIdAndUpdate(
+      createUsers._id,
+      { $set: { referCode: referrerCode } },
+      { new: true }
+    );
+
+    const location = await getLocation(ip);
+    const token = generateToken(createUsers._id);
+
+    res.status(202).header("Authorization", `Bearer ${token}`).json({
+      status: "202",
+      message: updateReferral,
+      referralCount: referredUsers.length,
+      referredUsers: referredUsers,
+    });
+
+    logger.info(
+      `User with ID ${createUsers._id} was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - ${req.session.id} - from ${location}`
     );
   }
 });
+
 
 //access  private
 //route /users/landing_page
