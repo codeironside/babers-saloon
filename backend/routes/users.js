@@ -13,7 +13,7 @@ Router.route("/register").post(register_users)
 Router.route("/login").post(login_users)
 //update users
 Router.route('/update/:userId').put(protect, updateUser)
-//update users
+//update usersn
 Router.route('/updatefor/:userId').put(protect, forum_status)
 //get one user
 Router.route('/getone').get(protect,getUser)

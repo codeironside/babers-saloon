@@ -19,16 +19,23 @@ const COOLDOWN_PERIOD = 60 * 60 * 1000; // 1 hour in milliseconds
 
 const loginAttempts = new Map();
 
+const cookieOptions = {
+  sameSite: "none",
+  secure: true,
+  // domain: ".example.com"
+};
+
 const login_users = asynchandler(async (req, res) => {
-  const { userName, password } = req.body;
+  const { email, password } = req.body;
   const clientIp = req.clientIp;
-  // console.log(userName);
+
   // Check if there are too many login attempts from this IP address
   if (loginAttempts.has(clientIp)) {
     const attempts = loginAttempts.get(clientIp);
     if (attempts >= MAX_LOGIN_ATTEMPTS) {
-      throw new Error("Too many login attempts. Try again later.");
-      const location = await getLocation(clientIp);
+      return res.status(403).send("Too many login attempts. Try again later.");
+
+      /*const location = await getLocation(clientIp);
       logger.error(
         `user with id ${
           user._id
@@ -37,25 +44,26 @@ const login_users = asynchandler(async (req, res) => {
         } - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${
           req.ip
         } - ${req.session.id} - with IP: ${req.clientIp} from ${location}`
-      );
+      );*/
     }
   }
 
-  if (!userName || !password) {
-    const location = await getLocation(clientIp);
+  if (!email || !password) {
+    // const location = await getLocation(clientIp);
+
     logger.error(
-      ` attempted log in at ${currentDateTimeWAT.toString()} - ${
-        res.statusCode
-      } - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${
-        req.ip
+      ` attempted log in at ${currentDateTimeWAT.toString()} - ${res.statusCode
+      } - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip
       }  - with IP: ${req.clientIp} from ${req.ip}`
     );
-    throw new Error("fields can not be empty");
+    return res.status(400).send("fields can not be empty");
   }
-  const user = await USER.findOne({ userName: userName });
+
+  const user = await USER.findOne({ email });
   // console.log(user);
+
   if (!user) {
-    throw new Error("User does not exist");
+    return res.status(404).send("User does not exist");
   }
 
   if (await bcrypt.compare(password, user.password)) {
@@ -67,26 +75,23 @@ const login_users = asynchandler(async (req, res) => {
       { referredBy: user.referCode },
       "firstName lastName userName pictureUrl"
     );
+
     const referralCount = referredUsers.length;
     const token = generateToken(user._id);
     const userWithoutPassword = await USER.findById(user.id).select(
       "-password"
     );
-    res.status(200).header("Authorization", `Bearer ${token}`).json({
-      status: 200,
-      user: userWithoutPassword,
-      referralCount: referralCount,
-      referredUsers: referredUsers,
-    });
+
     // Log successful login
-    const location = await getLocation(clientIp);
+    // const location = await getLocation(clientIp);
     logger.info(
-      `user with id ${
-        user._id
-      } logged in at ${currentDateTimeWAT.toString()} - ${res.statusCode} - ${
-        res.statusMessage
+      `user with id ${user._id
+      } logged in at ${currentDateTimeWAT.toString()} - ${res.statusCode} - ${res.statusMessage
       } - ${req.originalUrl} - ${req.method} - ${req.ip}`
     );
+
+    // send user object and token
+    res.json({ ...userWithoutPassword._doc, token, referralCount, });
   } else {
     // Failed login attempt
     // Track the login attempt
@@ -99,20 +104,18 @@ const login_users = asynchandler(async (req, res) => {
       }, COOLDOWN_PERIOD);
     }
 
-    // res.status(401).json({
-    //   error: "Invalid credentials",
-    // });
-    const location = await getLocation(clientIp);
+
+    // const location = await getLocation(clientIp);
     logger.error(
-      `user with id ${
-        user._id
-      } attempted to log in at ${currentDateTimeWAT.toString()} - ${
-        res.statusCode
-      } - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${
-        req.ip
+      `user with id ${user._id
+      } attempted to log in at ${currentDateTimeWAT.toString()} - ${res.statusCode
+      } - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip
       } -  - with IP: ${req.clientIp} from ${req.ip}`
     );
-    throw new Error("invalid credentials");
+
+    res.status(400).json({
+      error: "Invalid credentials",
+    });
   }
 });
 
@@ -121,9 +124,9 @@ const login_users = asynchandler(async (req, res) => {
 //router /users/register
 const register_users = asynchandler(async (req, res) => {
   const ip = req.ip;
+
   const {
     firstName,
-    middleName,
     lastName,
     email,
     password,
@@ -140,23 +143,27 @@ const register_users = asynchandler(async (req, res) => {
     !userName ||
     !phoneNumber
   ) {
-    throw new Error("fields cannot be empty");
+    return res.status(400).send("fields cannot be empty");
   }
 
   const findemail = await USER.findOne({ email: email });
   if (findemail) {
-    throw new Error("user already exists");
+    return res.status(403).send("user already exists");
   }
+
   const exist = await USER.findOne({ userName: userName });
-  if (exist) throw new Error("user Name already exist");
-  const re = await USER.find({ referCode: referralCode });
-  if (re) throw new Error("invalid coupon");
+  if (exist) return res.status(403).send("user Name already exist");
+
+  if (referralCode) {
+    const re = await USER.find({ referCode: referralCode });
+    if (re) return res.status(403).send("invalid coupon");
+  }
+
   const salt = await bcrypt.genSalt(10);
   const hashedpassword = await bcrypt.hash(password, salt);
 
   const createUsers = await USER.create({
     firstName,
-    middleName,
     lastName,
     email,
     password: hashedpassword,
@@ -164,6 +171,7 @@ const register_users = asynchandler(async (req, res) => {
     phoneNumber,
     referredBy: referralCode, // Add the referral code to the model
   });
+
   const codeone = createUsers._id.toString().slice(3, 7);
   const codetwo = firstName.toString().slice(0, 3);
   const codethree = firstName.toString().slice(0, 2);
@@ -175,9 +183,11 @@ const register_users = asynchandler(async (req, res) => {
     { $set: { referCode: referrCode } },
     { new: true }
   );
-  const location = await getLocation(ip);
+
+  const location = getLocation(ip);
   const token = generateToken(createUsers._id);
   let referredUsers;
+
   if (referralCode) {
     referredUsers = await USER.find(
       { referredBy: referrCode },
@@ -186,18 +196,11 @@ const register_users = asynchandler(async (req, res) => {
   } else {
     referredUsers = [];
   }
-  if (createUsers) {
-    res.status(202).header("Authorization", `Bearer ${token}`).json({
-      status: "202",
-      message: updatereferral,
-      referralCount: referredUsers.length,
-      referredUsers: referredUsers,
-    });
 
-    logger.info(
-      `user with id ${createUsers._id}, was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - ${req.session.id} - from ${location}`
-    );
-  }
+  // send token in cookie
+
+  // send user object via cookie
+  res.json(updatereferral._doc);
 });
 
 //access  private
@@ -373,7 +376,7 @@ const updateUser = async (req, res) => {
       .json(updatedUser);
     const createdAt = updatedUser.updatedAt; // Assuming createdAt is a Date object in your Mongoose schema
     const watCreatedAt = convertToWAT(createdAt);
-    const location = await getLocation(clientIp);
+    const location = getLocation(clientIp);
     logger.info(
       `user with id ${userId},updated profile ${watCreatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}  - from ${req.ip}`
     );
