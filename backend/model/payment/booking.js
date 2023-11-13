@@ -36,6 +36,8 @@ const BookingSchema = new mongoose.Schema({
     default: false,
     required:[true,'please specify payment']
   }
+},{
+  timestamps:true
 });
 
 // Create a model from the schema

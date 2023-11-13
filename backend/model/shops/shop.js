@@ -66,21 +66,21 @@ const SHOPS = new mongoose.Schema(
       type:Boolean,
       default:false
     },
-    subscribed:{
-      type:Boolean,
-      default:false
-    },
+    // subscribed:{
+    //   type:Boolean,
+    //   default:false
+    // },
     availabilty:{
       type:Boolean,
       default:false
     },
-    type:{
-      type:String,
-      default:'basic',
-    },
+    
     servicesOffered: {
       type: [String], // Array of services offered
     },
+    subscriptionType:{
+      type:String
+    }
   },
   {
     timestamps: true,

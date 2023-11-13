@@ -133,4 +133,34 @@ const getAllBookingsForVendor = asynchandler(async (req, res) => {
       throw new Error(`${error}`);
     }
   });
+  const getLocation = asynchandler(async (ip) => {
+    try {
+      // Set endpoint and your access key
+      const accessKey = process.env.ip_secret_key;
+      const url =
+        "http://apiip.net/api/check?ip=" + ip + "&accessKey=" + accessKey;
+  
+      // Make a request and store the response
+      const response = await fetch(url);
+  
+      // Decode JSON response:
+      const result = await response.json();
+  
+      // Output the "code" value inside "currency" object
+      return response.data;
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  });
+  
+  const generateToken = (id) => {
+    return jwt.sign(
+      {
+        id,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "12h" }
+    );
+  };
 module.exports = { makebooking, updateBooking, getAllBookingsForAdmins,getAllBookingsForVendor };

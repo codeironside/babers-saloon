@@ -205,7 +205,84 @@ const register_users = asynchandler(async (req, res) => {
 //desc landing user page
 const landing_page = asynchandler(async (req, res) => {
   try {
+    const { id } = req.auth;
+
+    const user = await USER.findById(id);
+    if (!user) throw new Error("User not found");
+
     const shops = await SHOPS.find({ approved: true });
+
+    // Define the order of subscription types
+    const subscriptionOrder = ['platinum', 'gold', 'basic'];
+
+    // Sort shops based on subscription type and creation date
+    shops.sort((a, b) => {
+      const aIndex = subscriptionOrder.indexOf(a.subscriptionType);
+      const bIndex = subscriptionOrder.indexOf(b.subscriptionType);
+
+      if (aIndex !== bIndex) {
+        return aIndex - bIndex;
+      }
+
+      // If the subscription type is the same, sort by creation date
+      return b.createdAt - a.createdAt;
+    });
+
+    const blogs = await BLOGS.find({ approved: true });
+
+    let blogDict = {};
+    for (const blog of blogs) {
+      const commentCount = await COMMENT.countDocuments({ blog_id: blog._id });
+      blog.commentCount = commentCount;
+      blogDict[blog] = commentCount;
+    }
+
+    const sortedShops = shops.map((shop) => ({ ...shop._doc, type: "shop" }));
+    const sortedBlogs = Object.keys(blogDict).map((blog) => ({
+      ...blog,
+      type: "blog",
+    }));
+
+    const combinedData = [...sortedShops, ...sortedBlogs];
+
+    combinedData.sort((a, b) => b.createdAt - a.createdAt);
+
+    res.status(200).json({
+      data: combinedData,
+    });
+
+    logger.info(
+      `Landing page data fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+    );
+  } catch (error) {
+    console.error(error);
+    throw new Error(`${error}`);
+  }
+});
+//access  public
+//route /users/landing_page
+//desc landing user page
+const landingpage = asynchandler(async (req, res) => {
+  try {
+
+    const shops = await SHOPS.find({ approved: true });
+
+    // Define the order of subscription types
+    const subscriptionOrder = ['platinum', 'gold', 'basic'];
+
+    // Sort shops based on subscription type and creation date
+    shops.sort((a, b) => {
+      const aIndex = subscriptionOrder.indexOf(a.subscriptionType);
+      const bIndex = subscriptionOrder.indexOf(b.subscriptionType);
+
+      if (aIndex !== bIndex) {
+        return aIndex - bIndex;
+      }
+
+      // If the subscription type is the same, sort by creation date
+      return b.createdAt - a.createdAt;
+    });
+
     const blogs = await BLOGS.find({ approved: true });
 
     let blogDict = {};
@@ -479,4 +556,5 @@ module.exports = {
   getallusers,
   forum_status,
   searchItems,
+  landingpage
 };
