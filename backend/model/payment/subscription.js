@@ -1,51 +1,53 @@
 const mongoose = require('mongoose');
 
 const subscriptionSchema = new mongoose.Schema({
-  shop_id: {
+  user_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'SHOP', // Reference to the Vendor schema
+    ref: 'USER', // Reference to the Vendor schema
     required: true,
   },
-  type: {
-    type: String,
-    enum: ['gold', 'diamond'], // Define the specific subscription plans here
-    required: [true,'please and a subscription type'],
-  },
-  plan: {
-    type: String,
-    enum: ['monthly', 'yearly'], // Define the specific subscription plans here
-    required: [true,'please and a subscription type'],
-  },
-  status: {
-    type: String,
-    enum: ['active', 'inactive', 'canceled'],
-    default: 'active',
-  },
-  startDate: {
-    type: Date,
-    required: true,
-  },
-  endDate: {
-    type: Date,
-  },
-  billingDetails: {
+
+  billingDetails: [{
+    type: {
+      type: String,
+      enum: ['gold', 'platinum'],
+      required: [true,'please and a subscription type'],
+    },
+    plan: {
+      type: String,
+      enum: ['monthly', 'yearly'],
+      required: [true,'please and a subscription plan'],
+    },
+    status: {
+      type: String,
+      enum: ['active', 'inactive', 'canceled'],
+      default: 'active',
+    },
+    startDate: {
+      type: Date,
+      required: [true,"please add a start date"],
+    },
+    amount: {
+      type: Number,
+      required: [true,'please add a payment amount'],
+    },
+    endDate: {
+      type: Date,
+      required: [true,"please add an end date"],
+    },
     paymentMethod: {
       type: String,
-      required: true,
+      required: [true,'please add a payment a method'],
     },
     billingAddress: {
       type: String,
-      required: true,
+      required: [true, 'please add a billing address'],
     },
     name: {
       type: String,
-      required: true,
+      required: [true,'please add the user name'],
     }
-  },
-    shop_name: {
-      type: String,
-      required: true,
-    }
+}],
 }, { timestamps: true });
 
 const Subscription = mongoose.model('Subscription', subscriptionSchema);
