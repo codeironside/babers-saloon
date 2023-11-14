@@ -15,7 +15,7 @@ const errorHandler=(err,req,res,next)=>{
     let statusCode = err.statusCode || res.statusCode || 500;
 
     // Customize error message based on production or development environment
-    const errorMessage = process.env.NODE_ENV === "production" ? err.message : err.message;
+    const errorMessage = err instanceof Error ? err.message : "Something went wrong";
 
     res.status(statusCode).json({
         Message: errorMessage,
