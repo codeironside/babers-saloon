@@ -21,7 +21,8 @@ const protect = asyncHandler(async (req, res, next) => {
 
       // Check if more than 12 hours (12 hours * 60 minutes * 60 seconds)
       if (timeElapsedInSeconds > 12 * 60 * 60) {
-        throw new Error("Session expired");
+        throw Object.assign(new Error("Session expired"), { statusCode: 401 });
+;
       }
 
       // Get user from the token
@@ -30,13 +31,16 @@ const protect = asyncHandler(async (req, res, next) => {
       next();
     } catch (error) {
       if (error.name === 'TokenExpiredError') {
-        throw new Error("Session expired");
+        throw Object.assign(new Error("Session expired"), { statusCode: 401 });
+
       } else {
-        throw new Error("Not authorized");
+        throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
+;
       }
     }
   } else {
-    throw new Error("Not authorized");
+    throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
+;
   }
 });
 

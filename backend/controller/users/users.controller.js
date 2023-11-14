@@ -15,42 +15,51 @@ const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 //access private-depending on endpoint needs
 //routes /users/login
 const login_users = asynchandler(async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  if (!userName || !password) {
-    throw new Error("fields can not be empty");
-  }
-  const user = await USER.findOne({ email: email });
-  // console.log(user);
-  if (!user) {
-    throw Object.assign(new Error("Invalid credentials"), { statusCode: 401 });
-  }
+    if (!email || !password) {
+      throw Object.assign(new Error("Fields cannot be empty"), { statusCode: 400 });
+      ;
+    }
+    const user = await USER.findOne({ email: email });
+    // console.log(user);
+    if (!user) {
+      throw Object.assign(new Error("Invalid credentials"), {
+        statusCode: 401,
+      });
+    }
 
-  if (await bcrypt.compare(password, user.password)) {
-    const referredUsers = await USER.find(
-      { referredBy: user.referCode },
-      "firstName lastName userName pictureUrl"
-    );
-    const referralCount = referredUsers.length;
-    const token = generateToken(user._id);
-    const userWithoutPassword = await USER.findById(user.id).select(
-      "-password"
-    );
-    res.status(200).header("Authorization", `Bearer ${token}`).json({
-      status: 200,
-      user: userWithoutPassword,
-      referralCount: referralCount,
-      referredUsers: referredUsers,
-    });
-    logger.info(
-      `user with id ${
-        user._id
-      } logged in at ${currentDateTimeWAT.toString()} - ${res.statusCode} - ${
-        res.statusMessage
-      } - ${req.originalUrl} - ${req.method} - ${req.ip}`
-    );
-  } else {
-    throw Object.assign(new Error("Invalid credentials"), { statusCode: 401 });
+    if (await bcrypt.compare(password, user.password)) {
+      const referredUsers = await USER.find(
+        { referredBy: user.referCode },
+        "firstName lastName userName pictureUrl"
+      );
+      const referralCount = referredUsers.length;
+      const token = generateToken(user._id);
+      const userWithoutPassword = await USER.findById(user.id).select(
+        "-password"
+      );
+      res.status(200).header("Authorization", `Bearer ${token}`).json({
+        status: 200,
+        user: userWithoutPassword,
+        referralCount: referralCount,
+        referredUsers: referredUsers,
+      });
+      logger.info(
+        `user with id ${
+          user._id
+        } logged in at ${currentDateTimeWAT.toString()} - ${res.statusCode} - ${
+          res.statusMessage
+        } - ${req.originalUrl} - ${req.method} - ${req.ip}`
+      );
+    } else {
+      throw Object.assign(new Error("Invalid credentials"), {
+        statusCode: 401,
+      });
+    }
+  } catch (error) {
+    throw Object.assign(new Error(`${error}`), { statusCode: 500 });
   }
 });
 
@@ -253,7 +262,8 @@ const landing_page = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: 500 });
+    ;
   }
 });
 //access  public
@@ -411,7 +421,7 @@ const getallusers = asynchandler(async (req, res) => {
 //route /user/updateac
 //access private
 //data updateData
-const updateUser = async (req, res) => {
+const updateUser = asynchandler(async (req, res) => {
   const { userId } = req.params; // Get the user ID from the route parameters
   const clientIp = req.clientIp;
   const { id } = req.auth;
@@ -419,11 +429,13 @@ const updateUser = async (req, res) => {
 
   try {
     if (!userId) {
-      throw new Error("params is empty");
+      throw Object.assign(new Error("Fields cannot be empty"), { statusCode: 400 });
+;
     }
 
     if (!updateData) {
-      throw new Error("body is empty");
+      throw Object.assign(new Error("Fields cannot be empty"), { statusCode: 400 });
+      ;
     }
     const updatUser = await USER.findById(userId);
     console.log(updatUser._id);
@@ -456,7 +468,7 @@ const updateUser = async (req, res) => {
     console.error(error);
     throw Object.assign(new Error(`${error}`), { statusCode: 500 });
   }
-};
+});
 const getLocation = asynchandler(async (ip) => {
   try {
     // Set endpoint and your access key
@@ -541,7 +553,8 @@ const searchItems = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: 500 });
+;
   }
 });
 
