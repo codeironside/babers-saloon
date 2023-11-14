@@ -4,180 +4,186 @@ const logger = require("../../utils/logger");
 const USER = require("../../model/users/user.js");
 const working_hours = require("../../model/shops/openinghours.model");
 const jwt = require("jsonwebtoken");
-const mongoose = require("mongoose");
+const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
+const fs = require('fs');
 
-//access privare
-//route /shops/register/
-// route for creating shops.
+
+// Set up Multer storage
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/'); // Save uploaded files to the 'uploads' folder
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.fieldname + '-' + Date.now()); // Rename uploaded files
+  },
+});
+
+const upload = multer({ storage: storage }).single('image');
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET,
+});
+
 const create_shops = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
 
-    if (!id) throw new Error("Not a user");
+    if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
 
     // Check the user's subscription type
     const user = await USER.findById(id);
-    if (!user) throw new Error("User not found");
+    if (!user) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
 
-    const {
-      shop_name,
-      shop_address,
-      contact_email,
-      contact_number,
-      keywords,
-      google_maps_place_id,
-      longitude,
-      images,
-      facebook,
-      description,
-      website,
-      twitter,
-      whatsapp,
-      instagram,
-      minimum_price,
-      maximum_price,
-      instant_booking,
-      category,
-      monday_opening_hours,
-      monday_closing_hours,
-      tuesday_opening_hours,
-      tuesday_closing_hours,
-      wednesday_opening_hours,
-      wednesday_closing_hours,
-      thursday_opening_hours,
-      thursday_closing_hours,
-      friday_opening_hours,
-      friday_closing_hours,
-      saturday_opening_hours,
-      saturday_closing_hours,
-      sunday_opening_hours,
-      sunday_closing_hours,
-    } = req.body;
+    upload(req, res, async (err) => {
+      if (err instanceof multer.MulterError) {
+      throw Object.assign(new Error(err.message), { statusCode: 500 });;
+      } else if (err) {
+       
+        throw Object.assign(new Error(err.message), { statusCode: 500 });;
+      }
 
-    if (!shop_name || !shop_address || !contact_email || !contact_number) {
-      throw Object.assign(new Error("Required fields can not be empty"), { statusCode: 400 });
-;
-    }
-
-    let maxShopsAllowed;
-
-    // Check the user's subscription type and set maxShopsAllowed
-    switch (user.type) {
-      case "basic":
-        maxShopsAllowed = 5;
-        break;
-      case "gold":
-        maxShopsAllowed = 15;
-        break;
-      case "platinum":
-        maxShopsAllowed = 20;
-        break;
-      default:
-        throw Object.assign(new Error("Invalid subscription type"), { statusCode: 422 });
-    }
-    const userShopsCount = await SHOPS.countDocuments({ owner: id });
-    if (userShopsCount >= maxShopsAllowed) {
-      throw Object.assign(new Error(`You have reached the maximum allowed shops (${maxShopsAllowed})`), { statusCode: 403 });
-      ;
-    }
-
-    const shopExists = await SHOPS.findOne({ shop_name: shop_name });
-    if (shopExists) {
-      throw Object.assign(new Error("Shop already exists"), { statusCode: 409 });
-
-    }
-
-    const role = "SHOP_OWNER";
-
-    // Create a new shop
-    const createShops = await SHOPS.create({
-      owner: id,
-      shop_name,
-      shop_address,
-      contact_email,
-      contact_number,
-      keywords,
-      google_maps_place_id,
-      longitude,
-      images,
-      facebook,
-      description,
-      website,
-      twitter,
-      whatsapp,
-      instagram,
-      minimum_price,
-      maximum_price,
-      instant_booking,
-      category,
-      subscriptionType:user.type
-
-    });
-
-    if (createShops) {
-      let newWorkingHours;
+      if (!req.file) {
+        throw Object.assign(new Error('no file uploaded'), { statusCode: 400 });;
+      }
 
       try {
-        const workingHoursData = {
-          shopId: createShops._id,
-          hours: {
-            monday: {
-              opening: monday_opening_hours,
-              closing: monday_closing_hours,
-            },
-            tuesday: {
-              opening: tuesday_opening_hours,
-              closing: tuesday_closing_hours,
-            },
-            wednesday: {
-              opening: wednesday_opening_hours,
-              closing: wednesday_closing_hours,
-            },
-            thursday: {
-              opening: thursday_opening_hours,
-              closing: thursday_closing_hours,
-            },
-            friday: {
-              opening: friday_opening_hours,
-              closing: friday_closing_hours,
-            },
-            saturday: {
-              opening: saturday_opening_hours,
-              closing: saturday_closing_hours,
-            },
-            sunday: {
-              opening: sunday_opening_hours,
-              closing: sunday_closing_hours,
-            },
-          },
-        };
+        // Upload the file to Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path);
 
-        newWorkingHours = await working_hours.create(workingHoursData);
-      } catch (error) {
-        console.log(error);
-        await SHOPS.findByIdAndDelete(createShops._id);
-        throw Object.assign(new Error("Error creating working hours"), { statusCode: 500 });
-;
-      }
+        const {
+          shop_name,
+          shop_address,
+          contact_email,
+          contact_number,
+          keywords,
+          services,
+          google_maps_place_id,
+          longitude,
+          images,
+          facebook,
+          description,
+          website,
+          twitter,
+          whatsapp,
+          instagram,
+          minimum_price,
+          maximum_price,
+          instant_booking,
+          category,
+          monday_opening_hours,
+          monday_closing_hours,
+          tuesday_opening_hours,
+          tuesday_closing_hours,
+          wednesday_opening_hours,
+          wednesday_closing_hours,
+          thursday_opening_hours,
+          thursday_closing_hours,
+          friday_opening_hours,
+          friday_closing_hours,
+          saturday_opening_hours,
+          saturday_closing_hours,
+          sunday_opening_hours,
+          sunday_closing_hours,
+        } = req.body;
 
-      const updatedUser = await USER.findByIdAndUpdate(
-        id,
-        { $set: { role: role } },
-        { new: true }
-      );
-      if (createShops && updatedUser) {
-        res.status(200).json({
-          data: {
-            shop: createShops,
-            workingHours: newWorkingHours,
-          },
-          SHOP_ID: createShops._id,
+        // Use the uploaded image URL from Cloudinary
+        const image = result.secure_url;
+
+        // Create shop with Cloudinary image URL
+        const createShops = await SHOPS.create({
+          owner: id,
+          shop_name,
+          shop_address,
+          contact_email,
+          contact_number,
+          keywords,
+          google_maps_place_id,
+          longitude,
+          images,
+          facebook,
+          description,
+          website,
+          twitter,
+          whatsapp,
+          image,
+          instagram,
+          servicesOffered: services.split(","),
+          minimum_price,
+          maximum_price,
+          instant_booking,
+          category,
+          subscriptionType: user.type,
         });
-        logger.info(
-          `User with id ${id} created a shop with id: ${createShops._id} at ${createShops.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
-        );
+
+        if (createShops) {
+          let newWorkingHours;
+
+          // Creating working hours for the shop
+          const workingHoursData = {
+            shopId: createShops._id,
+            hours: {
+              monday: {
+                opening: monday_opening_hours,
+                closing: monday_closing_hours,
+              },
+              tuesday: {
+                opening: tuesday_opening_hours,
+                closing: tuesday_closing_hours,
+              },
+              wednesday: {
+                opening: wednesday_opening_hours,
+                closing: wednesday_closing_hours,
+              },
+              thursday: {
+                opening: thursday_opening_hours,
+                closing: thursday_closing_hours,
+              },
+              friday: {
+                opening: friday_opening_hours,
+                closing: friday_closing_hours,
+              },
+              saturday: {
+                opening: saturday_opening_hours,
+                closing: saturday_closing_hours,
+              },
+              sunday: {
+                opening: sunday_opening_hours,
+                closing: sunday_closing_hours,
+              },
+            }
+          };
+
+          newWorkingHours = await working_hours.create(workingHoursData);
+
+          // Update user role
+          const updatedUser = await USER.findByIdAndUpdate(
+            id,
+            { $set: { role: 'SHOP_OWNER' } },
+            { new: true }
+          );
+
+          if (createShops && updatedUser) {
+            res.status(200).json({
+              data: {
+                shop: createShops,
+                workingHours: newWorkingHours,
+              },
+              SHOP_ID: createShops._id,
+            });
+
+            logger.info(`User with id ${id} created a shop with id: ${createShops._id} at ${createShops.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`);
+          }
+        }
+      } catch (error) {
+        console.error(error);
+        // Delete the uploaded file if an error occurs
+        fs.unlinkSync(req.file.path);
+        throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
       }
-    }
+    });
   } catch (error) {
     console.error(error);
     throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
@@ -191,7 +197,7 @@ const create_shops = asynchandler(async (req, res) => {
 const login_shops = asynchandler(async (req, res) => {
   const { SHOP_ID } = req.body;
   if (!SHOP_ID) {
-    throw new Error("no shops found");
+    throw Object.assign(new Error("No shops found"), { statusCode: 404 });
   }
   try {
     const shop = await SHOPS.findById(SHOP_ID);
@@ -213,7 +219,9 @@ const login_shops = asynchandler(async (req, res) => {
       );
     }
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 //access get one shop for registered users and shop i
@@ -221,10 +229,10 @@ const getshop = asynchandler(async (req, res) => {
   const { id } = req.auth;
   const { SHOP_ID } = req.body;
   if (!id) {
-    throw new Error("not authorized");
+    throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
   }
   if (!SHOP_ID) {
-    throw new Error("no shops found");
+    throw Object.assign(new Error("No shops found"), { statusCode: 404 });
   }
   try {
     const shop = await SHOPS.findById(SHOP_ID);
@@ -264,7 +272,9 @@ const getshop = asynchandler(async (req, res) => {
       }
     }
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 // access private
@@ -283,7 +293,7 @@ const getallshops = asynchandler(async (req, res) => {
         process.env.role.toString() === "superadmin"
       )
     ) {
-      throw new Error("not authorized");
+      throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
     }
     let owner = false;
     const shop = await SHOPS.findOne({ owner: id });
@@ -323,13 +333,12 @@ const getallshops = asynchandler(async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`{error}`), { statusCode: error.statusCode });
   }
 });
 // access public
 // desc list all shops
 // route /shops/al
-
 const getall = asynchandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
@@ -352,7 +361,9 @@ const getall = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.log(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 
@@ -364,6 +375,8 @@ const getallshopone = asynchandler(async (req, res) => {
 
   const pageSize = parseInt(req.query.pageSize) || 10;
   const { id } = req.auth; // Assuming you are passing userId as a route parameter
+  if (!id)
+    throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
 
   try {
     const totalCount = await SHOPS.countDocuments({ owner: id }); // Assuming user field represents the user's ID
@@ -390,7 +403,9 @@ const getallshopone = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.log(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error("Not authorized"), {
+      statusCode: error.statusCode,
+    });
   }
 });
 
@@ -406,17 +421,23 @@ const updateShops = asynchandler(async (req, res) => {
   const { id } = req.auth;
   try {
     if (!shopId) {
-      throw new Error("Shop ID is empty");
+      throw Object.assign(new Error("shop id is empty"), {
+        statusCode: 400,
+      });;
     }
 
     if (!updateData) {
-      throw new Error("Update data is empty");
+      throw Object.assign(new Error("update data is empty"), {
+        statusCode: 400,
+      });;
     }
 
     const shop = await SHOPS.findById(shopId);
 
     if (!shop) {
-      throw new Error("Shop not found");
+      throw Object.assign(new Error("shop not found"), {
+        statusCode: 404,
+      });;
     }
 
     // Check if the authenticated user is the owner of the shop
@@ -426,15 +447,32 @@ const updateShops = asynchandler(async (req, res) => {
         process.env.role.toString() === "superadmin"
       )
     ) {
-      throw new Error("Not authorized");
+      throw Object.assign(new Error("not authorized"), {
+        statusCode: 403,
+      });
+    }
+
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path);
+
+      if (!result || !result.secure_url) {
+        throw Object.assign(new Error("failed to upload shops"), {
+          statusCode: 500,
+        });
+      }
+
+      updateData.image = result.secure_url;
     }
 
     const updatedShop = await SHOPS.findByIdAndUpdate(shopId, updateData, {
       new: true, // Return the updated shop document
     });
 
+
     if (!updatedShop) {
-      throw new Error("Error updating shop");
+      throw Object.assign(new Error("error updating shop"), {
+        statusCode: 404,
+      });;
     }
 
     const location = await getLocation(clientIp);
@@ -452,7 +490,9 @@ const updateShops = asynchandler(async (req, res) => {
       `User with id ${id} updated shop with id: ${shopId} at ${updatedShop.updatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
     );
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 //update working hours
@@ -480,17 +520,23 @@ const updateWorkingHours = asynchandler(async (req, res) => {
 
   try {
     if (!shopId) {
-      throw new Error("Working hours ID is empty");
+      throw Object.assign(new Error("Working hours ID is empty"), {
+        statusCode: 400,
+      });
     }
 
     if (!req.body) {
-      throw new Error("Update data is empty");
+      throw Object.assign(new Error("Required fields can not be empty"), {
+        statusCode: 400,
+      });
     }
 
     const workingHours = await working_hours.findOne({ shopId: shopId });
 
     if (!workingHours) {
-      throw new Error("Working hours not found");
+      throw Object.assign(new Error("working hours not found"), {
+        statusCode: 404,
+      });
     }
     // Check if the authenticated user is the owner of the associated shop
     const shop = await SHOPS.findById(shopId);
@@ -500,7 +546,7 @@ const updateWorkingHours = asynchandler(async (req, res) => {
         process.env.role.toString() === "superadmin"
       )
     ) {
-      throw new Error("Not authorized");
+      throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
     }
     const workingHoursData = {
       shopId: shop._id,
@@ -544,7 +590,9 @@ const updateWorkingHours = asynchandler(async (req, res) => {
     );
 
     if (!updatedWorkingHours) {
-      throw new Error("Error updating working hours");
+      throw Object.assign(new Error("Error updating hours"), {
+        statusCode: 500,
+      });
     }
 
     const location = await getLocation(clientIp);
@@ -559,7 +607,9 @@ const updateWorkingHours = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 
@@ -601,7 +651,7 @@ const updateapproval = asynchandler(async (req, res) => {
         user.role === "superadmin"
       )
     )
-      throw new Error("not authorized");
+      throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
     const updatedUser = await SHOPS.findByIdAndUpdate(
       shopId,
       { $set: { approved: status } },
@@ -609,7 +659,7 @@ const updateapproval = asynchandler(async (req, res) => {
     );
 
     if (!updatedUser) {
-      throw new Error("User not found or blog_owner is already false");
+      throw Object.assign(new Error("Not a user"), { statusCode: 404 });
     }
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
@@ -620,7 +670,9 @@ const updateapproval = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.log(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 //update subscription
@@ -641,7 +693,7 @@ const updatesubscription = asynchandler(async (req, res) => {
         user.role === "superadmin"
       )
     )
-      throw new Error("not authorized");
+      throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
     const updatedUser = await SHOPS.findByIdAndUpdate(
       shopId,
       { $set: { subscribed: status } },
@@ -649,7 +701,7 @@ const updatesubscription = asynchandler(async (req, res) => {
     );
 
     if (!updatedUser) {
-      throw new Error("User not found ");
+      throw Object.assign(new Error("User not found"), { statusCode: 404 });
     }
 
     const token = generateToken(id);
@@ -660,7 +712,9 @@ const updatesubscription = asynchandler(async (req, res) => {
       `admin with id ${id}, updated shop with id ${shopId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
     );
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 //update subscription
@@ -681,7 +735,8 @@ const updateavalability = asynchandler(async (req, res) => {
         user.role === "superadmin"
       )
     )
-      throw new Error("not authorized");
+      throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
+
     const updatedUser = await SHOPS.findByIdAndUpdate(
       shopId,
       { $set: { avalabilty: status } },
@@ -689,7 +744,7 @@ const updateavalability = asynchandler(async (req, res) => {
     );
 
     if (!updatedUser) {
-      throw new Error("User not found ");
+      throw Object.assign(new Error("User not found"), { statusCode: 404 });
     }
 
     const token = generateToken(id);
@@ -718,34 +773,37 @@ const searchShops = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 
 // Controller for updating services offered
 const updateServices = asynchandler(async (req, res) => {
   try {
+    const { id } = req.auth;
     const { shopId } = req.params;
-    const { servicesOffered } = req.body;
-
+    const { services } = req.body;
+    if (id !== shop.owner)
+      throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
     if (!servicesOffered || !Array.isArray(servicesOffered)) {
-    throw new Error('invalid data')
+      throw Object.assign(new Error("Invalid data"), { statusCode: 422 });
     }
 
     const updatedShop = await SHOPS.findByIdAndUpdate(
       shopId,
-      {$set:{ servicesOffered }},
+      { $set: { servicesOffered: services.split(",") } },
       { new: true }
     );
 
     if (!updatedShop) {
-    throw new Error('vendor not found')
+      throw Object.assign(new Error("No shops found"), { statusCode: 404 });
     }
 
-    const token = generateToken(updatedShop.owner); // Assuming you have an owner field in ShopsModel
-
-    res.status(200).json({
-      status: 'success',
+    const token = generateToken(updatedShop.owner);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      status: "success",
       data: updatedShop,
     });
 
@@ -753,7 +811,7 @@ const updateServices = asynchandler(async (req, res) => {
       `Services for shop with id: ${shopId} updated by user with id ${req.auth.id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
     );
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: 404 });
   }
 });
 
@@ -779,5 +837,5 @@ module.exports = {
   getshop,
   getall,
   updateavalability,
-  updateServices
+  updateServices,
 };

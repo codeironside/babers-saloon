@@ -2,7 +2,10 @@ const { stack } = require("../routes/users");
 const logger = require("../utils/logger.js");
 
 const errorHandler = (err, req, res, next) => {
-  let statusCode = err.statusCode || res.statusCode || 500;
+  let statusCode 
+  if(err.statusCode || res.statusCode){
+    statusCode = err.statusCode ? err.statusCode : res.statusCode;
+  }else{ statusCode=500;}
   const errorMessage = err.message
     ? err.message.startsWith("Error: ")
       ? err.message.slice(7)
