@@ -14,42 +14,11 @@ const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 //desc login users
 //access private-depending on endpoint needs
 //routes /users/login
-const MAX_LOGIN_ATTEMPTS = 5;
-const COOLDOWN_PERIOD = 60 * 60 * 1000; // 1 hour in milliseconds
-
-const loginAttempts = new Map();
-
 const login_users = asynchandler(async (req, res) => {
   const { userName, password } = req.body;
-  const clientIp = req.clientIp;
-  // console.log(userName);
-  // Check if there are too many login attempts from this IP address
-  if (loginAttempts.has(clientIp)) {
-    const attempts = loginAttempts.get(clientIp);
-    if (attempts >= MAX_LOGIN_ATTEMPTS) {
-      throw new Error("Too many login attempts. Try again later.");
-      const location = await getLocation(clientIp);
-      logger.error(
-        `user with id ${
-          user._id
-        } to many login attempts ${currentDateTimeWAT.toString()} - ${
-          res.statusCode
-        } - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${
-          req.ip
-        } - ${req.session.id} - with IP: ${req.clientIp} from ${location}`
-      );
-    }
-  }
+
 
   if (!userName || !password) {
-    const location = await getLocation(clientIp);
-    logger.error(
-      ` attempted log in at ${currentDateTimeWAT.toString()} - ${
-        res.statusCode
-      } - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${
-        req.ip
-      }  - with IP: ${req.clientIp} from ${req.ip}`
-    );
     throw new Error("fields can not be empty");
   }
   const user = await USER.findOne({ userName: userName });
@@ -59,10 +28,6 @@ const login_users = asynchandler(async (req, res) => {
   }
 
   if (await bcrypt.compare(password, user.password)) {
-    // Successful login
-    // Reset the login attempts for this IP address
-    loginAttempts.delete(clientIp);
-
     const referredUsers = await USER.find(
       { referredBy: user.referCode },
       "firstName lastName userName pictureUrl"
@@ -78,8 +43,6 @@ const login_users = asynchandler(async (req, res) => {
       referralCount: referralCount,
       referredUsers: referredUsers,
     });
-    // Log successful login
-    const location = await getLocation(clientIp);
     logger.info(
       `user with id ${
         user._id
@@ -88,31 +51,7 @@ const login_users = asynchandler(async (req, res) => {
       } - ${req.originalUrl} - ${req.method} - ${req.ip}`
     );
   } else {
-    // Failed login attempt
-    // Track the login attempt
-    if (loginAttempts.has(clientIp)) {
-      loginAttempts.set(clientIp, loginAttempts.get(clientIp) + 1);
-    } else {
-      loginAttempts.set(clientIp, 1);
-      setTimeout(() => {
-        loginAttempts.delete(clientIp);
-      }, COOLDOWN_PERIOD);
-    }
-
-    // res.status(401).json({
-    //   error: "Invalid credentials",
-    // });
-    const location = await getLocation(clientIp);
-    logger.error(
-      `user with id ${
-        user._id
-      } attempted to log in at ${currentDateTimeWAT.toString()} - ${
-        res.statusCode
-      } - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${
-        req.ip
-      } -  - with IP: ${req.clientIp} from ${req.ip}`
-    );
-    throw new Error("invalid credentials");
+    throw Object.assign(new Error("Invalid credentials"), { statusCode: 401 })
   }
 });
 
@@ -130,6 +69,7 @@ const register_users = asynchandler(async (req, res) => {
     userName,
     phoneNumber,
     referralCode,
+    pictureUrl
   } = req.body;
 
   if (
@@ -170,6 +110,7 @@ const register_users = asynchandler(async (req, res) => {
       password: hashedPassword,
       userName,
       phoneNumber,
+      pictureUrl,
       referredBy: referralCode,
     });
 
@@ -213,6 +154,7 @@ const register_users = asynchandler(async (req, res) => {
       middleName,
       lastName,
       email,
+      pictureUrl,
       password: hashedPassword,
       userName,
       phoneNumber,
