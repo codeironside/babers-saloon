@@ -41,7 +41,6 @@ const login_users = asynchandler(async (req, res) => {
         "-password"
       );
       res.status(200).header("Authorization", `Bearer ${token}`).json({
-        status: 200,
         user: userWithoutPassword,
         referralCount: referralCount,
         referredUsers: referredUsers,

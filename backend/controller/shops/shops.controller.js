@@ -55,7 +55,8 @@ const create_shops = asynchandler(async (req, res) => {
     } = req.body;
 
     if (!shop_name || !shop_address || !contact_email || !contact_number) {
-      throw new Error("Required fields cannot be empty");
+      throw Object.assign(new Error("Required fields can not be empty"), { statusCode: 400 });
+;
     }
 
     let maxShopsAllowed;
@@ -72,18 +73,18 @@ const create_shops = asynchandler(async (req, res) => {
         maxShopsAllowed = 20;
         break;
       default:
-        throw new Error("Invalid subscription type");
+        throw Object.assign(new Error("Invalid subscription type"), { statusCode: 422 });
     }
-
-    // Check if the user has exceeded the maximum allowed shops
     const userShopsCount = await SHOPS.countDocuments({ owner: id });
     if (userShopsCount >= maxShopsAllowed) {
-      throw new Error(`You have reached the maximum allowed shops (${maxShopsAllowed})`);
+      throw Object.assign(new Error(`You have reached the maximum allowed shops (${maxShopsAllowed})`), { statusCode: 403 });
+      ;
     }
 
     const shopExists = await SHOPS.findOne({ shop_name: shop_name });
     if (shopExists) {
-      throw new Error("Shop already exists");
+      throw Object.assign(new Error("Shop already exists"), { statusCode: 409 });
+
     }
 
     const role = "SHOP_OWNER";
@@ -108,7 +109,8 @@ const create_shops = asynchandler(async (req, res) => {
       minimum_price,
       maximum_price,
       instant_booking,
-      category,subscriptionType:user.type
+      category,
+      subscriptionType:user.type
 
     });
 
@@ -152,10 +154,10 @@ const create_shops = asynchandler(async (req, res) => {
 
         newWorkingHours = await working_hours.create(workingHoursData);
       } catch (error) {
-        // If an error occurs during the creation of the working hours, delete the created shop
         console.log(error);
         await SHOPS.findByIdAndDelete(createShops._id);
-        throw new Error("Error creating working hours");
+        throw Object.assign(new Error("Error creating working hours"), { statusCode: 500 });
+;
       }
 
       const updatedUser = await USER.findByIdAndUpdate(
@@ -163,9 +165,6 @@ const create_shops = asynchandler(async (req, res) => {
         { $set: { role: role } },
         { new: true }
       );
-
-      const location = await getLocation(req.ip);
-
       if (createShops && updatedUser) {
         res.status(200).json({
           data: {
@@ -181,7 +180,7 @@ const create_shops = asynchandler(async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
 

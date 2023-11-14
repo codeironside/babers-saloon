@@ -33,7 +33,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // Routes
 app.use("/users", require("./routes/users"));
-// app.use("/shops", require("./routes/shops.route"));
+app.use("/shops", require("./routes/shops.route"));
 // app.use("/chats", require("./routes/chat"));
 // app.use("/blogs", require("./routes/blog"));
 app.use("/subscription", require("./routes/subscription"));
