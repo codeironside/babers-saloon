@@ -59,7 +59,7 @@ const login_users = asynchandler(async (req, res) => {
       });
     }
   } catch (error) {
-    throw Object.assign(new Error(`${error}`), { statusCode: 500 });
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
 
@@ -202,7 +202,7 @@ const register_users = asynchandler(async (req, res) => {
       );
     }
   } catch (error) {
-    throw Object.assign(new Error(`${error}`), { statusCode: 403 });
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
 
@@ -262,7 +262,7 @@ const landing_page = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw Object.assign(new Error(`${error}`), { statusCode: 500 });
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
     ;
   }
 });
@@ -317,7 +317,7 @@ const landingpage = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw Object.assign(new Error(`${error}`), { statusCode: 500 });
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
 
@@ -357,7 +357,7 @@ const getUser = asynchandler(async (req, res) => {
       throw new Error("unauthorized");
     }
   } catch (error) {
-    throw Object.assign(new Error(`${error}`), { statusCode: 500 });
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
 //desc get all users for admin
@@ -413,7 +413,7 @@ const getallusers = asynchandler(async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    throw Object.assign(new Error(`${error}`), { statusCode: 500 });
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
 
@@ -466,7 +466,7 @@ const updateUser = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw Object.assign(new Error(`${error}`), { statusCode: 500 });
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
 const getLocation = asynchandler(async (ip) => {
@@ -519,7 +519,7 @@ const forum_status = asynchandler(async (req, res) => {
       `admin with id ${id}, changed user with ${userId} forum status - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip} `
     );
   } catch (error) {
-    throw Object.assign(new Error(`${error}`), { statusCode: 500 });
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
 
@@ -553,7 +553,7 @@ const searchItems = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw Object.assign(new Error(`${error}`), { statusCode: 500 });
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
 ;
   }
 });

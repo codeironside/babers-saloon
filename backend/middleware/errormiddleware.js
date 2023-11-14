@@ -12,10 +12,10 @@ const errorHandler=(err,req,res,next)=>{
     // })
     // logger.error(new Error(`${res.status} - ${res.Message} - ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip}`));
     // next()
-    let statusCode = err.statusCode || res.statusCode;
+    let statusCode = err.statusCode || res.statusCode||500;
 
     // Customize error message based on production or development environment
-    const errorMessage = err instanceof Error ? err.message : "Something went wrong";
+    const errorMessage = (err.message.startsWith('Error: ') ? err.message.slice(7) : err.message);
 
     res.status(statusCode).json({
         Message: errorMessage,
