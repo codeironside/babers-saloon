@@ -6,21 +6,51 @@ const comment = require("../../model/blogs/comments.js");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 
-//access privare
-//route /shops/register/
-// route for creating shops
+// Set up Cloudinary configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 const create_blog = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
-    const { blog_title, category, content, media_url } = req.body;
-    if (!id) throw new Error("Not a user");
+    const { blog_title, category, content } = req.body;
+    const { media } = req.file; // Assuming the image file comes in 'media'
+
+    if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
     if (!blog_title || !category || !content)
-      throw new Error("body can not be empty");
+      throw Object.assign(new Error("Body cannot be empty"), {
+        statusCode: 400,
+      });
     const exist = await BLOG.findOne({ blog_title: blog_title });
     const contentexist = await BLOG.findOne({ content: content });
-    if (exist) throw new Error("title already exist");
-    if (contentexist) throw new Error("content already exist");
+    if(exist){
+      throw Object.assign(new Error("title already exists"), { statusCode: 409 });
+    }
+    
+
+    if (contentexist)
+      throw Object.assign(new Error("Content already exists"), {
+        statusCode: 409,
+      });
     const user = await USER.findById(id);
+
+    let media_url = ""; // Initialize the media_url variable
+
+    if (media) {
+      const result = await cloudinary.uploader.upload(media.path);
+
+      if (!result || !result.secure_url) {
+        throw Object.assign(new Error("Content already exists"), {
+          statusCode: 409,
+        });
+      }
+
+      media_url = result.secure_url; // Assign the uploaded image URL
+    }
+
     const blog = await BLOG.create({
       blog_title,
       owner_id: id,
@@ -29,25 +59,31 @@ const create_blog = asynchandler(async (req, res) => {
       content,
       media_url,
     });
+
     const comments = await comment.find({ blog_id: blog._id });
     const commentsCount = comments.length;
+
     const updateuser = await USER.findByIdAndUpdate(
       id,
       { $set: { blog_owner: true } },
       { new: true }
     );
-    if (!updateuser) throw new Error("user not updated");
+
+    if (!updateuser) throw Object.assign(new Error("User not updated"), { statusCode: 500 });
+
+
     const token = generateToken(id);
     res
       .status(200)
       .header("Authorization", `Bearer ${token}`)
       .json({ blog, comments, commentsCount });
+
     logger.info(
       `User with id ${id} created a blog with id: ${blog._id} at ${blog.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
     );
   } catch (error) {
     console.error(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error("title already exists"), { statusCode: error.statusCode});;
   }
 });
 //access privare
@@ -57,8 +93,10 @@ const create_comment = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
     const { blog_id, content } = req.body;
-    if (!id) throw new Error("Not a user");
-    if (!blog_id || !content) throw new Error("body can not be empty");
+    if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
+    if (!blog_id || !content)  throw Object.assign(new Error("Body cannot be empty"), {
+      statusCode: 400,
+    });
     const user = await USER.findById(id);
     const blog = await comment.create({
       blog_id,
@@ -80,7 +118,9 @@ const create_comment = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 
@@ -96,7 +136,7 @@ const getallblogs = asynchandler(async (req, res) => {
   try {
     const user = await USER.findById(id);
     if (user._role === "superadmin" || process.env.role === "superadmin") {
-      if (!id) throw new Error("Not a user");
+      if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
 
       const blogs = await BLOG.find()
         .skip((page - 1) * pageSize)
@@ -124,11 +164,11 @@ const getallblogs = asynchandler(async (req, res) => {
         `Blogs were fetched by admin with id:${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
       );
     } else {
-      throw new Error("user  not authorized");
+      throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
     }
   } catch (error) {
     console.log(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
 
@@ -149,25 +189,25 @@ const getallblogsowner = asynchandler(async (req, res) => {
       .limit(pageSize)
       .sort({ createdAt: -1 });
 
-      let blogDict = [];
+    let blogDict = [];
 
-      for (const blog of blogs) {
-          let blogObject = blog.toObject(); // Convert Mongoose object to plain object
-          const comments = await comment.find({ blog_id: blog._id.toString() });
-          blogObject.comments = comments; // Add comments to the blog object
-          blogDict.push(blogObject); // Push the blog object to the array
-      }
-      
-      const totalCount = await BLOG.countDocuments({ owner: id });
-      const totalPages = Math.ceil(totalCount / pageSize);
-      const token = generateToken(id);
-      
-      res.status(200).header("Authorization", `Bearer ${token}`).json({
-          data: blogDict,
-          page: page,
-          totalPages: totalPages,
-      });
-      
+    for (const blog of blogs) {
+      let blogObject = blog.toObject(); // Convert Mongoose object to plain object
+      const comments = await comment.find({ blog_id: blog._id.toString() });
+      blogObject.comments = comments; // Add comments to the blog object
+      blogDict.push(blogObject); // Push the blog object to the array
+    }
+
+    const totalCount = await BLOG.countDocuments({ owner: id });
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const token = generateToken(id);
+
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      data: blogDict,
+      page: page,
+      totalPages: totalPages,
+    });
+
     logger.info(
       `user with id ${id}, fetched all his blogs - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip} `
     );
@@ -184,17 +224,16 @@ const getblog = asynchandler(async (req, res) => {
   const { id } = req.auth; // Assuming you are passing userId as a route parameter
 
   try {
-    if (!id) throw new Error("Not a user");
+    if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
 
     const blogs = await BLOG.findById(blog_id);
-    let owner = false
-    if(id === blogs.owner_id){
-      owner = true
+    let owner = false;
+    if (id === blogs.owner_id) {
+      owner = true;
       const reviews = await comment.find({ blog_id: blogs._id });
       let dict = [];
-      dict.comment= reviews;
-  
-      
+      dict.comment = reviews;
+
       const token = generateToken(id);
       res.status(200).header("Authorization", `Bearer ${token}`).json({
         data: dict,
@@ -202,12 +241,11 @@ const getblog = asynchandler(async (req, res) => {
       logger.info(
         `user with id ${id}, fetched a blog with id ${blogs._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
       );
-    }else{
+    } else {
       const reviews = await comment.find({ blog_id: blogs._id });
       let dict = [];
-      dict.comment= reviews;
-  
-      
+      dict.comment = reviews;
+
       const token = generateToken(id);
       res.status(200).header("Authorization", `Bearer ${token}`).json({
         data: dict,
@@ -216,10 +254,9 @@ const getblog = asynchandler(async (req, res) => {
         `user with id ${id}, fetched a blog with id ${blogs._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location} `
       );
     }
- 
   } catch (error) {
     console.log(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
 //update blogowner
@@ -234,7 +271,7 @@ const updateBlogOwner = asynchandler(async (req, res) => {
     const { status } = req.body;
     const role = await USER.findById(id);
     if (!(role._role === "superadmin" || process.env.role === "superadmin"))
-      throw new Error("not authorized");
+    throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
     const updatedUser = await BLOG.findByIdAndUpdate(
       blog_id,
       { $set: { approved: status } },
@@ -242,12 +279,12 @@ const updateBlogOwner = asynchandler(async (req, res) => {
     );
 
     if (!updatedUser || updatedUser.blog_owner === false) {
-      throw new Error("User not found or blog_owner is already false");
+      throw Object.assign(new Error("Not a user"), { statusCode: 404 });
     }
 
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-success:true
+      success: true,
     });
 
     logger.info(
@@ -255,9 +292,11 @@ success:true
     );
   } catch (error) {
     console.error("Error updating blog_owner:", error.message);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: error.message })
   }
 });
+
+//search blogs
 const searchBlogs = asynchandler(async (req, res) => {
   const query = req.query.query;
   try {
@@ -273,9 +312,11 @@ const searchBlogs = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
+
+
 const getall = asynchandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
@@ -298,7 +339,7 @@ const getall = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.log(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
 // access private
@@ -317,7 +358,7 @@ const blogs = asynchandler(async (req, res) => {
         process.env.role.toString() === "superadmin"
       )
     ) {
-      throw new Error("not authorized");
+      throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
     }
     let owner = false;
     const shop = await BLOG.findOne({ owner: id });
@@ -357,7 +398,7 @@ const blogs = asynchandler(async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
 
@@ -399,5 +440,5 @@ module.exports = {
   getblog,
   getall,
   searchBlogs,
-  blogs
+  blogs,
 };
