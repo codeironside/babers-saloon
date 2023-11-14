@@ -15,16 +15,15 @@ const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 //access private-depending on endpoint needs
 //routes /users/login
 const login_users = asynchandler(async (req, res) => {
-  const { userName, password } = req.body;
-
+  const { email, password } = req.body;
 
   if (!userName || !password) {
     throw new Error("fields can not be empty");
   }
-  const user = await USER.findOne({ userName: userName });
+  const user = await USER.findOne({ email: email });
   // console.log(user);
   if (!user) {
-    throw new Error("User does not exist");
+    throw Object.assign(new Error("Invalid credentials"), { statusCode: 401 });
   }
 
   if (await bcrypt.compare(password, user.password)) {
@@ -51,7 +50,7 @@ const login_users = asynchandler(async (req, res) => {
       } - ${req.originalUrl} - ${req.method} - ${req.ip}`
     );
   } else {
-    throw Object.assign(new Error("Invalid credentials"), { statusCode: 401 })
+    throw Object.assign(new Error("Invalid credentials"), { statusCode: 401 });
   }
 });
 
@@ -59,135 +58,144 @@ const login_users = asynchandler(async (req, res) => {
 //access public
 //router /users/register
 const register_users = asynchandler(async (req, res) => {
-  const ip = req.ip;
-  const {
-    firstName,
-    middleName,
-    lastName,
-    email,
-    password,
-    userName,
-    phoneNumber,
-    referralCode,
-    pictureUrl
-  } = req.body;
+  try {
+    const ip = req.ip;
+    const {
+      firstName,
+      middleName,
+      lastName,
+      email,
+      password,
+      userName,
+      phoneNumber,
+      referralCode,
+      pictureUrl,
+    } = req.body;
 
-  if (
-    !firstName ||
-    !lastName ||
-    !email ||
-    !password ||
-    !userName ||
-    !phoneNumber
-  ) {
-    throw new Error("Fields cannot be empty");
-  }
-
-  const findEmail = await USER.findOne({ email: email });
-  if (findEmail) {
-    throw new Error("User already exists");
-  }
-
-  const exist = await USER.findOne({ userName: userName });
-  if (exist) throw new Error("Username already exists");
-
-  let referredUsers = [];
-
-  if (referralCode) {
-    const referrer = await USER.findOne({ referCode: referralCode });
-    if (!referrer) {
-      throw new Error("Invalid referral code");
+    if (
+      !firstName ||
+      !lastName ||
+      !email ||
+      !password ||
+      !userName ||
+      !phoneNumber
+    ) {
+      throw Object.assign(new Error("Fields cannot be empty"), {
+        statusCode: 400,
+      });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const findEmail = await USER.findOne({ email: email });
+    if (findEmail) {
+      throw Object.assign(new Error("User already exists"), {
+        statusCode: 409,
+      });
+    }
 
-    const createUsers = await USER.create({
-      firstName,
-      middleName,
-      lastName,
-      email,
-      password: hashedPassword,
-      userName,
-      phoneNumber,
-      pictureUrl,
-      referredBy: referralCode,
-    });
+    const exist = await USER.findOne({ userName: userName });
+    if (exist)
+      throw Object.assign(new Error("User Name already exists"), {
+        statusCode: 409,
+      });
+    let referredUsers = [];
 
-    const codeOne = createUsers._id.toString().slice(3, 7);
-    const codeTwo = firstName.toString().slice(0, 3);
-    const codeThree = firstName.toString().slice(0, 2);
-    const codeFour = userName.toString().slice(0, 2);
-    const referrerCode = `REF-${codeOne}${codeTwo}${codeThree}${codeFour}${codeTwo}`;
+    if (referralCode) {
+      const referrer = await USER.findOne({ referCode: referralCode });
+      if (!referrer) {
+        throw new Error("Invalid referral code");
+      }
 
-    const updateReferral = await USER.findByIdAndUpdate(
-      createUsers._id,
-      { $set: { referCode: referrerCode } },
-      { new: true }
-    );
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
 
-    const location = await getLocation(ip);
-    const token = generateToken(createUsers._id);
+      const createUsers = await USER.create({
+        firstName,
+        middleName,
+        lastName,
+        email,
+        password: hashedPassword,
+        userName,
+        phoneNumber,
+        pictureUrl,
+        referredBy: referralCode,
+      });
 
-    referredUsers = await USER.find(
-      { referredBy: referrerCode },
-      "firstName lastName userName pictureUrl"
-    );
+      const codeOne = createUsers._id.toString().slice(3, 7);
+      const codeTwo = firstName.toString().slice(0, 3);
+      const codeThree = firstName.toString().slice(0, 2);
+      const codeFour = userName.toString().slice(0, 2);
+      const referrerCode = `REF-${codeOne}${codeTwo}${codeThree}${codeFour}${codeTwo}`;
 
-    res.status(202).header("Authorization", `Bearer ${token}`).json({
-      status: "202",
-      message: updateReferral,
-      referralCount: referredUsers.length,
-      referredUsers: referredUsers,
-    });
+      const updateReferral = await USER.findByIdAndUpdate(
+        createUsers._id,
+        { $set: { referCode: referrerCode } },
+        { new: true }
+      );
 
-    logger.info(
-      `User with ID ${createUsers._id} was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - ${req.session.id} - from ${location}`
-    );
-  } else {
-    // Continue the registration process without referral code
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+      const location = await getLocation(ip);
+      const token = generateToken(createUsers._id);
 
-    const createUsers = await USER.create({
-      firstName,
-      middleName,
-      lastName,
-      email,
-      pictureUrl,
-      password: hashedPassword,
-      userName,
-      phoneNumber,
-    });
+      referredUsers = await USER.find(
+        { referredBy: referrerCode },
+        "firstName lastName userName pictureUrl"
+      );
 
-    const codeOne = createUsers._id.toString().slice(3, 7);
-    const codeTwo = firstName.toString().slice(0, 3);
-    const codeThree = firstName.toString().slice(0, 2);
-    const codeFour = userName.toString().slice(0, 2);
-    const referrerCode = `REF-${codeOne}${codeTwo}${codeThree}${codeFour}${codeTwo}`;
+      res.status(202).header("Authorization", `Bearer ${token}`).json({
+        status: "202",
+        message: updateReferral,
+        referralCount: referredUsers.length,
+        referredUsers: referredUsers,
+      });
 
-    const updateReferral = await USER.findByIdAndUpdate(
-      createUsers._id,
-      { $set: { referCode: referrerCode } },
-      { new: true }
-    );
+      logger.info(
+        `User with ID ${createUsers._id} was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - ${req.session.id} - from ${location}`
+      );
+    } else {
+      // Continue the registration process without referral code
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
 
-    const location = await getLocation(ip);
-    const token = generateToken(createUsers._id);
+      const createUsers = await USER.create({
+        firstName,
+        middleName,
+        lastName,
+        email,
+        pictureUrl,
+        password: hashedPassword,
+        userName,
+        phoneNumber,
+      });
 
-    res.status(202).header("Authorization", `Bearer ${token}`).json({
-      status: "202",
-      message: updateReferral,
-      referralCount: referredUsers.length,
-      referredUsers: referredUsers,
-    });
+      const codeOne = createUsers._id.toString().slice(3, 7);
+      const codeTwo = firstName.toString().slice(0, 3);
+      const codeThree = firstName.toString().slice(0, 2);
+      const codeFour = userName.toString().slice(0, 2);
+      const referrerCode = `REF-${codeOne}${codeTwo}${codeThree}${codeFour}${codeTwo}`;
 
-    logger.info(
-      `User with ID ${createUsers._id} was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - ${req.session.id} - from ${location}`
-    );
+      const updateReferral = await USER.findByIdAndUpdate(
+        createUsers._id,
+        { $set: { referCode: referrerCode } },
+        { new: true }
+      );
+
+      const location = await getLocation(ip);
+      const token = generateToken(createUsers._id);
+
+      res.status(202).header("Authorization", `Bearer ${token}`).json({
+        status: "202",
+        message: updateReferral,
+        referralCount: referredUsers.length,
+        referredUsers: referredUsers,
+      });
+
+      logger.info(
+        `User with ID ${createUsers._id} was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - ${req.session.id} - from ${location}`
+      );
+    }
+  } catch (error) {
+    throw Object.assign(new Error(`${error}`), { statusCode: 403 });
   }
 });
-
 
 //access  private
 //route /users/landing_page
@@ -197,12 +205,12 @@ const landing_page = asynchandler(async (req, res) => {
     const { id } = req.auth;
 
     const user = await USER.findById(id);
-    if (!user) throw new Error("User not found");
-
+    if (!user)
+      throw Object.assign(new Error("User not found"), { statusCode: 404 });
     const shops = await SHOPS.find({ approved: true });
 
     // Define the order of subscription types
-    const subscriptionOrder = ['platinum', 'gold', 'basic'];
+    const subscriptionOrder = ["platinum", "gold", "basic"];
 
     // Sort shops based on subscription type and creation date
     shops.sort((a, b) => {
@@ -253,11 +261,10 @@ const landing_page = asynchandler(async (req, res) => {
 //desc landing user page
 const landingpage = asynchandler(async (req, res) => {
   try {
-
     const shops = await SHOPS.find({ approved: true });
 
     // Define the order of subscription types
-    const subscriptionOrder = ['platinum', 'gold', 'basic'];
+    const subscriptionOrder = ["platinum", "gold", "basic"];
 
     // Sort shops based on subscription type and creation date
     shops.sort((a, b) => {
@@ -300,7 +307,7 @@ const landingpage = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: 500 });
   }
 });
 
@@ -315,7 +322,9 @@ const getUser = asynchandler(async (req, res) => {
     if (id === user._id || process.env.role === "superadmin") {
       owner = true;
       if (!user) {
-        throw new Error("User not found");
+        throw Object.assign(new Error("user Not authorized"), {
+          statusCode: 404,
+        });
       }
 
       const referredUsers = await USER.find(
@@ -338,7 +347,7 @@ const getUser = asynchandler(async (req, res) => {
       throw new Error("unauthorized");
     }
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: 500 });
   }
 });
 //desc get all users for admin
@@ -390,11 +399,11 @@ const getallusers = asynchandler(async (req, res) => {
         `users were fetched- ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
       );
     } else {
-      throw new Error("not authorized");
+      throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
     }
   } catch (error) {
     console.log(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: 500 });
   }
 });
 
@@ -422,14 +431,14 @@ const updateUser = async (req, res) => {
       !(userId === updatUser._id.toString()) ||
       !(process.env.role === "superadmin")
     ) {
-      throw new Error("not allowed");
+      throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
     }
     const updatedUser = await USER.findByIdAndUpdate(userId, updateData, {
       new: true, // Return the updated user document
     });
 
     if (!updatedUser) {
-      throw new Error("user not found ");
+      throw Object.assign(new Error("User not  found"), { statusCode: 404 });
     }
 
     const token = generateToken(id);
@@ -445,7 +454,7 @@ const updateUser = async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw new Error("server Error");
+    throw Object.assign(new Error(`${error}`), { statusCode: 500 });
   }
 };
 const getLocation = asynchandler(async (ip) => {
@@ -487,7 +496,7 @@ const forum_status = asynchandler(async (req, res) => {
       { new: true }
     );
     if (!updatedUser) {
-      throw new Error("User not found or blog_owner is already false");
+      throw Object.assign(new Error("error updating"), { statusCode: 400 });
     }
 
     const token = generateToken(id);
@@ -498,7 +507,7 @@ const forum_status = asynchandler(async (req, res) => {
       `admin with id ${id}, changed user with ${userId} forum status - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip} `
     );
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: 500 });
   }
 });
 
@@ -545,5 +554,5 @@ module.exports = {
   getallusers,
   forum_status,
   searchItems,
-  landingpage
+  landingpage,
 };
