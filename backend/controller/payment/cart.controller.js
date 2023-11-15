@@ -13,21 +13,36 @@ const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 const makecart = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
-    const { paid, totalAmount, amount, quantity, shop_id } = req.body;
-    if (!id) throw new Error("not allowed");
+    let { items } = req.body; 
+    if (!id) throw Object.assign(new Error("Not allowed"), { statusCode: 403 });
+    ;
     const user = await USER.findById(id);
-    if (!user) throw new Error("user not found");
-    const shop = await SHOPS.findById(shop_id);
-    if (!shop_id) throw new Error("shop not found");
-    if (shop.category === "barbers")
+    if (!user) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
+    ;
+    let totalAmount = 0;
+    if (typeof items === 'string') {
+      items = JSON.parse(items);
+    }
+    for (item of items) {
+      const shop = await SHOPS.findById(item.shop_id);
+      console.log(item)
+      if (!shop) throw Object.assign(new Error("No shops found"), { statusCode: 404 });
+      ;
+      if (shop.category === "barbers")
       throw new Error("cart is reserved for only none barbers");
+      item.amount = item.quantity * shop.price; 
+      totalAmount += item.amount;
+      item.product = shop._id;
+      item.product_name = shop.shop_name;
+    }
+
     const book = await cart.create({
       user: user._id,
-      user_name:user.userName,
-      items: { shop: shop._id, product_name: shop.shop_name, quantity, amount },
+      user_name: user.userName,
+      items,
       totalAmount,
-      paid,
     });
+
     if (book) {
       const token = generateToken(user._id);
       res.status(201).header("Authorization", `Bearer ${token}`).json({
@@ -39,68 +54,99 @@ const makecart = asynchandler(async (req, res) => {
       );
     }
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
+
 
 // Controller for updating a booking
 // Controller to update the cart
 const updateCart = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
-    const { cartId } = req.params;
-    const { product, quantity } = req.body;
-
-    if (!cartId) {
-      throw new Error("Cart ID is required");
+    let { items } = req.body;
+    const user = await USER.findById(id)
+    if (!user) {
+      throw Object.assign(new Error("user not found"), { statusCode: 404 });
+;
+    }
+    if (typeof items === 'string') {
+      items = JSON.parse(items);
+    }
+    if (!items || !Array.isArray(items)) {
+      throw Object.assign(new Error("Invalid items format"), { statusCode: 400 });
+;
     }
 
-    const cart = await Cart.findById(cartId);
+    const userCart = await cart.findOne({ user: id });
+    const existingItems = userCart ? userCart.items : [];
 
-    if (!cart) {
-      throw new Error("Cart not found");
+    // Iterate through the items in the request
+    for (const item of items) {
+      const { shop_id, quantity } = item;
+
+      // Check if the shop exists
+      const shop = await SHOPS.findById(shop_id);
+      if (!shop) {
+        throw Object.assign(new Error("shop not found"), { statusCode: 404 });
+;
+      }
+
+      // Check if the product already exists in the user's cart
+      const existingProductIndex = existingItems.findIndex(
+        (existingItem) => existingItem.product.toString() === shop_id
+      );
+
+      if (existingProductIndex !== -1) {
+        // If the product exists, update quantity and amount
+        existingItems[existingProductIndex].quantity += quantity;
+        existingItems[existingProductIndex].amount +=
+          quantity * shop.price;
+      } else {
+        // If the product doesn't exist, add it to the user's cart
+        existingItems.push({
+          product: shop_id,
+          product_name: shop.shop_name,
+          quantity,
+          amount: quantity * shop.price,
+        });
+      }
     }
 
-    if (id.toString() !== cart.user.toString()) {
-      throw new Error("User cannot edit this cart");
-    }
-
-    // Check if the product is already in the cart
-    const existingItem = cart.items.find(
-      (item) => item.product.toString() === product
+    // Calculate the total amount for the user's cart
+    const totalAmount = existingItems.reduce(
+      (total, item) => total + item.amount,
+      0
     );
 
-    if (existingItem) {
-      // If the product is found, update the quantity
-      existingItem.quantity += quantity || 1;
+    // Update the user's cart with the modified items and totalAmount
+    if (userCart) {
+      userCart.items = existingItems;
+      userCart.totalAmount = totalAmount;
+      await userCart.save();
     } else {
-      // If the product is not found, add a new item to the cart
-      cart.items.push({
-        product,
-        quantity: quantity || 1,
+      // Create a new cart for the user if it doesn't exist
+      const newCart = new cart({
+        user: id,
+        user_name: user.userName,
+        items: existingItems,
+        totalAmount,
       });
+      await newCart.save();
     }
-
-    // Recalculate totalAmount based on updated items
-    cart.totalAmount = calculateTotalAmount(cart.items);
-
-    // Save the updated cart
-    const updatedCart = await cart.save();
-
-    const token = generateToken(id);
-
-    res.status(200).header("Authorization", `Bearer ${token}`).json({
-      status: "success",
-      data: updatedCart,
+const token = generateToken(id)
+    res.status(200).header("Authorization",`Bearer ${token}`).json({
+      updatedCart: userCart || newCart, 
     });
 
-    logger.info(
-      `Cart with ID: ${cartId} updated by user with ID ${req.auth.id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
-    );
+    // Log your info here if needed
+    logger.info(`user with id: ${id} updated his cart ${userCart._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`);
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+    ;
   }
 });
+
 
 // Controller to get all cart for admins
 const getAllcartForAdmins = asynchandler(async (req, res) => {
@@ -108,7 +154,7 @@ const getAllcartForAdmins = asynchandler(async (req, res) => {
     const { id } = req.auth;
     const user = await USER.findById(id);
     if (!(user.role === "superadmin" || process.env.role === "superadmin"))
-      throw new Error("not authorized");
+    throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
     const carts = await cart.find();
     const token = generateToken(id);
     res.status(200).header("Authoriation", `Bearer ${token}`).json({
@@ -120,7 +166,8 @@ const getAllcartForAdmins = asynchandler(async (req, res) => {
       `All carts retrieved for admin - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
     );
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+
   }
 });
 
@@ -136,7 +183,7 @@ const getAllCartsForVendor = asynchandler(async (req, res) => {
       !shop ||
       (id !== shop.owner && process.env.role.toString() !== "superadmin")
     ) {
-      throw new Error("Not authorized");
+      throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
     }
 
     const carts = await Cart.find({ "items.product": vendorId })
@@ -157,7 +204,7 @@ const getAllCartsForVendor = asynchandler(async (req, res) => {
       `All carts retrieved for vendor with ID: ${vendorId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
     );
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode})
   }
 });
 

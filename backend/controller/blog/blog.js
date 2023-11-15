@@ -4,7 +4,8 @@ const USER = require("../../model/users/user.js");
 const BLOG = require("../../model/blogs/blog.js");
 const comment = require("../../model/blogs/comments.js");
 const jwt = require("jsonwebtoken");
-const mongoose = require("mongoose");
+
+const cloudinary = require('cloudinary').v2;;
 
 // Set up Cloudinary configuration
 cloudinary.config({

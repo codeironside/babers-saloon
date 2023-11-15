@@ -9,7 +9,7 @@ Router.route('/create').post(protect,makecart)
 Router.route("/getall").get(protect,getAllcartForAdmins)
 //ccess private
 
-Router.route("/getone").get(protect,getAllCartsForVendor)
+Router.route("/getone/:vendorId").get(protect,getAllCartsForVendor)
 Router.route("/user").get(protect,getAllcartsForuser)
 
 //access private
