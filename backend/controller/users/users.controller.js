@@ -421,21 +421,16 @@ const getallusers = asynchandler(async (req, res) => {
 //access private
 //data updateData
 const updateUser = asynchandler(async (req, res) => {
-  const { userId } = req.params; // Get the user ID from the route parameters
+  const { userId } = req.params; 
   const clientIp = req.clientIp;
   const { id } = req.auth;
-  const updateData = req.body; // Get the updated data from the request body
+  const updateData = req.body; 
 
   try {
-    if (!userId) {
+    if (!userId || !updateData) {
       throw Object.assign(new Error("Fields cannot be empty"), { statusCode: 400 });
-;
     }
 
-    if (!updateData) {
-      throw Object.assign(new Error("Fields cannot be empty"), { statusCode: 400 });
-      ;
-    }
     const updatUser = await USER.findById(userId);
     console.log(updatUser._id);
     if (
@@ -444,6 +439,15 @@ const updateUser = asynchandler(async (req, res) => {
     ) {
       throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
     }
+
+    // Check if a file was uploaded
+    if (req.body.data) {
+      // Upload file to Cloudinary
+      const result = await cloudinary.uploader.upload(req.body.data, { resource_type: 'image', format: 'png' });
+      // Add the Cloudinary URL of the uploaded image to the update data
+      updateData.profile_image = result.secure_url;
+    }
+
     const updatedUser = await USER.findByIdAndUpdate(userId, updateData, {
       new: true, // Return the updated user document
     });

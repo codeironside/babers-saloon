@@ -12,6 +12,9 @@ const USERS = mongoose.Schema(
       type: String,
       required: [true, "please add a last name "],
     },
+    profile_image:{
+      type:String
+    },
     userName: {
       type: String,
       required: [true, "please add a user name "],

@@ -4,22 +4,8 @@ const logger = require("../../utils/logger");
 const USER = require("../../model/users/user.js");
 const working_hours = require("../../model/shops/openinghours.model");
 const jwt = require("jsonwebtoken");
-const cloudinary = require('cloudinary').v2;
-const multer = require('multer');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;;
 
-
-// Set up Multer storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // Save uploaded files to the 'uploads' folder
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.fieldname + '-' + Date.now()); // Rename uploaded files
-  },
-});
-
-const upload = multer({ storage: storage }).single('image');
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -37,158 +23,166 @@ const create_shops = asynchandler(async (req, res) => {
     const user = await USER.findById(id);
     if (!user) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
 
-    upload(req, res, async (err) => {
-      if (err instanceof multer.MulterError) {
-      throw Object.assign(new Error(err.message), { statusCode: 500 });;
-      } else if (err) {
-       
-        throw Object.assign(new Error(err.message), { statusCode: 500 });;
-      }
+    
+    let maxAllowedShops;
 
-      if (!req.file) {
-        throw Object.assign(new Error('no file uploaded'), { statusCode: 400 });;
-      }
+    // Set the maximum allowed shops based on the user's subscription type
+    switch (user.type) {
+      case "basic":
+        maxAllowedShops = 5;
+        break;
+      case "gold":
+        maxAllowedShops = 15;
+        break;
+      case "diamond":
+        maxAllowedShops = Infinity; // Unlimited shops for diamond subscription
+        break;
+      default:
+        throw Object.assign(new Error("Invalid subscription type"), { statusCode: 422 });
+    }
 
-      try {
-        // Upload the file to Cloudinary
-        const result = await cloudinary.uploader.upload(req.file.path);
+    // Check the current number of shops created by the user
+    const userShopsCount = await SHOPS.countDocuments({ owner: id });
+    if (userShopsCount >= maxAllowedShops) {
+      throw Object.assign(new Error(`You have reached the maximum allowed shops (${maxAllowedShops})`), { statusCode: 403 });
+    }
+    if (req.body.data) {
+      const result = await cloudinary.uploader.upload(req.body.data, { resource_type: 'image', format: 'png' });
 
-        const {
-          shop_name,
-          shop_address,
-          contact_email,
-          contact_number,
-          keywords,
-          services,
-          google_maps_place_id,
-          longitude,
-          images,
-          facebook,
-          description,
-          website,
-          twitter,
-          whatsapp,
-          instagram,
-          minimum_price,
-          maximum_price,
-          instant_booking,
-          category,
-          monday_opening_hours,
-          monday_closing_hours,
-          tuesday_opening_hours,
-          tuesday_closing_hours,
-          wednesday_opening_hours,
-          wednesday_closing_hours,
-          thursday_opening_hours,
-          thursday_closing_hours,
-          friday_opening_hours,
-          friday_closing_hours,
-          saturday_opening_hours,
-          saturday_closing_hours,
-          sunday_opening_hours,
-          sunday_closing_hours,
-        } = req.body;
+    image = result.secure_url;
+    }
 
-        // Use the uploaded image URL from Cloudinary
-        const image = result.secure_url;
+      const {
+        shop_name,
+        shop_address,
+        contact_email,
+        contact_number,
+        keywords,
+        services,
+        google_maps_place_id,
+        longitude,
+        images,
+        facebook,
+        description,
+        website,
+        twitter,
+        whatsapp,
+        instagram,
+        minimum_price,
+        maximum_price,
+        instant_booking,
+        category,
+        monday_opening_hours,
+        monday_closing_hours,
+        tuesday_opening_hours,
+        tuesday_closing_hours,
+        wednesday_opening_hours,
+        wednesday_closing_hours,
+        thursday_opening_hours,
+        thursday_closing_hours,
+        friday_opening_hours,
+        friday_closing_hours,
+        saturday_opening_hours,
+        saturday_closing_hours,
+        sunday_opening_hours,
+        sunday_closing_hours,
+      } = req.body;
 
-        // Create shop with Cloudinary image URL
-        const createShops = await SHOPS.create({
-          owner: id,
-          shop_name,
-          shop_address,
-          contact_email,
-          contact_number,
-          keywords,
-          google_maps_place_id,
-          longitude,
-          images,
-          facebook,
-          description,
-          website,
-          twitter,
-          whatsapp,
-          image,
-          instagram,
-          servicesOffered: services.split(","),
-          minimum_price,
-          maximum_price,
-          instant_booking,
-          category,
-          subscriptionType: user.type,
-        });
+      // Use the uploaded image URL from Cloudinary
+      const image = result.secure_url;
 
-        if (createShops) {
-          let newWorkingHours;
+      // Create shop with Cloudinary image URL
+      const createShops = await SHOPS.create({
+        owner: id,
+        shop_name,
+        shop_address,
+        contact_email,
+        contact_number,
+        keywords,
+        google_maps_place_id,
+        longitude,
+        images,
+        facebook,
+        description,
+        website,
+        twitter,
+        whatsapp,
+        image,
+        instagram,
+        servicesOffered: services.split(","),
+        minimum_price,
+        maximum_price,
+        instant_booking,
+        category,
+        subscriptionType: user.type,
+      });
 
-          // Creating working hours for the shop
-          const workingHoursData = {
-            shopId: createShops._id,
-            hours: {
-              monday: {
-                opening: monday_opening_hours,
-                closing: monday_closing_hours,
-              },
-              tuesday: {
-                opening: tuesday_opening_hours,
-                closing: tuesday_closing_hours,
-              },
-              wednesday: {
-                opening: wednesday_opening_hours,
-                closing: wednesday_closing_hours,
-              },
-              thursday: {
-                opening: thursday_opening_hours,
-                closing: thursday_closing_hours,
-              },
-              friday: {
-                opening: friday_opening_hours,
-                closing: friday_closing_hours,
-              },
-              saturday: {
-                opening: saturday_opening_hours,
-                closing: saturday_closing_hours,
-              },
-              sunday: {
-                opening: sunday_opening_hours,
-                closing: sunday_closing_hours,
-              },
-            }
-          };
+      if (createShops) {
+        let newWorkingHours;
 
-          newWorkingHours = await working_hours.create(workingHoursData);
-
-          // Update user role
-          const updatedUser = await USER.findByIdAndUpdate(
-            id,
-            { $set: { role: 'SHOP_OWNER' } },
-            { new: true }
-          );
-
-          if (createShops && updatedUser) {
-            res.status(200).json({
-              data: {
-                shop: createShops,
-                workingHours: newWorkingHours,
-              },
-              SHOP_ID: createShops._id,
-            });
-
-            logger.info(`User with id ${id} created a shop with id: ${createShops._id} at ${createShops.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`);
+        // Creating working hours for the shop
+        const workingHoursData = {
+          shopId: createShops._id,
+          hours: {
+            monday: {
+              opening: monday_opening_hours,
+              closing: monday_closing_hours,
+            },
+            tuesday: {
+              opening: tuesday_opening_hours,
+              closing: tuesday_closing_hours,
+            },
+            wednesday: {
+              opening: wednesday_opening_hours,
+              closing: wednesday_closing_hours,
+            },
+            thursday: {
+              opening: thursday_opening_hours,
+              closing: thursday_closing_hours,
+            },
+            friday: {
+              opening: friday_opening_hours,
+              closing: friday_closing_hours,
+            },
+            saturday: {
+              opening: saturday_opening_hours,
+              closing: saturday_closing_hours,
+            },
+            sunday: {
+              opening: sunday_opening_hours,
+              closing: sunday_closing_hours,
+            },
           }
+        };
+
+        newWorkingHours = await working_hours.create(workingHoursData);
+
+        // Update user role
+        const updatedUser = await USER.findByIdAndUpdate(
+          id,
+          { $set: { role: 'SHOP_OWNER' } },
+          { new: true }
+        );
+
+        if (createShops && updatedUser) {
+          res.status(200).json({
+            data: {
+              shop: createShops,
+              workingHours: newWorkingHours,
+            },
+            SHOP_ID: createShops._id,
+          });
+
+          logger.info(`User with id ${id} created a shop with id: ${createShops._id} at ${createShops.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`);
         }
-      } catch (error) {
-        console.error(error);
-        // Delete the uploaded file if an error occurs
-        fs.unlinkSync(req.file.path);
-        throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
       }
-    });
-  } catch (error) {
-    console.error(error);
-    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
-  }
-});
+    } catch (error) {
+      console.error(error);
+  
+      throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+    }
+  });
+
 
 
 //desc login shops

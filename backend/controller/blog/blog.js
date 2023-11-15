@@ -37,20 +37,15 @@ const create_blog = asynchandler(async (req, res) => {
       });
     const user = await USER.findById(id);
 
-    let media_url = ""; // Initialize the media_url variable
-
-    if (media) {
-      const result = await cloudinary.uploader.upload(media.path);
-
-      if (!result || !result.secure_url) {
-        throw Object.assign(new Error("Content already exists"), {
+    if (req.body.data) {
+      const result = await cloudinary.uploader.upload(req.body.data, { resource_type: 'image', format: 'png' });
+      media_url = result.secure_url;
+      if (!media_url|| !result.secure_url) {
+        throw Object.assign(new Error("upload failed"), {
           statusCode: 409,
         });
       }
-
-      media_url = result.secure_url; // Assign the uploaded image URL
     }
-
     const blog = await BLOG.create({
       blog_title,
       owner_id: id,
