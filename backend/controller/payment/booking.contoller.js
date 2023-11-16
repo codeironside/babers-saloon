@@ -7,28 +7,33 @@ const logger = require("../../utils/logger");
 const { DateTime } = require("luxon");
 const { convertToWAT } = require("../../utils/datetime");
 const Subscription = require("../../model/payment/subscription");
-const booking = require("../../model/payment/subscription");
+const booking = require("../../model/payment/booking");
 const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 
 const makebooking = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
-    const { service, date, time, shop_id } = req.body;
-    if (!id) throw new Error("not allowed");
+    const { service, date, no_persons, time, shop_id } = req.body;
+    if (!id) throw Object.assign(new Error("Not allowed"), { statusCode: 403 });
     const user = await USER.findById(id);
-    if (!user) throw new Error("user not found");
+    if (!user)
+      throw Object.assign(new Error("user not found"), { statusCode: 404 });
     const shop = await SHOPS.findById(shop_id);
-    if (!shop_id) throw new Error("shop not found");
+    if (!shop_id)
+      throw Object.assign(new Error("shop not found"), { statusCode: 404 });
     if (shop.category !== "barbers")
-      throw new Error("booking is reserved for only barbers");
+      throw Object.assign(new Error("Booking is reserved for only barbnoers"), {
+        statusCode: 403,
+      });
+    let n = Number(no_persons) * shop.price;
     const book = await booking.create({
       user: user._id,
       shop: shop._id,
-      shop_name: shop.shop_name,
       service,
-      user_userName: user.userName,
       time,
-      date,
+      date: new Date(date),
+      no_persons: Number(no_persons),
+      amount: n,
     });
     if (book) {
       const token = generateToken(user._id);
@@ -41,7 +46,9 @@ const makebooking = asynchandler(async (req, res) => {
       );
     }
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 
@@ -50,31 +57,40 @@ const updateBooking = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
     const { bookingId } = req.params;
-    const { service, date, time } = req.body;
+    const { service, date, no_persons,time } = req.body;
     const book = await booking.findById(bookingId);
-    if (!book) throw new Error("no current booking available");
-
+    
+    if (!book)
+      throw Object.assign(new Error("No current available"), {
+        statusCode: 404,
+      });
+      const shop = await SHOPS.findOne({shop:book.shop})
     if (id.toString() !== book.user.toString())
-      throw new Error("user can not edit this schedule");
+    throw Object.assign(new Error("User cannot edit this schedule"), { statusCode: 403 });
+    
 
     if (!bookingId) {
-      throw new Error("bookingid is required");
+      throw Object.assign(new Error("Booking ID required"), { statusCode: 400 });
+;
     }
 
-    const updatedBooking = await Booking.findByIdAndUpdate(
+    const updatedBooking = await booking.findByIdAndUpdate(
       bookingId,
       {
         $set: {
           service,
           date,
           time,
+          no_persons:Number(no_persons),
+          amount:Number(no_persons)*shop.price
         },
       },
       { new: true }
     );
 
     if (!updatedBooking) {
-      throw new Error("booking not found");
+      throw Object.assign(new Error("booking not updated"), { statusCode: 500 });
+;
     }
     const token = generateToken(id);
 
@@ -87,7 +103,8 @@ const updateBooking = asynchandler(async (req, res) => {
       `Booking with ID: ${bookingId} updated by user with ID ${req.auth.id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
     );
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+;
   }
 });
 // Controller to get all bookings for admins
@@ -96,10 +113,23 @@ const getAllBookingsForAdmins = asynchandler(async (req, res) => {
     const { id } = req.auth;
     const user = await USER.findById(id);
     if (!(user.role === "superadmin" || process.env.role === "superadmin"))
-      throw new Error("not authorized");
-    const bookings = await Booking.find();
+      throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
+
+    let bookings = await booking.find()
+      .populate({
+        path: "user",
+        model: "USER",
+        select: "firstName email number address" 
+      })
+      .populate({
+        path: "shop",
+        model: "SHOPS", 
+        select: "shop_name contact_email shop_address contact_number" 
+      });
+
     const token = generateToken(id);
-    res.status(200).header("Authoriation", `Bearer ${token}`).json({
+
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
       status: "success",
       data: bookings,
     });
@@ -108,59 +138,113 @@ const getAllBookingsForAdmins = asynchandler(async (req, res) => {
       `All bookings retrieved for admin - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
     );
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
 
+
+
 // Controller to get all bookings for one vendor
 const getAllBookingsForVendor = asynchandler(async (req, res) => {
-    try {
-      const { vendorId } = req.params;
-  const {id}=req.auth
-  const Shop = await SHOPS.findById(vendorId)
-  if(id!==shop.owner||process.env.role.toString()!=='superadmin') throw new Error('nor authorized')
-      const bookings = await Booking.find({ shop: Shop._id })
-    const token = generateToken(id)
-      res.status(200).header("Authorization",`Bearer ${token}`).json({
-        status: 'success',
-        data: bookings,
+  try {
+    const { vendorId } = req.params;
+    const { id } = req.auth;
+    const shop = await SHOPS.findById(vendorId);
+    if (id !== shop.owner.toString() && process.env.role.toString() !== "superadmin")
+      throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
+
+    let bookings = await booking.find({ shop: shop._id })
+      .populate({
+        path: "user",
+        model: "USER", 
+        select: "firstName email number address" 
+      })
+      .populate({
+        path: "shop",
+        model: "SHOPS", // Adjust the model name based on your ShopsModel
+        select: "shop_name contact_email shop_address contact_number" // Adjust these field names based on your SHOPS schema
       });
-  
-      logger.info(
-        `All bookings retrieved for vendor with ID: ${vendorId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
-      );
-    } catch (error) {
-      throw new Error(`${error}`);
-    }
-  });
-  const getLocation = asynchandler(async (ip) => {
-    try {
-      // Set endpoint and your access key
-      const accessKey = process.env.ip_secret_key;
-      const url =
-        "http://apiip.net/api/check?ip=" + ip + "&accessKey=" + accessKey;
-  
-      // Make a request and store the response
-      const response = await fetch(url);
-  
-      // Decode JSON response:
-      const result = await response.json();
-  
-      // Output the "code" value inside "currency" object
-      return response.data;
-    } catch (error) {
-      console.log(error);
-      return null;
-    }
-  });
-  
-  const generateToken = (id) => {
-    return jwt.sign(
-      {
-        id,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "12h" }
+
+    const token = generateToken(id);
+
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      status: "success",
+      data: bookings,
+    });
+
+    logger.info(
+      `All bookings retrieved for vendor with ID: ${vendorId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
     );
-  };
-module.exports = { makebooking, updateBooking, getAllBookingsForAdmins,getAllBookingsForVendor };
+  } catch (error) {
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+  }
+});
+
+
+//bookings for users
+const getAllBookingsForUser = asynchandler(async (req, res) => {
+  try {
+    const { id } = req.auth;
+    const user = await USER.findById(id);
+    if (id !== user._id.toString() && process.env.role.toString() !== "superadmin")
+      throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
+
+    let bookings = await booking.find({ user: user._id })
+      .populate({
+        path: "shop",
+        model: "SHOPS", 
+        select: "shop_name contact_email shop_address contact_number" 
+      });
+
+    const token = generateToken(id);
+
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      status: "success",
+      data: bookings,
+    });
+
+    logger.info(
+      `All bookings retrieved for user with ID: ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+    );
+  } catch (error) {
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+  }
+});
+
+const getLocation = asynchandler(async (ip) => {
+  try {
+    // Set endpoint and your access key
+    const accessKey = process.env.ip_secret_key;
+    const url =
+      "http://apiip.net/api/check?ip=" + ip + "&accessKey=" + accessKey;
+
+    // Make a request and store the response
+    const response = await fetch(url);
+
+    // Decode JSON response:
+    const result = await response.json();
+
+    // Output the "code" value inside "currency" object
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+});
+
+const generateToken = (id) => {
+  return jwt.sign(
+    {
+      id,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "12h" }
+  );
+};
+module.exports = {
+  makebooking,
+  updateBooking,
+  getAllBookingsForAdmins,
+  getAllBookingsForUser,
+  getAllBookingsForVendor,
+};
