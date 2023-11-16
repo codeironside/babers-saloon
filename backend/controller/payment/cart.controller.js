@@ -9,6 +9,7 @@ const { convertToWAT } = require("../../utils/datetime");
 const Subscription = require("../../model/payment/subscription");
 const cart = require("../../model/payment/cart");
 const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
+const mongoose = require("mongoose")
 
 const makecart = asynchandler(async (req, res) => {
   try {
@@ -176,7 +177,7 @@ const getAllCartsForVendor = asynchandler(async (req, res) => {
   try {
     const { vendorId } = req.params;
     const { id } = req.auth;
-
+    const user = await USER.findById(id);
     const shop = await SHOPS.findById(vendorId);
 
     if (
@@ -186,47 +187,64 @@ const getAllCartsForVendor = asynchandler(async (req, res) => {
       throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
     }
 
-    const carts = await Cart.find({ "items.product": vendorId })
-      .populate("user")
-      .populate({
-        path: "items.product",
-        model: "SHOP", // Adjust the model name based on your ShopsModel
-      });
-
+    let carts = await cart.find().populate({
+      path: "items.product",
+      model: "SHOPS",
+    }).populate({
+      path: "user",
+      model: "USER",
+      select: "firstName  userName email number" 
+    });;
+    carts = carts.map(cart => {
+      cart = cart.toObject();
+      cart.items = cart.items.filter(item => item.product._id.toString() === vendorId);
+      return cart;
+    });
+    
     const token = generateToken(id);
 
     res.status(200).header("Authorization", `Bearer ${token}`).json({
       status: "success",
       data: carts,
     });
-
     logger.info(
       `All carts retrieved for vendor with ID: ${vendorId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
     );
   } catch (error) {
-    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode})
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
 
 const getAllcartsForuser = asynchandler(async (req, res) => {
   try {
-    const { vendorId } = req.params;
     const { id } = req.auth;
-    const Shop = await SHOPS.findById(vendorId);
-    if (id !== Shop.owner || process.env.role.toString() !== "superadmin")
-      throw new Error("nor authorized");
-    const bookings = await cart.find({ user: id });
-    const token = generateToken(id);
-    res.status(200).header("Authorization", `Bearer ${token}`).json({
-      status: "success",
-      data: bookings,
+    const user = await USER.findById(id);
+    if (id !== user._id.toString() || process.env.role.toString() !== "superadmin")
+    throw Object.assign(new Error("Not authorized"), { statusCode: 401 })
+    let carts = await cart.find({ user: id })
+    .populate({
+      path: "items.product",
+      model: "SHOPS", 
+      populate: {
+        path: "owner",
+        model: "USER", 
+        select: "firstName email number address" 
+      },
+      select: "shop_name contact_email shop_address contact_number" 
     });
 
-    logger.info(
-      `All bookings retrieved for vendor with ID: ${vendorId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
-    );
+  const token = generateToken(id);
+
+  res.status(200).header("Authorization", `Bearer ${token}`).json({
+    status: "success",
+    data: carts,
+  });
+
+  logger.info(
+    `All carts retrieved for user with ID: ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+  );
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
 const getLocation = asynchandler(async (ip) => {
