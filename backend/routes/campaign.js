@@ -4,9 +4,9 @@ const { protect } = require("../middleware/authmiddleware");
 const {
   createCrowdfunding,
   contributeToCrowdfunding,
-  getAllCrowdfundingsWithContributorsforadmin,
   getCrowdfundingsForUser,
   getContributionForUser,
+  getAllCrowdfundingsWithContributorsforadmin,
   getCampaignDetails,
   getCampaignDetailsWithoutContributors,
   getallCampaignDetailsWithoutContributors,
@@ -16,26 +16,23 @@ const {
 Router.route("/create").post(protect, createCrowdfunding);
 
 // //ccess public
-Router.route("/getall").get(protect, getallCampaignDetailsWithoutContributors);
+Router.route("/getall").get(getallCampaignDetailsWithoutContributors);
 // //ccess public
-Router.route("/getall/:crowdfundingId").get(
-  protect,
+Router.route("/one/:crowdfundingId").get(
   getCampaignDetailsWithoutContributors
 );
+
 // //ccess private
-Router.route("/getone").get(
-  protect,
-  getAllCrowdfundingsWithContributorsforadmin
-);
+Router.route("/user/:userId").get(protect, getCrowdfundingsForUser);
 // //ccess private
-Router.route("/getone/:userId").get(protect, getCrowdfundingsForUser);
+Router.route("/details/:crowdfundingId").get(protect, getCampaignDetails);
 // //ccess private
-Router.route("/getone/:crowdfundingId").get(protect, getCampaignDetails);
-// //ccess private
-Router.route("/getone/:userId").get(protect, getContributionForUser);
+Router.route("/contributions/:userId").get(protect, getContributionForUser);
+//admin
+Router.route("/admin").get(protect, getAllCrowdfundingsWithContributorsforadmin);
 
 // //access private
-Router.route("/updatebooking/:crowdfundingId").put(
+Router.route("/contribute/:crowdfundingId").put(
   protect,
   contributeToCrowdfunding
 );

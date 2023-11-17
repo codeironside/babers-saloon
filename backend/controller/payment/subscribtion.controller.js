@@ -23,9 +23,11 @@ const createSubscription = asynchandler(async (req, res) => {
     const endDate = new Date(startDate); // Set the end date based on the selected plan
     const user = await USER.findById(id);
 
-    if (!user) throw new Error("User not found");
+    if (!user) throw Object.assign(new Error("Not found"), { statusCode: 4034 });
+    ;
     const find = await Subscription.findOne({user_id:user._id})
-    if(find) throw new Error('cannot create two subscribtion, please update if that is what you wish to do')
+    if(find) throw Object.assign(new Error("cannot create two subscribtion, please update if that is what you wish to do"), { statusCode: 403 });
+
     const newSubscription = await Subscription.create({
       user_id: user._id,
      
@@ -45,7 +47,8 @@ const createSubscription = asynchandler(async (req, res) => {
       $set: { subscribed: true, type: type },
     });
     if (!update) {
-      throw new Error("error updating user");
+      throw Object.assign(new Error("Error updating user"), { statusCode: 500 });
+;
     }
     // Update the subscription type for all shops
     const updateShops = await SHOPS.updateMany(
@@ -70,7 +73,8 @@ const createSubscription = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+;
   }
 });
 
@@ -106,11 +110,14 @@ const adminSubscriptionPanel = asynchandler(async (req, res) => {
         `Subscriptions  were fetched for admin with id: ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
       );
     } else {
-      throw new Error("Not authorized");
+      throw Object.assign(new Error("not authorized"), { statusCode: 403 });
+      ;
     }
   } catch (error) {
     console.error(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });;
   }
 });
 
@@ -126,16 +133,19 @@ const updateSubscriptionPlan = asynchandler(async (req, res) => {
     const { planId } = req.params; // Get the subscription plan ID from the request parameters
 
     const user = await USER.findById(id);
-    if (!user) throw new Error("User not found");
+    if (!user) throw Object.assign(new Error("user not found"), { statusCode: 404 });
+    ;
 
     const subscription = await Subscription.findById(planId);
     if (!subscription || subscription.user_id.toString() !== id.toString() || process.env.role.toString() !== "superadmin") {
-      throw new Error("who goes you?");
+      throw Object.assign(new Error("who goes you"), { statusCode: 403 });
+;
     }
 
     const currentDate = new Date();
     if (subscription.endDate > currentDate) {
-      throw new Error("Cannot cancel an existing subscription. It has not expired yet.");
+      throw Object.assign(new Error("Cannot cancel an existing subscription. It has not expired yet."), { statusCode: 403 });
+;
     }
 
    const startDate = new Date();
@@ -193,7 +203,9 @@ const updateSubscriptionPlan = asynchandler(async (req, res) => {
       `User with id: ${id} updated their subscription plan for subscription ${planId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
     );
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });;
   }
 });
 
@@ -229,11 +241,14 @@ const getAllUsersSubscription = asynchandler(async (req, res) => {
         `Subscriptions for user with ID: ${id} were fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
       );
     } else {
-      throw new Error("No Subscription for user");
+      throw Object.assign(new Error("No subscription for user"), { statusCode: 404 });
+;
     }
   } catch (error) {
     console.error(error);
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });;
   }
 });
 

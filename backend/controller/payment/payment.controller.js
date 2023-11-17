@@ -229,7 +229,7 @@ const getPaymentsforvendor = asynchandler(async (req, res) => {
       .populate({
         path: 'user_id',
         model: 'USER',
-        select: 'name email number address' // Adjust these field names based on your USER schema
+        select: 'firstName email number address' 
       })
       .populate({
         path: 'transaction_id',

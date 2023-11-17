@@ -4,6 +4,7 @@ const crowdfundingSchema = new mongoose.Schema({
   campaignName: {
     type: String,
     required: [true, 'Please add a campaign name'],
+    unique:true
   },
   organizer: {
     type: mongoose.Schema.Types.ObjectId,
