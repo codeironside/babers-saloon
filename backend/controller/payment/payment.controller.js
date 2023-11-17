@@ -20,106 +20,103 @@ const paidproduct = asynchandler(async (req, res) => {
       booking_id,
       cart_id,
       category,
-      amount,
-      paymentDate,
       paymentStatus,
     } = req.body;
     const { id } = req.auth;
-    if (!paymentDate || !paymentStatus || !shop_id || !quantity || !amount) {
-      throw new Error("Fields cannot be empty");
+    if (!paymentStatus || !category) {
+      throw Object.assign(new Error("fields can not be empty"), { statusCode: 404 });
     }
     const user = await USER.findById(id);
-    if (!user) throw new Error("user not found");
-
+    if (!user) throw Object.assign(new Error("User not found"), { statusCode: 404 });
+    
+    let newPayments = [];
+    
     if (category === "barbers") {
-      const shop = await Booking.findById(booking_id);
-      const name = await SHOPS.findById(shop.shop);
+      const booking = await Booking.findById(booking_id);
+      if (!booking) throw Object.assign(new Error("Booking not found"), { statusCode: 404 });
+      if (id!==booking.user.toString()) throw Object.assign(new Error("not allowed"), { statusCode: 403 });
+      const shop = await SHOPS.findById(booking.shop);
+      if (!shop) throw Object.assign(new Error("Shop not found"), { statusCode: 404 });
 
-      if (!shop) throw new Error("Booking not found");
       const newPayment = await PaymentModel.create({
-        shop_name: name.shop_name,
+        shop_name: shop.shop_name,
         user_id: user._id,
+        user_name: user.userName,
         shop_id: shop._id,
-        user_name:user.userName,
-        amount,
-        paymentDate,
+        amount:booking.amount,
         paymentStatus,
+        transaction_id: booking._id,
+        onModel: 'Booking'
       });
-      const token = generateToken(user._id);
+
       if (newPayment) {
-        const pay = await Booking.findByIdAndUpdate(
-          shop._id,
+        await Booking.findByIdAndUpdate(
+          booking._id,
           { $set: { paid: true } },
           { new: true }
         );
-        if(pay){
-          res.status(201).header("Authorization", `Bearer ${token}`).json({
-            status: "success",
-            data: newPayment,
-          });
-        }else{
-          throw new Error('update payement error')
-        }
-
       }
+      const token = generateToken(user._id);
+      res.status(200).header("Authorization", `Bearer ${token}`).json({
+        status: "success",
+        data: newPayment,
+      });
+  
       logger.info(
-        `user with id: ${id} paid a product with id ${shop._id} for plan ${type}, for the duration of a ${plan} from ${startDate}, to ${endDate} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+        `User with id: ${id} paid for a product - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
       );
     } else {
+      
       const cart = await Cart.findById(cart_id);
-      if (!cart) throw new Error("Cart not found");
-
-      const paymentReceipts = [];
-
-      for (const item of cart.items) {
+      if (!cart) throw Object.assign(new Error("Cart not found"), { statusCode: 404 });
+      // console.log(id, cart)
+      if (id!==cart.user.toString()) throw Object.assign(new Error("not allowed"), { statusCode: 403 });
+      for (let item of cart.items) {
+        console.log(item.product)
         const shop = await SHOPS.findById(item.product);
-        if (!shop)
-          throw new Error(`Shop not found for product ${item.product}`);
+        
+        if (!shop) throw Object.assign(new Error(`Shop not found for product ${item.product}`), { statusCode: 404 });
 
         const newPayment = await PaymentModel.create({
           shop_name: shop.shop_name,
           user_id: user._id,
-          
-        user_name:user.userName,
+          user_name: user.userName,
           shop_id: shop._id,
           amount: item.amount,
-          paymentDate,
           paymentStatus,
+          transaction_id: cart._id,
+          onModel: 'Cart'
         });
-
-        paymentReceipts.push(newPayment);
+        newPayments.push(newPayment)
       }
-
-      // Update the cart to mark it as paid
-      cart.paid = true;
-      await cart.save();
-
-      const token = generateToken(user._id);
-      if (paymentReceipts.length > 0) {
-        const pay = await Cart.findByIdAndUpdate(
-          shop._id,
+      if (newPayments.length > 0) {
+        await Cart.findByIdAndUpdate(
+          cart._id,
           { $set: { paid: true } },
           { new: true }
         );
-        if(pay){
-                  res.status(201).header("Authorization", `Bearer ${token}`).json({
-          status: "success",
-          data: paymentReceipts,
-        });
-        }
-
       }
-
+      const token = generateToken(user._id);
+      res.status(200).header("Authorization", `Bearer ${token}`).json({
+        status: "success",
+        data: newPayments,
+      });
+  
       logger.info(
-        `User with id: ${id} paid for products in cart with id ${cart._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+        `User with id: ${id} paid for a product - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
       );
     }
+
+
   } catch (error) {
-    throw new Error(`${error}`);
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode || 500 });
   }
 });
 
+
 // // Controller for updating a payment
+
+//controller to get
 // const updatePayment = asyncHandler(async (req, res) => {
 //   const { paymentId, paymentStatus } = req.body;
 
@@ -142,75 +139,117 @@ const paidproduct = asynchandler(async (req, res) => {
 // });
 
 // Controller for retrieving all payments
+
+//cpntroller for admin
 const getPaymentsforadmin = asynchandler(async (req, res) => {
-  try{  const{ id}= req.auth
-  const user = await USER.findById(id)
-  if(!(user.role==='superadmin'|| proces.env.role.toString()==='superadmin')){
-    throw new Error('not authorized')
-  }
-  const payments = await PaymentModel.find();
-const token = await generateToken(user._id)
-  if (payments) {
-    res.status(200).heaer("Authorization",`Bearer ${token}`).json({
+  try {
+    const { id } = req.auth;
+    const user = await USER.findById(id);
+    if (!(user.role === 'superadmin' || process.env.role.toString() === 'superadmin')) {
+      throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
+    }
+
+    const payments = await PaymentModel.find()
+    .populate({
+      path: 'user_id',
+      model: 'USER',
+      select: 'name email number address'
+    })
+    .populate({
+      path: 'shop_id',
+      model: 'SHOPS',
+      select: 'shop_name contact_email shop_address contact_number' 
+    })
+    .populate({
+      path: 'transaction_id',
+      modelPath: 'onModel'
+    });
+  
+
+    const token = generateToken(user._id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
       status: "success",
       data: payments,
     });
-    logger.info(
-      `admin with id ${user.id} fetch all payments- ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
-    )
-  }}catch(error){
-    throw new Error(`${error}`)
-  }
 
+    logger.info(
+      `Admin with id ${user.id} fetched all payments - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+    );
+  } catch (error) {
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode || 500 });
+  }
 });
+
 //controller for payment for all users
 const getPaymentsforuser = asynchandler(async (req, res) => {
-  try{
-      const{ id}= req.auth
-  const user = await USER.findById(id)
-  if(!user){
-    throw new Error('not authorized')
-  }
-  const payments = await PaymentModel.find({user_id:user._id});
-const token = await generateToken(user._id)
-  if (payments) {
-    res.status(200).heaer("Authorization",`Bearer ${token}`).json({
+  try {
+    const { id } = req.auth;
+    const user = await USER.findById(id);
+    if (!user) throw Object.assign(new Error("User not found"), { statusCode: 404 });
+    if (id !== user._id.toString()) throw Object.assign(new Error("not authorized"), { statusCode: 403 });
+
+    const payments = await PaymentModel.find({ user_id: user._id })
+      .populate({
+        path: 'shop_id',
+        model: 'SHOPS',
+        select: 'shop_name contact_email shop_address contact_number' 
+      })
+      .populate({
+        path: 'transaction_id',
+        modelPath: 'onModel'
+      });
+
+    const token = generateToken(user._id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
       status: "success",
       data: payments,
     });
-    logger.info(
-      `admin with id ${user.id} fetch all payments- ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
-    )
-  }
-  }catch(error){throw new Error(`${error}`)}
 
+    logger.info(
+      `User with id ${user.id} fetched all payments - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+    );
+  } catch (error) {
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+  }
 });
+
+
+//controller fpr vendor
 const getPaymentsforvendor = asynchandler(async (req, res) => {
-  try{  const{ id}= req.auth
-  const {shop_id}=req.body
-  const user = await USER.findById(id)
-  const book = await Booking.findById(shop_id)
-  const cart= await Cart.findById(shop_id)
-  if(!user){
-    throw new Error('not authorized')
-  }
-  if(!(id===book.user||id===cart.user)){
-    throw new Error('not authorized')
-  }
-  const payments = await PaymentModel.find({shop_id:shop
-  -id});
-const token = await generateToken(user._id)
-  if (payments) {
-    res.status(200).heaer("Authorization",`Bearer ${token}`).json({
+  try {
+    const { id } = req.auth;
+    const { shop_id } = req.body;
+    const user = await USER.findById(id);
+    if (!user) throw Object.assign(new Error("User not found"), { statusCode: 404 });
+    const shop = await SHOPS.findById(shop_id);
+
+    if (!shop) throw Object.assign(new Error("Shop not found"), { statusCode: 404 });
+   if (id!==shop.owner.toString() && process.env.role.toString()!=='superadmin') throw Object.assign(new Error("not authorized"), { statusCode: 403 });
+    const payments = await PaymentModel.find({ shop_id: shop._id })
+      .populate({
+        path: 'user_id',
+        model: 'USER',
+        select: 'name email number address' // Adjust these field names based on your USER schema
+      })
+      .populate({
+        path: 'transaction_id',
+        modelPath: 'onModel'
+      });
+
+    const token = generateToken(user._id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
       status: "success",
       data: payments,
     });
-    logger.info(
-      `vendor with id ${user.items.product} fetch all payments- ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
-    )
-  }}catch(error){throw new Error(`${error}`)}
 
+    logger.info(
+      `Vendor with id ${user.id} fetched all payments - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+    );
+  } catch (error) {
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode || 500 });
+  }
 });
+
 
 const getLocation = asynchandler(async (ip) => {
   try {

@@ -19,14 +19,23 @@ const PaymentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       required: [true, 'Please add a shop id'],
     },
-    //      ref: ['Booking',"Cart"],
+    transaction_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: [true, 'Please add a transaction id'],
+      refPath: 'onModel',
+    },
+    onModel: {
+      type: String,
+      required: true,
+      enum: ['Booking', 'Cart'],
+    },
     amount: {
       type: Number,
       required: true,
     },
     paymentDate: {
       type: Date,
-      default: Date.now,
+      default:new Date(),
     },
     paymentStatus: {
       type: String,
