@@ -1,7 +1,7 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/univvwcw/babers-saloon
+    - export DEPLOYPATH=/home/univvwcw/public_html
     - /bin/mkdir $DEPLOYPATH
     - /bin/cp -r backend $DEPLOYPATH
     - /bin/cp package-lock.json $DEPLOYPATH
