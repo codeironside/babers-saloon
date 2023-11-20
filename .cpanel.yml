@@ -3,9 +3,9 @@ deployment:
   tasks:
     - export DEPLOYPATH=/home/codeiroside/public_html/babers-saloon
     - /bin/mkdir -p $DEPLOYPATH
-    - /bin/cp -r /home/univvwcw/babers-saloon/backend $DEPLOYPATH
-    - /bin/cp /home/univvwcw/babers-saloon/package-lock.json $DEPLOYPATH
-    - /bin/cp /home/univvwcw/babers-saloon/package.json $DEPLOYPATH
+    - /bin/cp -r /home/codeiroside/babers-saloon/backend $DEPLOYPATH
+    - /bin/cp /home/codeiroside/babers-saloon/package-lock.json $DEPLOYPATH
+    - /bin/cp /home/codeiroside/babers-saloon/package.json $DEPLOYPATH
     - /bin/mkdir -p $DEPLOYPATH/tmp
     - /bin/touch $DEPLOYPATH/tmp/restart.txt
     - npm install
