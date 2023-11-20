@@ -41,7 +41,7 @@ const login_users = asynchandler(async (req, res) => {
         "-password"
       );
       res.status(200).header("Authorization", `Bearer ${token}`).json({
-       ...userWithoutPassword._doc,referralcount,referredUsers
+       ...userWithoutPassword._doc,referralCount,referredUsers
       });
       logger.info(
         `user with id ${
@@ -147,7 +147,7 @@ const register_users = asynchandler(async (req, res) => {
       );
 
       res.status(202).header("Authorization", `Bearer ${token}`).json({
-        ...userWithoutPassword._doc,referralcount,referredUsers
+        ...userWithoutPassword._doc,referredUsers
       });
 
       logger.info(
