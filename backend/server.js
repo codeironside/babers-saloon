@@ -32,15 +32,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Routes
-app.use("api/v1/users", require("./routes/users"));
-app.use("api/v1/shops", require("./routes/shops.route"));
-app.use("api/v1/chats", require("./routes/chat"));
-app.use("api/v1/blogs", require("./routes/blog"));
-app.use("api/v1/subscription", require("./routes/subscription"));
-app.use("api/v1/booking", require("./routes/booking"));
-app.use("api/v1/cart", require("./routes/cart"));
-app.use("api/v1/payment", require("./routes/payment"));
-app.use("api/v1/campaign", require("./routes/campaign"));
+app.use("/api/v1/users", require("./routes/users"));
+app.use("/api/v1/shops", require("./routes/shops.route"));
+app.use("/api/v1/chats", require("./routes/chat"));
+app.use("/api/v1/blogs", require("./routes/blog"));
+app.use("/api/v1/subscription", require("./routes/subscription"));
+app.use("/api/v1/booking", require("./routes/booking"));
+app.use("/api/v1/cart", require("./routes/cart"));
+app.use("/api/v1/payment", require("./routes/payment"));
+app.use("/api/v1/campaign", require("./routes/campaign"));
 
 // Error handling middleware
 app.use(errorHandler);
