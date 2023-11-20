@@ -48,5 +48,5 @@ app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
-  logger.info('Server running on development');
+  logger.info('Server running on port ${port}');
 });
