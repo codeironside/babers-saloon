@@ -8,6 +8,4 @@ deployment:
     - /bin/cp /home/univvwcw/babers-saloon/package.json $DEPLOYPATH
     - /bin/mkdir -p $DEPLOYPATH/tmp
     - /bin/touch $DEPLOYPATH/tmp/restart.txt
-    - source /home/univvwcw/nodevenv/babers-saloon/14/bin/activate
-    - cd /home/univvwcw/babers-saloon
     - npm install
