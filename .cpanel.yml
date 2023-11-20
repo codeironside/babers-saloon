@@ -1,13 +1,12 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/univvwcw/public_html
-    - /bin/mkdir $DEPLOYPATH
-    - /bin/cp -r backend $DEPLOYPATH
-    - /bin/cp package-lock.json $DEPLOYPATH
-    - /bin/cp package.json $DEPLOYPATH
-    - /bin/mkdir $DEPLOYPATH/tmp
+    - export DEPLOYPATH=/home/univvwcw/public_html/babers-saloon
+    - /bin/mkdir -p $DEPLOYPATH
+    - /bin/cp -r /home/univvwcw/babers-saloon/backend $DEPLOYPATH
+    - /bin/cp /home/univvwcw/babers-saloon/package-lock.json $DEPLOYPATH
+    - /bin/cp /home/univvwcw/babers-saloon/package.json $DEPLOYPATH
+    - /bin/mkdir -p $DEPLOYPATH/tmp
     - /bin/touch $DEPLOYPATH/tmp/restart.txt
     - cd $DEPLOYPATH
     - npm install
-    - npm start
