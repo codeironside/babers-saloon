@@ -10,3 +10,4 @@ deployment:
     - /bin/touch $DEPLOYPATH/tmp/restart.txt
     - cd $DEPLOYPATH
     - npm install
+    - npm start
