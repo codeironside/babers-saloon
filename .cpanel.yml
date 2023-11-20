@@ -1,7 +1,7 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/univvwcw/public_html/babers-saloon
+    - export DEPLOYPATH=/home/codeironside/public_html/babers-saloon
     - /bin/mkdir -p $DEPLOYPATH
     - /bin/cp -r /home/univvwcw/babers-saloon/backend $DEPLOYPATH
     - /bin/cp /home/univvwcw/babers-saloon/package-lock.json $DEPLOYPATH
