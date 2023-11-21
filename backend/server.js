@@ -30,7 +30,19 @@ app.use(credentials);
 app.use(cors(corsOption));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
+//authorizations endpoint
+app.use((req, res, next) => {
+  res.append('Access-Control-Allow-Origin', '*');
+  res.append('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+  res.append('Access-Control-Allow-Headers', 'Content-Type');
+  // Add the 'Authorization' header to the list of exposed headers
+  res.append('Access-Control-Expose-Headers', 'Authorization');
+  next();
+});
+// Your routes go here
+app.get('/', (req, res) => {
+  res.send('Hello, world!');
+});
 // Routes
 app.use("/api/v1/users", require("./routes/users"));
 app.use("/api/v1/shops", require("./routes/shops.route"));
