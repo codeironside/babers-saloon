@@ -9,3 +9,4 @@ deployment:
     - /bin/mkdir -p $DEPLOYPATH/tmp
     - /bin/touch $DEPLOYPATH/tmp/restart.txt
     - npm install
+    - npm start
