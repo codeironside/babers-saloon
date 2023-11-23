@@ -10,10 +10,50 @@ const { DateTime } = require("luxon");
 const { convertToWAT } = require("../../utils/datetime");
 
 const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
-//
-//desc login users
-//access private-depending on endpoint needs
-//routes /users/login
+/**
+ * @api {post} /login Login User
+ * @apiName LoginUser
+ * @apiGroup User
+ *
+ * @apiParam {String} email User's email.
+ * @apiParam {String} password User's password.
+ *
+ * @apiSuccess {Object} userWithoutPassword User object without password.
+ * @apiSuccess {Number} referralCount Number of users referred by the user.
+ * @apiSuccess {Array} referredUsers Array of users referred by the user.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "userWithoutPassword": {
+ *         "_id": "userId",
+ *         "email": "user@example.com",
+ *         // other user fields
+ *       },
+ *       "referralCount": 5,
+ *       "referredUsers": [
+ *         // array of user objects
+ *       ],
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (400) FieldsEmpty Email and password cannot be empty.
+ * @apiError (401) InvalidCredentials The provided credentials are invalid.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "FieldsEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "error": "InvalidCredentials"
+ *     }
+ */
+
 const login_users = asynchandler(async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -60,9 +100,70 @@ const login_users = asynchandler(async (req, res) => {
   }
 });
 
-//desc register users
-//access public
-//router /users/register
+/**
+ * @api {post} /register Register User
+ * @apiName RegisterUser
+ * @apiGroup User
+ *
+ * @apiParam {String} firstName User's first name.
+ * @apiParam {String} middleName User's middle name.
+ * @apiParam {String} lastName User's last name.
+ * @apiParam {String} email User's email.
+ * @apiParam {String} password User's password.
+ * @apiParam {String} userName User's username.
+ * @apiParam {String} phoneNumber User's phone number.
+ * @apiParam {String} referralCode Referral code of the user who referred this user.
+ * @apiParam {String} pictureUrl URL of the user's picture.
+ *
+ * @apiSuccess {Object} userWithoutPassword User object without password.
+ * @apiSuccess {Number} referralCount Number of users referred by the user.
+ * @apiSuccess {Array} referredUsers Array of users referred by the user.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 202 Accepted
+ *     {
+ *       "userWithoutPassword": {
+ *         "_id": "userId",
+ *         "email": "user@example.com",
+ *         // other user fields
+ *       },
+ *       "referralCount": 5,
+ *       "referredUsers": [
+ *         // array of user objects
+ *       ],
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (400) FieldsEmpty First name, last name, email, password, username, and phone number cannot be empty.
+ * @apiError (409) UserExists User already exists.
+ * @apiError (409) UserNameExists Username already exists.
+ * @apiError InvalidReferralCode The provided referral code is invalid.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "FieldsEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 409 Conflict
+ *     {
+ *       "error": "UserExists"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 409 Conflict
+ *     {
+ *       "error": "UserNameExists"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "InvalidReferralCode"
+ *     }
+ */
 const register_users = asynchandler(async (req, res) => {
   try {
     const ip = req.ip;
@@ -200,9 +301,44 @@ const register_users = asynchandler(async (req, res) => {
   }
 });
 
-//access  private
-//route /users/landing_page
-//desc landing user page
+/**
+ * @api {get} /users Get Landing Page Data
+ * @apiName GetLandingPageData
+ * @apiGroup LandingPage
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ *
+ * @apiSuccess {Array} data Array of shop and blog objects sorted by creation date.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "data": [
+ *         {
+ *           "_id": "shopId",
+ *           "name": "shopName",
+ *           "type": "shop",
+ *           // other shop fields
+ *         },
+ *         {
+ *           "_id": "blogId",
+ *           "title": "blogTitle",
+ *           "type": "blog",
+ *           // other blog fields
+ *         },
+ *         // more shop and blog objects
+ *       ]
+ *     }
+ *
+ * @apiError (404) UserNotFound The user was not found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "UserNotFound"
+ *     }
+ */
+
 const landing_page = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
@@ -260,9 +396,46 @@ const landing_page = asynchandler(async (req, res) => {
     ;
   }
 });
-//access  public
-//route /users/landing_page
-//desc landing user page
+
+
+/**
+ * @api {get} /home Get Landing Page Data
+ * @apiName GetLandingPageData
+ * @apiGroup LandingPage
+ *
+ * @apiSuccess {Array} data Array of shop and blog objects sorted by subscription type and creation date.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "data": [
+ *         {
+ *           "_id": "shopId",
+ *           "name": "shopName",
+ *           "subscriptionType": "platinum",
+ *           "createdAt": "creationDate",
+ *           // other shop fields
+ *         },
+ *         {
+ *           "_id": "blogId",
+ *           "title": "blogTitle",
+ *           "commentCount": 5,
+ *           "createdAt": "creationDate",
+ *           // other blog fields
+ *         },
+ *         // more shop and blog objects
+ *       ]
+ *     }
+ *
+ * @apiError (500) ServerError An error occurred on the server.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 500 Internal Server Error
+ *     {
+ *       "error": "ServerError"
+ *     }
+ */
+
 const landingpage = asynchandler(async (req, res) => {
   try {
     const shops = await SHOPS.find({ approved: true });
@@ -285,22 +458,25 @@ const landingpage = asynchandler(async (req, res) => {
 
     const blogs = await BLOGS.find({ approved: true });
 
-    let blogDict = {};
     for (const blog of blogs) {
       const commentCount = await COMMENT.countDocuments({ blog_id: blog._id });
       blog.commentCount = commentCount;
-      blogDict[blog] = commentCount;
     }
 
-    const sortedShops = shops.map((shop) => ({ ...shop._doc, type: "shop" }));
-    const sortedBlogs = Object.keys(blogDict).map((blog) => ({
-      ...blog,
-      type: "blog",
-    }));
+    // Mix blogs with sorted shops
+    let combinedData = [];
+    let shopIndex = 0;
+    let blogIndex = 0;
 
-    const combinedData = [...sortedShops, ...sortedBlogs];
+    while (shopIndex < shops.length || blogIndex < blogs.length) {
+      if (shopIndex < shops.length) {
+        combinedData.push(shops[shopIndex++]);
+      }
 
-    combinedData.sort((a, b) => b.createdAt - a.createdAt);
+      if (blogIndex < blogs.length) {
+        combinedData.push(blogs[blogIndex++]);
+      }
+    }
 
     res.status(200).json({
       data: combinedData,
@@ -314,9 +490,52 @@ const landingpage = asynchandler(async (req, res) => {
     throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
+ 
+/**
+ * @api {get} /getone Get User Data
+ * @apiName GetUserData
+ * @apiGroup User
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} user_id ID of the user to get data for.
+ *
+ * @apiSuccess {Object} user User object.
+ * @apiSuccess {Number} referralCount Number of users referred by the user.
+ * @apiSuccess {Array} referredUsers Array of users referred by the user.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 202 Accepted
+ *     {
+ *       "status": 200,
+ *       "user": {
+ *         "_id": "userId",
+ *         "email": "user@example.com",
+ *         // other user fields
+ *       },
+ *       "referralCount": 5,
+ *       "referredUsers": [
+ *         // array of user objects
+ *       ],
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (404) UserNotFound The user was not found.
+ * @apiError Unauthorized The user is not authorized to access this data.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "UserNotFound"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "error": "Unauthorized"
+ *     }
+ */
 
-//get one user
-//access private for user
 const getUser = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
@@ -354,11 +573,46 @@ const getUser = asynchandler(async (req, res) => {
     throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
-//desc get all users for admin
-//access private for admins only
-//access private
-// desc list all shops
-// route /shops/al
+/**
+ * @api {get} /getall Get All Users
+ * @apiName GetAllUsers
+ * @apiGroup User
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {Number} [page=1] Page number.
+ * @apiParam {Number} [pageSize=10] Number of users per page.
+ *
+ * @apiSuccess {Array} data Array of user objects with referral counts.
+ * @apiSuccess {Number} page Current page number.
+ * @apiSuccess {Number} totalPages Total number of pages.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "data": [
+ *         {
+ *           "_id": "userId",
+ *           "email": "user@example.com",
+ *           "referralCount": 5,
+ *           // other user fields
+ *         },
+ *         // more user objects
+ *       ],
+ *       "page": 1,
+ *       "totalPages": 10,
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (403) NotAuthorized The user is not authorized to access this data.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 403 Forbidden
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ */
+
 const getallusers = asynchandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
@@ -411,10 +665,50 @@ const getallusers = asynchandler(async (req, res) => {
   }
 });
 
-// Controller function to update a user
-//route /user/updateac
-//access private
-//data updateData
+/**
+ * @api {put} /update/:userId Update User Data
+ * @apiName UpdateUserData
+ * @apiGroup User
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} userId ID of the user to update.
+ * @apiParam {Object} updateData Data to update.
+ *
+ * @apiSuccess {Object} updatedUser Updated user object.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "_id": "userId",
+ *       "email": "user@example.com",
+ *       // other updated user fields
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (400) FieldsEmpty User ID and update data cannot be empty.
+ * @apiError (403) NotAuthorized The user is not authorized to update this data.
+ * @apiError (404) UserNotFound The user was not found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "FieldsEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 403 Forbidden
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "UserNotFound"
+ *     }
+ */
+
 const updateUser = asynchandler(async (req, res) => {
   const { userId } = req.params; 
   const clientIp = req.clientIp;
@@ -481,8 +775,41 @@ const getLocation = asynchandler(async (ip) => {
     return null;
   }
 });
-//update subscription
-//access private
+/**
+ * @api {put} /updatefor/:userId Update User Forum Status
+ * @apiName UpdateUserForumStatus
+ * @apiGroup User
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} userId ID of the user to update.
+ * @apiParam {Boolean} status New forum status.
+ *
+ * @apiSuccess {Boolean} successful Indicates whether the update was successful.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "successful": true,
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (400) ErrorUpdating An error occurred while updating the user.
+ * @apiError Unauthorized The user is not authorized to update this data.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "ErrorUpdating"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "error": "Unauthorized"
+ *     }
+ */
+
 const forum_status = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
@@ -524,6 +851,44 @@ const generateToken = (id) => {
     { expiresIn: "12h" }
   );
 };
+/**
+ * @api {get} /search Search Items
+ * @apiName SearchItems
+ * @apiGroup Search
+ *
+ * @apiParam {String} query Search query.
+ *
+ * @apiSuccess {Array} data Array of shop and blog objects sorted by creation date.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "data": [
+ *         {
+ *           "_id": "shopId",
+ *           "name": "shopName",
+ *           "createdAt": "creationDate",
+ *           // other shop fields
+ *         },
+ *         {
+ *           "_id": "blogId",
+ *           "title": "blogTitle",
+ *           "createdAt": "creationDate",
+ *           // other blog fields
+ *         },
+ *         // more shop and blog objects
+ *       ]
+ *     }
+ *
+ * @apiError (500) ServerError An error occurred on the server.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 500 Internal Server Error
+ *     {
+ *       "error": "ServerError"
+ *     }
+ */
+
 const searchItems = asynchandler(async (req, res) => {
   const query = req.query.query;
   try {

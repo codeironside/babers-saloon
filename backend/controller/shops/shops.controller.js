@@ -12,6 +12,85 @@ cloudinary.config({
   api_key: process.env.CLOUD_API_KEY,
   api_secret: process.env.CLOUD_API_SECRET,
 });
+/**
+ * @api {post} /create_shops Create Shop
+ * @apiName CreateShop
+ * @apiGroup Shop
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} shop_name Name of the shop.
+ * @apiParam {String} shop_address Address of the shop.
+ * @apiParam {String} contact_email Contact email of the shop.
+ * @apiParam {String} contact_number Contact number of the shop.
+ * @apiParam {String} keywords Keywords related to the shop.
+ * @apiParam {String} services Services offered by the shop.
+ * @apiParam {String} google_maps_place_id Google Maps Place ID of the shop.
+ * @apiParam {Number} longitude Longitude of the shop.
+ * @apiParam {Array} images Array of image URLs of the shop.
+ * @apiParam {String} facebook Facebook page of the shop.
+ * @apiParam {String} description Description of the shop.
+ * @apiParam {String} website Website of the shop.
+ * @apiParam {String} twitter Twitter handle of the shop.
+ * @apiParam {String} whatsapp Whatsapp number of the shop.
+ * @apiParam {String} instagram Instagram handle of the shop.
+ * @apiParam {Number} minimum_price Minimum price of the services offered by the shop.
+ * @apiParam {Number} maximum_price Maximum price of the services offered by the shop.
+ * @apiParam {Boolean} instant_booking Whether the shop supports instant booking.
+ * @apiParam {String} category Category of the shop.
+ * @apiParam {String} monday_opening_hours Opening hours on Monday.
+ * @apiParam {String} monday_closing_hours Closing hours on Monday.
+ * @apiParam {String} tuesday_opening_hours Opening hours on Tuesday.
+ * @apiParam {String} tuesday_closing_hours Closing hours on Tuesday.
+ * @apiParam {String} wednesday_opening_hours Opening hours on Wednesday.
+ * @apiParam {String} wednesday_closing_hours Closing hours on Wednesday.
+ * @apiParam {String} thursday_opening_hours Opening hours on Thursday.
+ * @apiParam {String} thursday_closing_hours Closing hours on Thursday.
+ * @apiParam {String} friday_opening_hours Opening hours on Friday.
+ * @apiParam {String} friday_closing_hours Closing hours on Friday.
+ * @apiParam {String} saturday_opening_hours Opening hours on Saturday.
+ * @apiParam {String} saturday_closing_hours Closing hours on Saturday.
+ * @apiParam {String} sunday_opening_hours Opening hours on Sunday.
+ * @apiParam {String} sunday_closing_hours Closing hours on Sunday.
+ *
+ * @apiSuccess {Object} shop Created shop object.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "_id": "shopId",
+ *       "name": "shopName",
+ *       // other shop fields
+ *     }
+ *
+ * @apiError (400) FieldsEmpty Shop name, address, contact email, contact number, services, Google Maps Place ID, longitude, images, Facebook page, description, website, Twitter handle, Whatsapp number, Instagram handle, minimum price, maximum price, instant booking, category, and opening and closing hours cannot be empty.
+ * @apiError (403) NotAuthorized The user is not authorized to create a shop.
+ * @apiError (404) UserNotFound The user was not found.
+ * @apiError (422) InvalidSubscriptionType The user's subscription type is invalid.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "FieldsEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 403 Forbidden
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "UserNotFound"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 422 Unprocessable Entity
+ *     {
+ *       "error": "InvalidSubscriptionType"
+ *     }
+ */
 
 const create_shops = asynchandler(async (req, res) => {
   try {
@@ -185,9 +264,35 @@ const create_shops = asynchandler(async (req, res) => {
 
 
 
-//desc login shops
-//route /shops/login
-//access private
+/**
+ * @api {post} /login_shops Login Shop
+ * @apiName LoginShop
+ * @apiGroup Shop
+ *
+ * @apiParam {String} SHOP_ID ID of the shop to login.
+ *
+ * @apiSuccess {Boolean} successful Indicates whether the login was successful.
+ * @apiSuccess {Object} data Shop object.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "successful": true,
+ *       "data": {
+ *         "_id": "shopId",
+ *         "name": "shopName",
+ *         // other shop fields
+ *       }
+ *     }
+ *
+ * @apiError (404) NoShopsFound No shops were found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "NoShopsFound"
+ *     }
+ */
 const login_shops = asynchandler(async (req, res) => {
   const { SHOP_ID } = req.body;
   if (!SHOP_ID) {
@@ -218,7 +323,48 @@ const login_shops = asynchandler(async (req, res) => {
     });
   }
 });
-//access get one shop for registered users and shop i
+/**
+ * @api {get} /getshop Get Shop
+ * @apiName GetShop
+ * @apiGroup Shop
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} SHOP_ID ID of the shop to get.
+ *
+ * @apiSuccess {Boolean} successful Indicates whether the request was successful.
+ * @apiSuccess {Object} data Shop object.
+ * @apiSuccess {Boolean} owner Indicates whether the user is the owner of the shop.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "successful": true,
+ *       "data": {
+ *         "_id": "shopId",
+ *         "name": "shopName",
+ *         // other shop fields
+ *       },
+ *       "owner": true,
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (401) NotAuthorized The user is not authorized to access this data.
+ * @apiError (404) NoShopsFound No shops were found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "NoShopsFound"
+ *     }
+ */
+
 const getshop = asynchandler(async (req, res) => {
   const { id } = req.auth;
   const { SHOP_ID } = req.body;
@@ -271,9 +417,53 @@ const getshop = asynchandler(async (req, res) => {
     });
   }
 });
-// access private
-// desc list all shops
-// route /shops/al
+/**
+ * @api {get} /getallshops Get All Shops
+ * @apiName GetAllShops
+ * @apiGroup Shop
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {Number} [page=1] Page number.
+ * @apiParam {Number} [pageSize=10] Number of shops per page.
+ *
+ * @apiSuccess {Boolean} owner Indicates whether the user is the owner of the shop.
+ * @apiSuccess {Array} data Array of shop objects.
+ * @apiSuccess {Number} page Current page number.
+ * @apiSuccess {Number} totalPages Total number of pages.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "owner": true,
+ *       "data": [
+ *         {
+ *           "_id": "shopId",
+ *           "name": "shopName",
+ *           // other shop fields
+ *         },
+ *         // more shop objects
+ *       ],
+ *       "page": 1,
+ *       "totalPages": 10,
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (403) NotAuthorized The user is not authorized to access this data.
+ * @apiError (404) NoShopsFound No shops were found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 403 Forbidden
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "NoShopsFound"
+ *     }
+ */
 
 const getallshops = asynchandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
@@ -330,7 +520,44 @@ const getallshops = asynchandler(async (req, res) => {
     throw Object.assign(new Error(`{error}`), { statusCode: error.statusCode });
   }
 });
-// access public
+/**
+ * @api {get} /getall Get All Shops
+ * @apiName GetAllShops
+ * @apiGroup Shop
+ *
+ * @apiParam {Number} [page=1] Page number.
+ * @apiParam {Number} [pageSize=10] Number of shops per page.
+ *
+ * @apiSuccess {Boolean} owner Indicates whether the user is the owner of the shop.
+ * @apiSuccess {Array} data Array of shop objects.
+ * @apiSuccess {Number} page Current page number.
+ * @apiSuccess {Number} totalPages Total number of pages.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "owner": false,
+ *       "data": [
+ *         {
+ *           "_id": "shopId",
+ *           "name": "shopName",
+ *           // other shop fields
+ *         },
+ *         // more shop objects
+ *       ],
+ *       "page": 1,
+ *       "totalPages": 10
+ *     }
+ *
+ * @apiError (500) ServerError An error occurred on the server.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 500 Internal Server Error
+ *     {
+ *       "error": "ServerError"
+ *     }
+ */
+
 // desc list all shops
 // route /shops/al
 const getall = asynchandler(async (req, res) => {
@@ -361,9 +588,45 @@ const getall = asynchandler(async (req, res) => {
   }
 });
 
-//desc get a shop owbers product
-//acess private
-//rouyte
+/**
+ * @api {get} /getallshopone Get All Shops for One User
+ * @apiName GetAllShopsOne
+ * @apiGroup Shop
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {Number} [page=1] Page number.
+ * @apiParam {Number} [pageSize=10] Number of shops per page.
+ *
+ * @apiSuccess {Array} data Array of shop objects owned by the user.
+ * @apiSuccess {Number} page Current page number.
+ * @apiSuccess {Number} totalPages Total number of pages.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "data": [
+ *         {
+ *           "_id": "shopId",
+ *           "name": "shopName",
+ *           // other shop fields
+ *         },
+ *         // more shop objects
+ *       ],
+ *       "page": 1,
+ *       "totalPages": 10,
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (401) NotAuthorized The user is not authorized to access this data.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ */
+
 const getallshopone = asynchandler(async (req, res) => {
   let page = parseInt(req.query.page) || 1;
 
@@ -403,10 +666,76 @@ const getallshopone = asynchandler(async (req, res) => {
   }
 });
 
-// Controller function to update a shop
-//route /user/updateac
-//access private
-//data updateData
+/**
+ * @api {put} /updateShops/:shopId Update Shop
+ * @apiName UpdateShop
+ * @apiGroup Shop
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} shopId ID of the shop to update.
+ * @apiParam {Object} updateData Data to update.
+ *
+ * @apiSuccess {Boolean} successful Indicates whether the update was successful.
+ * @apiSuccess {Object} data Updated shop object.
+ * @apiSuccess {Object} workingHours Working hours of the shop.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 202 Accepted
+ *     {
+ *       "successful": true,
+ *       "data": {
+ *         "_id": "shopId",
+ *         "name": "shopName",
+ *         // other updated shop fields
+ *       },
+ *       "workingHours": {
+ *         "monday": {
+ *           "opening": "09:00",
+ *           "closing": "17:00"
+ *         },
+ *         // other days
+ *       },
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (400) ShopIdEmpty Shop ID is empty.
+ * @apiError (400) UpdateDataEmpty Update data is empty.
+ * @apiError (401) NotAuthorized The user is not authorized to update this data.
+ * @apiError (404) ShopNotFound The shop was not found.
+ * @apiError (404) ErrorUpdatingShop An error occurred while updating the shop.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "ShopIdEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "UpdateDataEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "ShopNotFound"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "ErrorUpdatingShop"
+ *     }
+ */
+
 const updateShops = asynchandler(async (req, res) => {
   const { shopId } = req.params; // Get the shop ID from the route parameters
   const clientIp = req.ip;
@@ -489,8 +818,85 @@ const updateShops = asynchandler(async (req, res) => {
     });
   }
 });
-//update working hours
-//access private
+/**
+ * @api {put} /updateWorkingHours/:shopId Update Shop Working Hours
+ * @apiName UpdateShopWorkingHours
+ * @apiGroup Shop
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} shopId ID of the shop to update.
+ * @apiParam {String} monday_opening_hours Opening hours on Monday.
+ * @apiParam {String} monday_closing_hours Closing hours on Monday.
+ * @apiParam {String} tuesday_opening_hours Opening hours on Tuesday.
+ * @apiParam {String} tuesday_closing_hours Closing hours on Tuesday.
+ * @apiParam {String} wednesday_opening_hours Opening hours on Wednesday.
+ * @apiParam {String} wednesday_closing_hours Closing hours on Wednesday.
+ * @apiParam {String} thursday_opening_hours Opening hours on Thursday.
+ * @apiParam {String} thursday_closing_hours Closing hours on Thursday.
+ * @apiParam {String} friday_opening_hours Opening hours on Friday.
+ * @apiParam {String} friday_closing_hours Closing hours on Friday.
+ * @apiParam {String} saturday_opening_hours Opening hours on Saturday.
+ * @apiParam {String} saturday_closing_hours Closing hours on Saturday.
+ * @apiParam {String} sunday_opening_hours Opening hours on Sunday.
+ * @apiParam {String} sunday_closing_hours Closing hours on Sunday.
+ *
+ * @apiSuccess {Boolean} successful Indicates whether the update was successful.
+ * @apiSuccess {Object} data Updated working hours object.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 202 Accepted
+ *     {
+ *       "successful": true,
+ *       "data": {
+ *         "shopId": "shopId",
+ *         "hours": {
+ *           "monday": {
+ *             "opening": "09:00",
+ *             "closing": "17:00"
+ *           },
+ *           // other days
+ *         },
+ *       },
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (400) WorkingHoursIdEmpty Working hours ID is empty.
+ * @apiError (400) RequiredFieldsEmpty Required fields cannot be empty.
+ * @apiError (401) NotAuthorized The user is not authorized to update this data.
+ * @apiError (404) WorkingHoursNotFound The working hours were not found.
+ * @apiError (500) ErrorUpdatingHours An error occurred while updating the working hours.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "WorkingHoursIdEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "RequiredFieldsEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "WorkingHoursNotFound"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 500 Internal Server Error
+ *     {
+ *       "error": "ErrorUpdatingHours"
+ *     }
+ */
 const updateWorkingHours = asynchandler(async (req, res) => {
   const { shopId } = req.params; // Get the working hours ID from the route parameters
   const {

@@ -9,6 +9,7 @@ const connectDB = async () => {
     logger.info(`database up and running on development`)
   } catch (error) {
     console.log(error);
+    logger.error(`${error.message}`)
     process.exit(1);
   }
 };

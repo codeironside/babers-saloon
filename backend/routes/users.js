@@ -18,7 +18,7 @@ Router.route('/updatefor/:userId').put(protect, forum_status)
 //get one user
 Router.route('/getone').get(protect,getUser)
 //access private
-Router.route('/home').get(protect, landing_page)
+Router.route('/users').get(protect, landing_page)
 //access public
 Router.route('/home').get(landingpage)
 //access public

@@ -10,13 +10,12 @@ const errorHandler = (err, req, res, next) => {
     ? err.message.startsWith("Error: ")
       ? err.message.slice(7)
       : err.message
-    : process.env.NODE_ENV === "production"
+    : process.env.NODE_ENV === "Production"
     ? "Server Error"
     : "Something went wrong";
 
   res.status(statusCode).json({
     Message: errorMessage,
-    stack: process.env.NODE_ENV === "production" ? null : err.stack,
   });
 
   logger.error(
