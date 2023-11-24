@@ -28,7 +28,7 @@ Router.route('/updateH/:shopId').put(protect, updateWorkingHours)
 //access private
 Router.route('/updatesub/:shopId').put(protect, updatesubscription)
 //access public
-Router.route('/updatesub/:shopId').put(protect, updateavalability)
+Router.route('/updateavb/:shopId').put(protect, updateavalability)
 //access private
 Router.route('/updateapp/:shopId').put(protect, updateapproval)
 //access private

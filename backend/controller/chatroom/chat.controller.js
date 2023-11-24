@@ -2,6 +2,41 @@ const asynchandler = require("express-async-handler");
 const CHAT = require("../../model/chat/chat");
 const users = require("../../model/users/user");
 const jwt = require("jsonwebtoken");
+
+
+/**
+ * @api {post} /send-message Create Chat Message
+ * @apiName CreateChatMessage
+ * @apiGroup Chat
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} chat Chat message.
+ *
+ * @apiSuccess {Boolean} successful Indicates whether the message was successfully sent.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "successful": true,
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (404) NotAUser The user was not found.
+ * @apiError (500) ErrorSendingMessage An error occurred while sending the message.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "NotAUser"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 500 Internal Server Error
+ *     {
+ *       "error": "ErrorSendingMessage"
+ *     }
+ */
 const chatlogic = asynchandler(async (req, res, io) => {
   try {
     const { id } = req.auth;
@@ -29,6 +64,49 @@ const chatlogic = asynchandler(async (req, res, io) => {
     throw new Error(`${error}`);
   }
 });
+
+
+/**
+ * @api {get} /getall Get All Chats
+ * @apiName GetAllChats
+ * @apiGroup Chat
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ *
+ * @apiSuccess {Boolean} successful Indicates whether the request was successful.
+ * @apiSuccess {Array} data Array of chat objects.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "successful": true,
+ *       "data": [
+ *         {
+ *           "_id": "chatId",
+ *           "chat": "chatMessage",
+ *           // other chat fields
+ *         },
+ *         // more chat objects
+ *       ],
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (403) BannedFromForum The user is banned from the forum.
+ * @apiError (404) NotAUser The user was not found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 403 Forbidden
+ *     {
+ *       "error": "BannedFromForum"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "NotAUser"
+ *     }
+ */
 const getallchats = asynchandler(async (req, res, io) => {
   try {
     const { id } = req.auth;
@@ -52,6 +130,46 @@ const getallchats = asynchandler(async (req, res, io) => {
 ;
   }
 });
+
+
+/**
+ * @api {delete} /delete/:chatId Delete Chat Message
+ * @apiName DeleteChatMessage
+ * @apiGroup Chat
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} chatId ID of the chat message to delete.
+ *
+ * @apiSuccess {Boolean} successful Indicates whether the deletion was successful.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "successful": true
+ *     }
+ *
+ * @apiError (403) NotAuthorized The user is not authorized to delete this data.
+ * @apiError (404) NotAUser The user was not found.
+ * @apiError (500) ChatNotFound The chat message was not found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 403 Forbidden
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "NotAUser"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 500 Internal Server Error
+ *     {
+ *       "error": "ChatNotFound"
+ *     }
+ */
 const deletechat = asynchandler(async (req, res, io) => {
   try {
     const { id } = req.auth;
@@ -83,6 +201,9 @@ const deletechat = asynchandler(async (req, res, io) => {
 ;
   }
 });
+
+
+
 const generateToken = (id) => {
   return jwt.sign(
     {

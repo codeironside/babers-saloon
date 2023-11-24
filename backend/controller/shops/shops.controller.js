@@ -13,7 +13,7 @@ cloudinary.config({
   api_secret: process.env.CLOUD_API_SECRET,
 });
 /**
- * @api {post} /create_shops Create Shop
+ * @api {post} /register Create Shop
  * @apiName CreateShop
  * @apiGroup Shop
  *
@@ -265,7 +265,7 @@ const create_shops = asynchandler(async (req, res) => {
 
 
 /**
- * @api {post} /login_shops Login Shop
+ * @api {post} /login Login Shop
  * @apiName LoginShop
  * @apiGroup Shop
  *
@@ -324,7 +324,7 @@ const login_shops = asynchandler(async (req, res) => {
   }
 });
 /**
- * @api {get} /getshop Get Shop
+ * @api {get} /getone Get Shop
  * @apiName GetShop
  * @apiGroup Shop
  *
@@ -418,7 +418,7 @@ const getshop = asynchandler(async (req, res) => {
   }
 });
 /**
- * @api {get} /getallshops Get All Shops
+ * @api {get} /getall Get All Shops
  * @apiName GetAllShops
  * @apiGroup Shop
  *
@@ -521,7 +521,7 @@ const getallshops = asynchandler(async (req, res) => {
   }
 });
 /**
- * @api {get} /getall Get All Shops
+ * @api {get} /all Get All Shops
  * @apiName GetAllShops
  * @apiGroup Shop
  *
@@ -587,9 +587,39 @@ const getall = asynchandler(async (req, res) => {
     });
   }
 });
+//desc get all barbers end point
+//access public
+//routes /babers
+// const getbabers = asynchandler(async (req, res) => {
+//   const page = parseInt(req.query.page) || 1;
+//   const pageSize = parseInt(req.query.pageSize) || 10;
+//   try {
+//     owner = false;
+//     const totalCount = await SHOPS.countDocuments();
+//     const totalPages = Math.ceil(totalCount / pageSize);
+//     const shops = await SHOPS.find({category:"barbers"})
+//       .skip((page - 1) * pageSize)
+//       .limit(pageSize);
+//     res.status(200).json({
+//       owner: owner,
+//       data: shops,
+//       page: page,
+//       totalPages: totalPages,
+//     });
+
+//     logger.info(
+//       `shops were fetched  - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+//     );
+//   } catch (error) {
+//     console.log(error);
+//     throw Object.assign(new Error(`${error}`), {
+//       statusCode: error.statusCode,
+//     });
+//   }
+// });
 
 /**
- * @api {get} /getallshopone Get All Shops for One User
+ * @api {get} /getallone Get All Shops for One User
  * @apiName GetAllShopsOne
  * @apiGroup Shop
  *
@@ -667,7 +697,7 @@ const getallshopone = asynchandler(async (req, res) => {
 });
 
 /**
- * @api {put} /updateShops/:shopId Update Shop
+ * @api {put} /updateS/:shopId Update Shop
  * @apiName UpdateShop
  * @apiGroup Shop
  *
@@ -819,7 +849,7 @@ const updateShops = asynchandler(async (req, res) => {
   }
 });
 /**
- * @api {put} /updateWorkingHours/:shopId Update Shop Working Hours
+ * @api {put} /updateH/:shopId Update Shop Working Hours
  * @apiName UpdateShopWorkingHours
  * @apiGroup Shop
  *
@@ -1033,8 +1063,46 @@ const getLocation = asynchandler(async (ip) => {
     return null;
   }
 });
-//update shopowner
-//access private
+/**
+ * @api {put} /updateapp/:shopId Update Shop Approval Status
+ * @apiName UpdateShopApproval
+ * @apiGroup Shop
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} shopId ID of the shop to update.
+ * @apiParam {Boolean} status New approval status.
+ *
+ * @apiSuccess {Object} data Updated shop object.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "data": {
+ *         "_id": "shopId",
+ *         "name": "shopName",
+ *         "approved": true,
+ *         // other updated shop fields
+ *       },
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (401) NotAuthorized The user is not authorized to update this data.
+ * @apiError (404) NotAUser The user was not found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "NotAUser"
+ *     }
+ */
+
 const updateapproval = asynchandler(async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -1075,8 +1143,45 @@ const updateapproval = asynchandler(async (req, res) => {
     });
   }
 });
-//update subscription
-//access private
+/**
+ * @api {put} /updatesub/:shopId Update Shop Subscription Status
+ * @apiName UpdateShopSubscription
+ * @apiGroup Shop
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} shopId ID of the shop to update.
+ * @apiParam {Boolean} status New subscription status.
+ *
+ * @apiSuccess {Object} data Updated shop object.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "data": {
+ *         "_id": "shopId",
+ *         "name": "shopName",
+ *         "subscribed": true,
+ *         // other updated shop fields
+ *       },
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (401) NotAuthorized The user is not authorized to update this data.
+ * @apiError (404) UserNotFound The user was not found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "UserNotFound"
+ *     }
+ */
 const updatesubscription = asynchandler(async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -1117,8 +1222,46 @@ const updatesubscription = asynchandler(async (req, res) => {
     });
   }
 });
-//update subscription
-//access private
+/**
+ * @api {put} /updateavb/:shopId Update Shop Availability Status
+ * @apiName UpdateShopAvailability
+ * @apiGroup Shop
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} shopId ID of the shop to update.
+ * @apiParam {Boolean} status New availability status.
+ *
+ * @apiSuccess {Object} data Updated shop object.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "data": {
+ *         "_id": "shopId",
+ *         "name": "shopName",
+ *         "avalabilty": true,
+ *         // other updated shop fields
+ *       },
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (401) NotAuthorized The user is not authorized to update this data.
+ * @apiError (404) UserNotFound The user was not found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "UserNotFound"
+ *     }
+ */
+
 const updateavalability = asynchandler(async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -1158,6 +1301,37 @@ const updateavalability = asynchandler(async (req, res) => {
     throw new Error(`${error}`);
   }
 });
+
+/**
+ * @api {get} /search Search Shops
+ * @apiName SearchShops
+ * @apiGroup Shop
+ *
+ * @apiParam {String} query Search query.
+ *
+ * @apiSuccess {Array} data Array of shop objects that match the search query.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "data": [
+ *         {
+ *           "_id": "shopId",
+ *           "name": "shopName",
+ *           // other shop fields
+ *         },
+ *         // more shop objects
+ *       ]
+ *     }
+ *
+ * @apiError (500) ServerError An error occurred on the server.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 500 Internal Server Error
+ *     {
+ *       "error": "ServerError"
+ *     }
+ */
 const searchShops = asynchandler(async (req, res) => {
   const query = req.query.query;
   try {
@@ -1179,7 +1353,54 @@ const searchShops = asynchandler(async (req, res) => {
   }
 });
 
-// Controller for updating services offered
+/**
+ * @api {put} /updateservices/:shopId Update Shop Services
+ * @apiName UpdateShopServices
+ * @apiGroup Shop
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} shopId ID of the shop to update.
+ * @apiParam {Array} services Array of services offered by the shop.
+ *
+ * @apiSuccess {String} status Status of the request.
+ * @apiSuccess {Object} data Updated shop object.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "status": "success",
+ *       "data": {
+ *         "_id": "shopId",
+ *         "name": "shopName",
+ *         "servicesOffered": ["service1", "service2"],
+ *         // other updated shop fields
+ *       },
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (401) NotAuthorized The user is not authorized to update this data.
+ * @apiError (404) NoShopsFound No shops were found.
+ * @apiError (422) InvalidData The provided data is invalid.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "NoShopsFound"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 422 Unprocessable Entity
+ *     {
+ *       "error": "InvalidData"
+ *     }
+ */
 const updateServices = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;

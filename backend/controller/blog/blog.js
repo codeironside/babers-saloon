@@ -14,6 +14,98 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+
+/**
+ * @api {post} /create Create Blog
+ * @apiName CreateBlog
+ * @apiGroup Blog
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} blog_title Title of the blog.
+ * @apiParam {String} category Category of the blog.
+ * @apiParam {String} content Content of the blog.
+ * @apiParam {File} media Image file for the blog.
+ *
+ * @apiSuccess {Object} blog Created blog object.
+ * @apiSuccess {Array} comments Array of comments on the blog.
+ * @apiSuccess {Number} commentsCount Number of comments on the blog.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "blog": {
+ *         "_id": "blogId",
+ *         "blog_title": "blogTitle",
+ *         "owner_id": "userId",
+ *         "owner_name": "userName",
+ *         "category": "blogCategory",
+ *         "content": "blogContent",
+ *         "media_url": "mediaUrl",
+ *         // other blog fields
+ *       },
+ *       "comments": [
+ *         {
+ *           "_id": "commentId",
+ *           "comment": "commentText",
+ *           // other comment fields
+ *         },
+ *         // more comment objects
+ *       ],
+ *       "commentsCount": 10,
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (400) BodyEmpty The request body cannot be empty.
+ * @apiError (401) NotAUser The user was not found.
+ * @apiError (403) NotAuthorized The user is not authorized to create this data.
+ * @apiError (409) TitleExists The blog title already exists.
+ * @apiError (409) ContentExists The blog content already exists.
+ * @apiError (409) UploadFailed The image upload failed.
+ * @apiError (500) UserNotUpdated The user was not updated.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "BodyEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "error": "NotAUser"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 403 Forbidden
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 409 Conflict
+ *     {
+ *       "error": "TitleExists"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 409 Conflict
+ *     {
+ *       "error": "ContentExists"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 409 Conflict
+ *     {
+ *       "error": "UploadFailed"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 500 Internal Server Error
+ *     {
+ *       "error": "UserNotUpdated"
+ *     }
+ */
 const create_blog = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
@@ -82,9 +174,58 @@ const create_blog = asynchandler(async (req, res) => {
     throw Object.assign(new Error("title already exists"), { statusCode: error.statusCode});;
   }
 });
-//access privare
-//route /shops/register/
-// route for creating shops
+/**
+ * @api {post} /createcomment Create Comment
+ * @apiName CreateComment
+ * @apiGroup Comment
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} blog_id ID of the blog to comment on.
+ * @apiParam {String} content Content of the comment.
+ *
+ * @apiSuccess {Object} Blogs Blog object that the comment was made on.
+ * @apiSuccess {Array} comments Array of comments on the blog.
+ * @apiSuccess {Number} commentsCount Number of comments on the blog.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "Blogs": {
+ *         "_id": "blogId",
+ *         "blog_title": "blogTitle",
+ *         // other blog fields
+ *       },
+ *       "comments": [
+ *         {
+ *           "_id": "commentId",
+ *           "blog_id": "blogId",
+ *           "owner_id": "userId",
+ *           "owner_name": "userName",
+ *           "content": "commentContent",
+ *           // other comment fields
+ *         },
+ *         // more comment objects
+ *       ],
+ *       "commentsCount": 10,
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (400) BodyEmpty The request body cannot be empty.
+ * @apiError (404) NotAUser The user was not found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "BodyEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "NotAUser"
+ *     }
+ */
 const create_comment = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
@@ -120,10 +261,74 @@ const create_comment = asynchandler(async (req, res) => {
   }
 });
 
-// access private
-// desc list all blogs for admin
-// route /shops/al
-
+/**
+ * @api {get} /getall Get All Blogs
+ * @apiName GetAllBlogs
+ * @apiGroup Blog
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {Number} [page=1] Page number.
+ * @apiParam {Number} [pageSize=10] Number of blogs per page.
+ *
+ * @apiSuccess {Array} data Array of blog objects.
+ * @apiSuccess {Number} page Current page number.
+ * @apiSuccess {Number} totalPages Total number of pages.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "data": [
+ *         {
+ *           "_id": "blogId",
+ *           "blog_title": "blogTitle",
+ *           "owner_id": "userId",
+ *           "owner_name": "userName",
+ *           "category": "blogCategory",
+ *           "content": "blogContent",
+ *           "media_url": "mediaUrl",
+ *           "comments": [
+ *             {
+ *               "_id": "commentId",
+ *               "blog_id": "blogId",
+ *               "owner_id": "userId",
+ *               "owner_name": "userName",
+ *               "content": "commentContent",
+ *               // other comment fields
+ *             },
+ *             // more comment objects
+ *           ],
+ *           // other blog fields
+ *         },
+ *         // more blog objects
+ *       ],
+ *       "page": 1,
+ *       "totalPages": 10,
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (400) BodyEmpty The request body cannot be empty.
+ * @apiError (403) NotAuthorized The user is not authorized to access this data.
+ * @apiError (404) NotAUser The user was not found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "BodyEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 403 Forbidden
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "NotAUser"
+ *     }
+ */
 const getallblogs = asynchandler(async (req, res) => {
   const { id } = req.auth;
   const page = parseInt(req.query.page) || 1;
@@ -168,9 +373,75 @@ const getallblogs = asynchandler(async (req, res) => {
   }
 });
 
-//desc get blog owners blog
-//acess private
-//rouyte
+/**
+ * @api {get} /getblog Get All Blogs by Owner
+ * @apiName GetAllBlogsOwner
+ * @apiGroup Blog
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {Number} [page=1] Page number.
+ * @apiParam {Number} [pageSize=10] Number of blogs per page.
+ *
+ * @apiSuccess {Array} data Array of blog objects.
+ * @apiSuccess {Number} page Current page number.
+ * @apiSuccess {Number} totalPages Total number of pages.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "data": [
+ *         {
+ *           "_id": "blogId",
+ *           "blog_title": "blogTitle",
+ *           "owner_id": "userId",
+ *           "owner_name": "userName",
+ *           "category": "blogCategory",
+ *           "content": "blogContent",
+ *           "media_url": "mediaUrl",
+ *           "comments": [
+ *             {
+ *               "_id": "commentId",
+ *               "blog_id": "blogId",
+ *               "owner_id": "userId",
+ *               "owner_name": "userName",
+ *               "content": "commentContent",
+ *               // other comment fields
+ *             },
+ *             // more comment objects
+ *           ],
+ *           // other blog fields
+ *         },
+ *         // more blog objects
+ *       ],
+ *       "page": 1,
+ *       "totalPages": 10,
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (400) BodyEmpty The request body cannot be empty.
+ * @apiError (403) NotAuthorized The user is not authorized to access this data.
+ * @apiError (404) NotAUser The user was not found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "BodyEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 403 Forbidden
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "NotAUser"
+ *     }
+ */
+
 const getallblogsowner = asynchandler(async (req, res) => {
   let page = parseInt(req.query.page) || 1;
 
@@ -212,9 +483,74 @@ const getallblogsowner = asynchandler(async (req, res) => {
     throw new Error(`${error}`);
   }
 });
-//desc get one blog
-//acess private
-//rouyte
+/**
+ * @api {get} /getone Get Blog by ID
+ * @apiName GetBlog
+ * @apiGroup Blog
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} blog_id ID of the blog to retrieve.
+ *
+ * @apiSuccess {Object} data Blog object with comments.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "data": {
+ *         "_id": "blogId",
+ *         "blog_title": "blogTitle",
+ *         "owner_id": "userId",
+ *         "owner_name": "userName",
+ *         "category": "blogCategory",
+ *         "content": "blogContent",
+ *         "media_url": "mediaUrl",
+ *         "comments": [
+ *           {
+ *             "_id": "commentId",
+ *             "blog_id": "blogId",
+ *             "owner_id": "userId",
+ *             "owner_name": "userName",
+ *             "content": "commentContent",
+ *             // other comment fields
+ *           },
+ *           // more comment objects
+ *         ],
+ *         // other blog fields
+ *       },
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (400) BodyEmpty The request body cannot be empty.
+ * @apiError (403) NotAuthorized The user is not authorized to access this data.
+ * @apiError (404) NotAUser The user was not found.
+ * @apiError (404) BlogNotFound The blog was not found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "BodyEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 403 Forbidden
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "NotAUser"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "BlogNotFound"
+ *     }
+ */
+
 const getblog = asynchandler(async (req, res) => {
   const { blog_id } = req.body;
   const { id } = req.auth; // Assuming you are passing userId as a route parameter
@@ -255,8 +591,55 @@ const getblog = asynchandler(async (req, res) => {
     throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
-//update blogowner
-//access private
+/**
+ * @api {put} /updateblog Update Blog Owner
+ * @apiName UpdateBlogOwner
+ * @apiGroup Blog
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {String} blog_id ID of the blog to update.
+ * @apiParam {Boolean} status New approval status of the blog.
+ *
+ * @apiSuccess {Boolean} success Indicates whether the update was successful.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "success": true,
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (400) BodyEmpty The request body cannot be empty.
+ * @apiError (403) NotAuthorized The user is not authorized to access this data.
+ * @apiError (404) NotAUser The user was not found.
+ * @apiError (404) BlogNotFound The blog was not found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "BodyEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 403 Forbidden
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "NotAUser"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "BlogNotFound"
+ *     }
+ */
+
 const updateBlogOwner = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
@@ -292,7 +675,49 @@ const updateBlogOwner = asynchandler(async (req, res) => {
   }
 });
 
-//search blogs
+/**
+ * @api {get} /search Search Blogs
+ * @apiName SearchBlogs
+ * @apiGroup Blog
+ *
+ * @apiParam {String} query Search query.
+ *
+ * @apiSuccess {Array} data Array of blog objects that match the search query.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "data": [
+ *         {
+ *           "_id": "blogId",
+ *           "blog_title": "blogTitle",
+ *           "owner_id": "userId",
+ *           "owner_name": "userName",
+ *           "category": "blogCategory",
+ *           "content": "blogContent",
+ *           "media_url": "mediaUrl",
+ *           // other blog fields
+ *         },
+ *         // more blog objects
+ *       ]
+ *     }
+ *
+ * @apiError (400) BodyEmpty The request body cannot be empty.
+ * @apiError (404) NoResultsFound No blogs were found that match the search query.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "BodyEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "NoResultsFound"
+ *     }
+ */
+
 const searchBlogs = asynchandler(async (req, res) => {
   const query = req.query.query;
   try {
@@ -312,6 +737,55 @@ const searchBlogs = asynchandler(async (req, res) => {
   }
 });
 
+/**
+ * @api {get} /all Get All Blogs
+ * @apiName GetAll
+ * @apiGroup Blog
+ *
+ * @apiParam {Number} [page=1] Page number.
+ * @apiParam {Number} [pageSize=10] Number of blogs per page.
+ *
+ * @apiSuccess {Boolean} owner Always false.
+ * @apiSuccess {Array} data Array of blog objects.
+ * @apiSuccess {Number} page Current page number.
+ * @apiSuccess {Number} totalPages Total number of pages.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "owner": false,
+ *       "data": [
+ *         {
+ *           "_id": "blogId",
+ *           "blog_title": "blogTitle",
+ *           "owner_id": "userId",
+ *           "owner_name": "userName",
+ *           "category": "blogCategory",
+ *           "content": "blogContent",
+ *           "media_url": "mediaUrl",
+ *           // other blog fields
+ *         },
+ *         // more blog objects
+ *       ],
+ *       "page": 1,
+ *       "totalPages": 10
+ *     }
+ *
+ * @apiError (400) BodyEmpty The request body cannot be empty.
+ * @apiError (404) NoResultsFound No blogs were found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "BodyEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "NoResultsFound"
+ *     }
+ */
 
 const getall = asynchandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
@@ -338,10 +812,65 @@ const getall = asynchandler(async (req, res) => {
     throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
-// access private
-// desc list all shops
-// route /shops/al
-
+/**
+ * @api {get} /blogs Get Blogs
+ * @apiName GetBlogs
+ * @apiGroup Blog
+ *
+ * @apiHeader {String} Authorization User's authorization token.
+ * @apiParam {Number} [page=1] Page number.
+ * @apiParam {Number} [pageSize=10] Number of blogs per page.
+ *
+ * @apiSuccess {Boolean} owner Indicates whether the user is the owner of the blogs.
+ * @apiSuccess {Array} data Array of blog objects.
+ * @apiSuccess {Number} page Current page number.
+ * @apiSuccess {Number} totalPages Total number of pages.
+ * @apiSuccess {String} token Authorization token.
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "owner": true,
+ *       "data": [
+ *         {
+ *           "_id": "blogId",
+ *           "blog_title": "blogTitle",
+ *           "owner_id": "userId",
+ *           "owner_name": "userName",
+ *           "category": "blogCategory",
+ *           "content": "blogContent",
+ *           "media_url": "mediaUrl",
+ *           // other blog fields
+ *         },
+ *         // more blog objects
+ *       ],
+ *       "page": 1,
+ *       "totalPages": 10,
+ *       "token": "authorizationToken"
+ *     }
+ *
+ * @apiError (400) BodyEmpty The request body cannot be empty.
+ * @apiError (401) NotAuthorized The user is not authorized to access this data.
+ * @apiError (404) NoResultsFound No blogs were found.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "error": "BodyEmpty"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "error": "NotAuthorized"
+ *     }
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "NoResultsFound"
+ *     }
+ */
 const blogs = asynchandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
