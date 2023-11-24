@@ -80,12 +80,13 @@ const login_users = asynchandler(async (req, res) => {
       const appointments = await BOOKING.find(
         { user: user._id }
       );
-      const blogs = BLOGS.find(
+      const bum = await BLOGS.find(
         { owner_id: user._id }
       );
       const referralCount = referredUsers.length;
-      const appointmentCount = appoinments.length;
-      const blogCount = blogs.length;
+      const appointmentCount =  appointments.length;
+      const blogCount = bum.length;
+      console.log(blogCount)
       const token = generateToken(user._id);
       const userWithoutPassword = await USER.findById(user.id).select(
         "-password"
