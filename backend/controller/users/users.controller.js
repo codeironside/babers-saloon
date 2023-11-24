@@ -8,6 +8,8 @@ const BLOGS = require("../../model/blogs/blog");
 const logger = require("../../utils/logger");
 const { DateTime } = require("luxon");
 const { convertToWAT } = require("../../utils/datetime");
+const BOOKING = require("../../model/payment/booking")
+
 
 const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 /**
@@ -75,13 +77,21 @@ const login_users = asynchandler(async (req, res) => {
         { referredBy: user.referCode },
         "firstName lastName userName pictureUrl"
       );
+      const appointments = await BOOKING.find(
+        { user: user._id }
+      );
+      const blogs = BLOGS.find(
+        { owner_id: user._id }
+      );
       const referralCount = referredUsers.length;
+      const appointmentCount = appoinments.length;
+      const blogCount = blogs.length;
       const token = generateToken(user._id);
       const userWithoutPassword = await USER.findById(user.id).select(
         "-password"
       );
       res.status(200).header("Authorization", `Bearer ${token}`).json({
-       ...userWithoutPassword._doc,referralCount,referredUsers
+       ...userWithoutPassword._doc,referralCount,appointmentCount,blogCount,referredUsers
       });
       logger.info(
         `user with id ${

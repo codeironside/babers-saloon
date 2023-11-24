@@ -10,6 +10,18 @@ const Subscription = require("../../model/payment/subscription");
 const booking = require("../../model/payment/booking");
 const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 
+
+/**
+ * @async
+ * @function makebooking
+ * @description This function is used to make a booking for a barber shop service.
+ * @param {Object} req - The request object from the client. It should contain:
+ *   - auth: An object that contains the user's ID.
+ *   - body: An object that contains the booking details such as service, date, number of persons, time, and shop ID.
+ * @param {Object} res - The response object that will be sent to the client.
+ * @throws {Error} Will throw an error if the user ID is not provided, or if the user or shop is not found in the database, or if the shop's category is not "barbers".
+ * @returns {Object} If successful, it will return a JSON response with the booking data.
+ */
 const makebooking = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
@@ -52,7 +64,18 @@ const makebooking = asynchandler(async (req, res) => {
   }
 });
 
-// Controller for updating a booking
+/**
+ * @async
+ * @function updateBooking
+ * @description This function is used to update a booking for a barber shop service.
+ * @param {Object} req - The request object from the client. It should contain:
+ *   - auth: An object that contains the user's ID.
+ *   - params: An object that contains the booking ID.
+ *   - body: An object that contains the updated booking details such as service, date, number of persons, and time.
+ * @param {Object} res - The response object that will be sent to the client.
+ * @throws {Error} Will throw an error if the user ID does not match the user ID in the booking, or if the booking ID is not provided, or if the booking is not found or not updated in the database.
+ * @returns {Object} If successful, it will return a JSON response with the updated booking data.
+ */
 const updateBooking = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
@@ -107,7 +130,17 @@ const updateBooking = asynchandler(async (req, res) => {
 ;
   }
 });
-// Controller to get all bookings for admins
+/**
+ * @async
+ * @function getAllBookingsForAdmins
+ * @description This function is used to retrieve all bookings for administrators.
+ * @param {Object} req - The request object from the client. It should contain:
+ *   - auth: An object that contains the user's ID.
+ * @param {Object} res - The response object that will be sent to the client.
+ * @throws {Error} Will throw an error if the user's role is not "superadmin".
+ * @returns {Object} If successful, it will return a JSON response with all the bookings data.
+ */
+
 const getAllBookingsForAdmins = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
@@ -144,7 +177,17 @@ const getAllBookingsForAdmins = asynchandler(async (req, res) => {
 
 
 
-// Controller to get all bookings for one vendor
+/**
+ * @async
+ * @function getAllBookingsForVendor
+ * @description This function is used to retrieve all bookings for a specific vendor.
+ * @param {Object} req - The request object from the client. It should contain:
+ *   - auth: An object that contains the user's ID.
+ *   - params: An object that contains the vendor's ID.
+ * @param {Object} res - The response object that will be sent to the client.
+ * @throws {Error} Will throw an error if the user's ID does not match the shop owner's ID and the user's role is not "superadmin".
+ * @returns {Object} If successful, it will return a JSON response with all the bookings data for the specific vendor.
+ */
 const getAllBookingsForVendor = asynchandler(async (req, res) => {
   try {
     const { vendorId } = req.params;
@@ -180,8 +223,17 @@ const getAllBookingsForVendor = asynchandler(async (req, res) => {
   }
 });
 
+/**
+ * @async
+ * @function getAllBookingsForUser
+ * @description This function is used to retrieve all bookings for a specific user.
+ * @param {Object} req - The request object from the client. It should contain:
+ *   - auth: An object that contains the user's ID.
+ * @param {Object} res - The response object that will be sent to the client.
+ * @throws {Error} Will throw an error if the user's ID does not match the user's ID in the database and the user's role is not "superadmin".
+ * @returns {Object} If successful, it will return a JSON response with all the bookings data for the specific user.
+ */
 
-//bookings for users
 const getAllBookingsForUser = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
