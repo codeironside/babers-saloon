@@ -805,17 +805,17 @@ const updateShops = asynchandler(async (req, res) => {
       });
     }
 
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path);
+    // if (req.file) {
+    //   const result = await cloudinary.uploader.upload(req.file.path);
 
-      if (!result || !result.secure_url) {
-        throw Object.assign(new Error("failed to upload shops"), {
-          statusCode: 500,
-        });
-      }
+    //   if (!result || !result.secure_url) {
+    //     throw Object.assign(new Error("failed to upload shops"), {
+    //       statusCode: 500,
+    //     });
+    //   }
 
-      updateData.image = result.secure_url;
-    }
+    //   updateData.image = result.secure_url;
+    // }
 
     const updatedShop = await SHOPS.findByIdAndUpdate(shopId, updateData, {
       new: true, // Return the updated shop document

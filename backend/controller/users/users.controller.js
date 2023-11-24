@@ -739,10 +739,10 @@ const updateUser = asynchandler(async (req, res) => {
     ) {
       throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
     }
-    if (req.body.data) {
-      const result = await cloudinary.uploader.upload(req.body.data, { resource_type: 'image', format: 'png' });
-      updateData.profile_image = result.secure_url;
-    }
+    // if (req.body.data) {
+    //   const result = await cloudinary.uploader.upload(req.body.data, { resource_type: 'image', format: 'png' });
+    //   updateData.profile_image = result.secure_url;
+    // }
     const updatedUser = await USER.findByIdAndUpdate(userId, updateData, {
       new: true, 
     });
