@@ -109,7 +109,7 @@ cloudinary.config({
 const create_blog = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
-    const { blog_title, category, content, media_url } = req.body;
+    const { blog_title, category,reading_time,content, media_url } = req.body;
     // const { media } = req.file; // Assuming the image file comes in 'media'
 
     if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
@@ -145,6 +145,7 @@ const create_blog = asynchandler(async (req, res) => {
       owner_name: user.userName,
       category,
       content,
+      reading_time,
       media_url,
     });
 
@@ -159,19 +160,19 @@ const create_blog = asynchandler(async (req, res) => {
 
     if (!updateuser) throw Object.assign(new Error("User not updated"), { statusCode: 500 });
 
-
+    const populatedBlog = await BLOG.findById(blog._id).populate('owner_id');
     const token = generateToken(id);
     res
       .status(200)
       .header("Authorization", `Bearer ${token}`)
-      .json({ blog, comments, commentsCount });
+      .json({ populatedBlog,commentsCount });
 
     logger.info(
       `User with id ${id} created a blog with id: ${blog._id} at ${blog.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
     );
   } catch (error) {
     console.error(error);
-    throw Object.assign(new Error("title already exists"), { statusCode: error.statusCode});;
+    throw Object.assign(new Error(`${error.message}`), { statusCode: error.statusCode});;
   }
 });
 /**

@@ -4,8 +4,7 @@ const BLOG = new mongoose.Schema(
   {
     blog_title: {
       type: String,
-      required: [true, "please add a blog title"],
-      unique: true,
+      required: [true, "please add a blog title"]
     },
     owner_id: {
       type: mongoose.Schema.Types.ObjectId,
@@ -23,8 +22,11 @@ const BLOG = new mongoose.Schema(
     },
     content: {
       type: String,
-      required: [true, "please add a content"],
-      unique:true
+      required: [true, "please add a content"]
+    },
+    reading_time: {
+      type: String,
+      required: [true, "please add a reading time"],
     },
     approved :{
       type:Boolean,
