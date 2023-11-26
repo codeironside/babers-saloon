@@ -109,8 +109,8 @@ cloudinary.config({
 const create_blog = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
-    const { blog_title, category, content } = req.body;
-    const { media } = req.file; // Assuming the image file comes in 'media'
+    const { blog_title, category, content, media_url } = req.body;
+    // const { media } = req.file; // Assuming the image file comes in 'media'
 
     if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
     if (!blog_title || !category || !content)
@@ -130,15 +130,15 @@ const create_blog = asynchandler(async (req, res) => {
       });
     const user = await USER.findById(id);
 
-    if (req.body.data) {
-      const result = await cloudinary.uploader.upload(req.body.data, { resource_type: 'image', format: 'png' });
-      media_url = result.secure_url;
-      if (!media_url|| !result.secure_url) {
-        throw Object.assign(new Error("upload failed"), {
-          statusCode: 409,
-        });
-      }
-    }
+    // if (req.body.data) {
+    //   const result = await cloudinary.uploader.upload(req.body.data, { resource_type: 'image', format: 'png' });
+    //   media_url = result.secure_url;
+    //   if (!media_url|| !result.secure_url) {
+    //     throw Object.assign(new Error("upload failed"), {
+    //       statusCode: 409,
+    //     });
+    //   }
+    // }
     const blog = await BLOG.create({
       blog_title,
       owner_id: id,

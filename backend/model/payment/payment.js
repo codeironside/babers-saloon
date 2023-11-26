@@ -15,6 +15,10 @@ const PaymentSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please add a user name']
     },
+    paymentMethod: {
+      type: String,
+      required: [true, 'Please add a payment Method']
+    },
     shop_id: {
       type: mongoose.Schema.Types.ObjectId,
       required: [true, 'Please add a shop id'],

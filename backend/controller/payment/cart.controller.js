@@ -30,7 +30,7 @@ const makecart = asynchandler(async (req, res) => {
       if (!shop) throw Object.assign(new Error("No shops found"), { statusCode: 404 });
       ;
       if (shop.category === "barbers")
-      throw new Error("cart is reserved for only none barbers");
+      throw Object.assign(new Error("carting only reserved for babers"), { statusCode: 403 });
       item.amount = item.quantity * shop.price; 
       totalAmount += item.amount;
       item.product = shop._id;
@@ -47,7 +47,6 @@ const makecart = asynchandler(async (req, res) => {
     if (book) {
       const token = generateToken(user._id);
       res.status(201).header("Authorization", `Bearer ${token}`).json({
-        successful: true,
         data: book,
       });
       logger.info(

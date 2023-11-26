@@ -21,6 +21,7 @@ const paidproduct = asynchandler(async (req, res) => {
       cart_id,
       category,
       paymentStatus,
+      paymentMethod,
     } = req.body;
     const { id } = req.auth;
     if (!paymentStatus || !category) {
@@ -45,6 +46,7 @@ const paidproduct = asynchandler(async (req, res) => {
         shop_id: shop._id,
         amount:booking.amount,
         paymentStatus,
+        paymentMethod,
         transaction_id: booking._id,
         onModel: 'Booking'
       });
@@ -84,6 +86,7 @@ const paidproduct = asynchandler(async (req, res) => {
           shop_id: shop._id,
           amount: item.amount,
           paymentStatus,
+          paymentMethod,
           transaction_id: cart._id,
           onModel: 'Cart'
         });
