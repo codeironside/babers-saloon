@@ -551,13 +551,13 @@ const getUser = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
     const { user_id } = req.body;
-    let owner = false;
     const user = await USER.findById(user_id);
-    if (id === user._id || process.env.role === "superadmin") {
+    const admin = await USER.findById(d);
+    if (admin.role === 'superadmin'|| process.env.role === "superadmin") {
       owner = true;
       if (!user) {
         throw Object.assign(new Error("user Not authorized"), {
-          statusCode: 404,
+          statusCode: 403,
         });
       }
 
@@ -576,6 +576,43 @@ const getUser = asynchandler(async (req, res) => {
 
       logger.info(
         `User with id ${userId} information was fetched successfully. Referred users count: ${referralCount}`
+      );
+    } else {
+      throw new Error("unauthorized");
+    }
+  } catch (error) {
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+  }
+});
+
+
+//one user
+const oneUser = asynchandler(async (req, res) => {
+  try {
+    const { id } = req.auth;
+  
+    const user = await USER.findById(id);
+    if (id === user._id || process.env.role === "superadmin") {
+      if (!user) {
+        throw Object.assign(new Error("user Not authorized"), {
+          statusCode: 403,
+        });
+      }
+
+      const referredUsers = await USER.find(
+        { referredBy: user.referCode },
+        "firstName lastName userName pictureUrl"
+      );
+      const referralCount = referredUsers.length;
+      const token = generateToken(id);
+      res.status(202).header("Authorization", `Bearer ${token}`).json({
+        user: user,
+        referralCount: referralCount,
+        referredUsers: referredUsers,
+      });
+
+      logger.info(
+        `User with id ${id} information was fetched successfully. Referred users count: ${referralCount}`
       );
     } else {
       throw new Error("unauthorized");
@@ -936,4 +973,5 @@ module.exports = {
   forum_status,
   searchItems,
   landingpage,
+  oneUser
 };
