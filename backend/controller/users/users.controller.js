@@ -8,8 +8,7 @@ const BLOGS = require("../../model/blogs/blog");
 const logger = require("../../utils/logger");
 const { DateTime } = require("luxon");
 const { convertToWAT } = require("../../utils/datetime");
-const BOOKING = require("../../model/payment/booking")
-
+const BOOKING = require("../../model/payment/booking");
 
 const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 /**
@@ -61,8 +60,9 @@ const login_users = asynchandler(async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      throw Object.assign(new Error("Fields cannot be empty"), { statusCode: 400 });
-      ;
+      throw Object.assign(new Error("Fields cannot be empty"), {
+        statusCode: 400,
+      });
     }
     const user = await USER.findOne({ email: email });
     // console.log(user);
@@ -77,23 +77,26 @@ const login_users = asynchandler(async (req, res) => {
         { referredBy: user.referCode },
         "firstName lastName userName pictureUrl"
       );
-      const appointments = await BOOKING.find(
-        { user: user._id }
-      );
-      const bum = await BLOGS.find(
-        { owner_id: user._id }
-      );
+      const appointments = await BOOKING.find({ user: user._id });
+      const bum = await BLOGS.find({ owner_id: user._id });
       const referralCount = referredUsers.length;
-      const appointmentCount =  appointments.length;
+      const appointmentCount = appointments.length;
       const blogCount = bum.length;
-      console.log(blogCount)
+      console.log(blogCount);
       const token = generateToken(user._id);
       const userWithoutPassword = await USER.findById(user.id).select(
         "-password"
       );
-      res.status(200).header("Authorization", `Bearer ${token}`).json({
-       ...userWithoutPassword._doc,referralCount,appointmentCount,blogCount,referredUsers
-      });
+      res
+        .status(200)
+        .header("Authorization", `Bearer ${token}`)
+        .json({
+          ...userWithoutPassword._doc,
+          referralCount,
+          appointmentCount,
+          blogCount,
+          referredUsers,
+        });
       logger.info(
         `user with id ${
           user._id
@@ -107,7 +110,9 @@ const login_users = asynchandler(async (req, res) => {
       });
     }
   } catch (error) {
-    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 
@@ -258,9 +263,13 @@ const register_users = asynchandler(async (req, res) => {
         "firstName lastName userName pictureUrl"
       );
 
-      res.status(202).header("Authorization", `Bearer ${token}`).json({
-        ...userWithoutPassword._doc,referredUsers
-      });
+      res
+        .status(202)
+        .header("Authorization", `Bearer ${token}`)
+        .json({
+          ...userWithoutPassword._doc,
+          referredUsers,
+        });
 
       logger.info(
         `User with ID ${createUsers._id} was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - ${req.session.id} - from ${location}`
@@ -308,7 +317,9 @@ const register_users = asynchandler(async (req, res) => {
       );
     }
   } catch (error) {
-    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 
@@ -403,11 +414,11 @@ const landing_page = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
-    ;
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
-
 
 /**
  * @api {get} /home Get Landing Page Data
@@ -498,10 +509,12 @@ const landingpage = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
- 
+
 /**
  * @api {get} /getone Get User Data
  * @apiName GetUserData
@@ -553,7 +566,7 @@ const getUser = asynchandler(async (req, res) => {
     const { user_id } = req.body;
     const user = await USER.findById(user_id);
     const admin = await USER.findById(d);
-    if (admin.role === 'superadmin'|| process.env.role === "superadmin") {
+    if (admin.role === "superadmin" || process.env.role === "superadmin") {
       owner = true;
       if (!user) {
         throw Object.assign(new Error("user Not authorized"), {
@@ -581,16 +594,17 @@ const getUser = asynchandler(async (req, res) => {
       throw new Error("unauthorized");
     }
   } catch (error) {
-    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
-
 
 //one user
 const oneUser = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
-  
+    console.log(id);
     const user = await USER.findById(id);
     if (id === user._id || process.env.role === "superadmin") {
       if (!user) {
@@ -615,10 +629,12 @@ const oneUser = asynchandler(async (req, res) => {
         `User with id ${id} information was fetched successfully. Referred users count: ${referralCount}`
       );
     } else {
-      throw new Error("unauthorized");
+      throw Object.assign(new Error(`unauthorized`), { statusCode: "403" });
     }
   } catch (error) {
-    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 /**
@@ -709,7 +725,9 @@ const getallusers = asynchandler(async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 
@@ -758,14 +776,16 @@ const getallusers = asynchandler(async (req, res) => {
  */
 
 const updateUser = asynchandler(async (req, res) => {
-  const { userId } = req.params; 
+  const { userId } = req.params;
   const clientIp = req.clientIp;
   const { id } = req.auth;
-  const updateData = req.body; 
+  const updateData = req.body;
 
   try {
     if (!userId || !updateData) {
-      throw Object.assign(new Error("Fields cannot be empty"), { statusCode: 400 });
+      throw Object.assign(new Error("Fields cannot be empty"), {
+        statusCode: 400,
+      });
     }
 
     const updatUser = await USER.findById(userId);
@@ -781,7 +801,7 @@ const updateUser = asynchandler(async (req, res) => {
     //   updateData.profile_image = result.secure_url;
     // }
     const updatedUser = await USER.findByIdAndUpdate(userId, updateData, {
-      new: true, 
+      new: true,
     });
 
     if (!updatedUser) {
@@ -801,7 +821,9 @@ const updateUser = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 const getLocation = asynchandler(async (ip) => {
@@ -886,7 +908,9 @@ const forum_status = asynchandler(async (req, res) => {
       `admin with id ${id}, changed user with ${userId} forum status - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip} `
     );
   } catch (error) {
-    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 
@@ -958,8 +982,9 @@ const searchItems = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
-;
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 
@@ -973,5 +998,5 @@ module.exports = {
   forum_status,
   searchItems,
   landingpage,
-  oneUser
+  oneUser,
 };
