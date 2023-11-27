@@ -604,9 +604,8 @@ const getUser = asynchandler(async (req, res) => {
 const oneUser = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
-    console.log(id);
     const user = await USER.findById(id);
-    if (id === user._id.toStrig() || process.env.role === "superadmin") {
+    if (id === user._id.toString() || process.env.role === "superadmin") {
       if (!user) {
         throw Object.assign(new Error("user Not authorized"), {
           statusCode: 403,
