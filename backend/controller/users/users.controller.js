@@ -255,7 +255,7 @@ const register_users = asynchandler(async (req, res) => {
         { new: true }
       );
 
-      const location = await getLocation(ip);
+     
       const token = generateToken(createUsers._id);
 
       referredUsers = await USER.find(
@@ -301,8 +301,6 @@ const register_users = asynchandler(async (req, res) => {
         { $set: { referCode: referrerCode } },
         { new: true }
       );
-
-      const location = await getLocation(ip);
       const token = generateToken(createUsers._id);
 
       res.status(202).header("Authorization", `Bearer ${token}`).json({
