@@ -588,7 +588,7 @@ const getUser = asynchandler(async (req, res) => {
       });
 
       logger.info(
-        `User with id ${userId} information was fetched successfully. Referred users count: ${referralCount}`
+        `User with id ${userId} information was fetched successfully. ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
       );
     } else {
       throw new Error("unauthorized");
@@ -625,7 +625,7 @@ const oneUser = asynchandler(async (req, res) => {
       });
 
       logger.info(
-        `User with id ${id} information was fetched successfully. Referred users count: ${referralCount}`
+        `User with id ${id} information was fetched successfully. ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
       );
     } else {
       throw Object.assign(new Error(`unauthorized`), { statusCode: 403 });
