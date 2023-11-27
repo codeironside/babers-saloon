@@ -243,7 +243,7 @@ const register_users = asynchandler(async (req, res) => {
         referredBy: referralCode,
       });
 
-      const codeOne = createUsers._id.toString().slice(3, 7);
+      const codeOne = createUsers._id.toString().slice(2, 9);
       const codeTwo = firstName.toString().slice(0, 3);
       const codeThree = firstName.toString().slice(0, 2);
       const codeFour = userName.toString().slice(0, 2);
@@ -505,7 +505,7 @@ const landingpage = asynchandler(async (req, res) => {
     });
 
     logger.info(
-      `Landing page data fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+      `Landing page data fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - from ${req.ip}`
     );
   } catch (error) {
     console.error(error);
@@ -588,7 +588,7 @@ const getUser = asynchandler(async (req, res) => {
       });
 
       logger.info(
-        `User with id ${userId} information was fetched successfully. ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+        `User with id ${userId} information was fetched successfully. ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - from ${req.ip}`
       );
     } else {
       throw new Error("unauthorized");
@@ -625,7 +625,7 @@ const oneUser = asynchandler(async (req, res) => {
       });
 
       logger.info(
-        `User with id ${id} information was fetched successfully. ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+        `User with id ${id} information was fetched successfully. ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method}  - from ${req.ip}`
       );
     } else {
       throw Object.assign(new Error(`unauthorized`), { statusCode: 403 });
@@ -717,7 +717,7 @@ const getallusers = asynchandler(async (req, res) => {
         });
 
       logger.info(
-        `users were fetched- ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+        `users were fetched- ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method}  from ${req.ip}`
       );
     } else {
       throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
