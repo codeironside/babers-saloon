@@ -606,7 +606,7 @@ const oneUser = asynchandler(async (req, res) => {
     const { id } = req.auth;
     console.log(id);
     const user = await USER.findById(id);
-    if (id === user._id || process.env.role === "superadmin") {
+    if (id === user._id.toStrig() || process.env.role === "superadmin") {
       if (!user) {
         throw Object.assign(new Error("user Not authorized"), {
           statusCode: 403,
@@ -629,7 +629,7 @@ const oneUser = asynchandler(async (req, res) => {
         `User with id ${id} information was fetched successfully. Referred users count: ${referralCount}`
       );
     } else {
-      throw Object.assign(new Error(`unauthorized`), { statusCode: "403" });
+      throw Object.assign(new Error(`unauthorized`), { statusCode: 403 });
     }
   } catch (error) {
     throw Object.assign(new Error(`${error}`), {
