@@ -272,7 +272,7 @@ const register_users = asynchandler(async (req, res) => {
         });
 
       logger.info(
-        `User with ID ${createUsers._id} was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - ${req.session.id}`
+        `User with ID ${createUsers._id} was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
       );
     } else {
       // Continue the registration process without referral code
@@ -313,7 +313,7 @@ const register_users = asynchandler(async (req, res) => {
       });
 
       logger.info(
-        `User with ID ${createUsers._id} was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - ${req.session.id}`
+        `User with ID ${createUsers._id} was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
       );
     }
   } catch (error) {
