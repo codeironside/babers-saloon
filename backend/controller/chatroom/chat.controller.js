@@ -119,7 +119,6 @@ const getallchats = asynchandler(async (req, res, io) => {
     const allChats = await CHAT.find().sort({ createdAt: -1 });
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      successful: true,
       data: allChats,
     });
     logger.info(
