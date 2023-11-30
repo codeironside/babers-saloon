@@ -66,7 +66,7 @@ const chatlogic = asynchandler(async (req, res, io) => {
   }
 });
 
-const thread = asynchandler(async (req, res) => {
+const threads = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
     const {  content } = req.body;
@@ -281,4 +281,4 @@ const generateToken = (id) => {
     { expiresIn: "12h" }
   );
 };
-module.exports = { chatlogic,getOneChat, thread,getallchats, deletechat };
+module.exports = { chatlogic,getOneChat, threads,getallchats, deletechat };

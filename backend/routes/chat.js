@@ -1,6 +1,6 @@
 const express = require("express")
 const { protect } = require("../middleware/authmiddleware")
-const {chatlogic,getOneChat, thread, getallchats, deletechat} = require("../controller/chatroom/chat.controller")
+const {chatlogic,getOneChat, threads, getallchats, deletechat} = require("../controller/chatroom/chat.controller")
 const Router = express.Router()
 
 
@@ -12,7 +12,7 @@ Router.route("/getall").get(protect, getallchats)
 Router.route("/getone/:chatId").get(protect, getOneChat)
 //access private
 Router.route("/delete/:chatId").delete(protect, deletechat)
-Router.route("/thread/:chatId").post(protect, thread)
+Router.route("/thread/:chatId").post(protect, threads)
 
 
 module.exports=Router
