@@ -126,11 +126,11 @@ const create_shops = asynchandler(async (req, res) => {
     if (userShopsCount >= maxAllowedShops) {
       throw Object.assign(new Error(`You have reached the maximum allowed shops (${maxAllowedShops})`), { statusCode: 403 });
     }
-    if (req.body.data) {
-      const result = await cloudinary.uploader.upload(req.body.data, { resource_type: 'image', format: 'png' });
+    // if (req.body.data) {
+    //   const result = await cloudinary.uploader.upload(req.body.data, { resource_type: 'image', format: 'png' });
 
-    image = result.secure_url;
-    }
+    // image = result.secure_url;
+    // }
 
       const {
         shop_name,
@@ -564,19 +564,19 @@ const getallshops = asynchandler(async (req, res) => {
 const getall = asynchandler(async (req, res) => {
   try {
     const shops = await SHOPS.find();
-    const payments = await PAYMENTS.aggregate([
+       const payments = await PAYMENTS.aggregate([
       { $group: { _id: "$shop_id", count: { $sum: 1 } } }
     ]);
 
     // Convert payments to a map for faster lookup
     const paymentMap = {};
     payments.forEach(payment => {
-      paymentMap[payment._id] = payment.count;
+      paymentMap[payment._id.toString()] = payment.count;
     });
 
     // Add payment count to each shop
     shops.forEach(shop => {
-      shop.paymentCount = paymentMap[shop._id] || 0;
+      shop.paymentCount = paymentMap[shop._id.toString()] || 0;
     });
 
     res.status(200).json({
