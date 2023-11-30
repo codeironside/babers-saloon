@@ -11,6 +11,17 @@ const CHAT = mongoose.Schema(
       required:[true,'please add a message'],
      
     },
+    category: {
+      type: String,
+      required:[true,'please add a message'],
+     
+    },
+    images: {
+      type: String,
+      required:[true,'please add a message'],
+     
+    },
+    
     chat_owner:{
       type :mongoose.Schema.Types.ObjectId,
       required:[true,'please add an owner id'],

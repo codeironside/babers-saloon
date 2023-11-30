@@ -41,7 +41,7 @@ const jwt = require("jsonwebtoken");
 const chatlogic = asynchandler(async (req, res, io) => {
   try {
     const { id } = req.auth;
-    const { topic,chat } = req.body;
+    const { topic,chat,category } = req.body;
     const name = await users.findById(id); // Assuming
     if (!name.banned_from_forum) {
       throw Object.assign(new Error("Not a user"), { statusCode: 404 });
@@ -49,8 +49,10 @@ const chatlogic = asynchandler(async (req, res, io) => {
     const chatCreate = await CHAT.create({
       topic,
       chat,
+      category,
       chat_owner: name._id,
       userName: name.userName,
+      images:name.pictureUrl
     });
     if (!chatCreate) {
       throw Object.assign(new Error("Error sending your message"), { statusCode: 500});;
