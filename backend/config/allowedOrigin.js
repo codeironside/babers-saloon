@@ -5,7 +5,6 @@ const allowedOrigin = [
     "https://universoulbarbers.com",
     "https://barbers-ochre.vercel.app",
     "https://universal-soul-babers-frontend.vercel.app",
-    "https://universal-soul-babers-frontend-gopcw357h-codeironside.vercel.app"
   ];
   module.exports = allowedOrigin;
   
