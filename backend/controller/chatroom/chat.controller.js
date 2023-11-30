@@ -41,12 +41,13 @@ const jwt = require("jsonwebtoken");
 const chatlogic = asynchandler(async (req, res, io) => {
   try {
     const { id } = req.auth;
-    const { chat } = req.body;
+    const { topic,chat } = req.body;
     const name = await users.findById(id); // Assuming
     if (!name.banned_from_forum) {
       throw Object.assign(new Error("Not a user"), { statusCode: 404 });
     }
     const chatCreate = await CHAT.create({
+      topic,
       chat,
       chat_owner: name._id,
       userName: name.userName,
@@ -162,7 +163,7 @@ const getallchats = asynchandler(async (req, res, io) => {
       data: chatsWithThreadCount,
     });
     logger.info(
-      `chats fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
+      `chats fetched by ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
     );
   } catch (error) {
     throw Object.assign(new Error("Banned from forum"), { statusCode: 403 });
@@ -192,7 +193,7 @@ const getOneChat = asynchandler(async (req, res, io) => {
       },
     });
     logger.info(
-      `chat fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
+      `chat fetched by ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
     );
   } catch (error) {
     throw Object.assign(new Error("Banned from forum"), { statusCode: 403 });

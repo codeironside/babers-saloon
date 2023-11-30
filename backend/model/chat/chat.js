@@ -6,6 +6,11 @@ const CHAT = mongoose.Schema(
       required:[true,'please add a message'],
      
     },
+    topic: {
+      type: String,
+      required:[true,'please add a message'],
+     
+    },
     chat_owner:{
       type :mongoose.Schema.Types.ObjectId,
       required:[true,'please add an owner id'],
