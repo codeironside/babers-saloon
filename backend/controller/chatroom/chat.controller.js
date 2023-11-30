@@ -162,7 +162,7 @@ const getallchats = asynchandler(async (req, res, io) => {
     }));
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      data: chatsWithThreadCount,
+      chatsWithThreadCount,
     });
     logger.info(
       `chats fetched by ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
