@@ -255,7 +255,6 @@ const register_users = asynchandler(async (req, res) => {
         { new: true }
       );
 
-     
       const token = generateToken(createUsers._id);
 
       referredUsers = await USER.find(
@@ -823,6 +822,49 @@ const updateUser = asynchandler(async (req, res) => {
     });
   }
 });
+
+const changePassword = asynchandler(async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const { userId } = req.params;
+    if (!userId || !oldPassword || !newPassword) {
+      throw Object.assign(new Error("Fields cannot be empty"), {
+        statusCode: 400,
+      });
+    }
+
+    const user = await USER.findById(userId);
+
+    if (!user) {
+      throw Object.assign(new Error("Invalid credentials"), {
+        statusCode: 401,
+      });
+    }
+
+    if (await bcrypt.compare(oldPassword, user.password)) {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+      const updatedUser = await USER.findByIdAndUpdate(
+        userId,
+        { password: hashedPassword },
+        { new: true }
+      );
+      res.status(200).json({
+        message: "Password changed successfully",
+        user: updatedUser,
+      });
+    } else {
+      throw Object.assign(new Error("Invalid credentials"), {
+        statusCode: 401,
+      });
+    }
+  } catch (error) {
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
+  }
+});
+
 const getLocation = asynchandler(async (ip) => {
   try {
     const accessKey = process.env.ip_secret_key;
@@ -996,4 +1038,5 @@ module.exports = {
   searchItems,
   landingpage,
   oneUser,
+  changePassword
 };
