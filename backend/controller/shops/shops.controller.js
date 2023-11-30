@@ -561,20 +561,10 @@ const getallshops = asynchandler(async (req, res) => {
 // desc list all shops
 // route /shops/al
 const getall = asynchandler(async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const pageSize = parseInt(req.query.pageSize) || 10;
   try {
-    owner = false;
-    const totalCount = await SHOPS.countDocuments();
-    const totalPages = Math.ceil(totalCount / pageSize);
-    const shops = await SHOPS.find()
-      .skip((page - 1) * pageSize)
-      .limit(pageSize);
+    const shops = await SHOPS.find();
     res.status(200).json({
-      owner: owner,
       data: shops,
-      page: page,
-      totalPages: totalPages,
     });
 
     logger.info(
@@ -587,6 +577,7 @@ const getall = asynchandler(async (req, res) => {
     });
   }
 });
+
 //desc get all barbers end point
 //access public
 //routes /babers
