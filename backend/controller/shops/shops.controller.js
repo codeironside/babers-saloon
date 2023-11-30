@@ -1,5 +1,6 @@
 const asynchandler = require("express-async-handler");
 const SHOPS = require("../../model/shops/shop");
+const PAYMENTS = require("../../model/payment/payment");
 const logger = require("../../utils/logger");
 const USER = require("../../model/users/user.js");
 const working_hours = require("../../model/shops/openinghours.model");
@@ -125,11 +126,11 @@ const create_shops = asynchandler(async (req, res) => {
     if (userShopsCount >= maxAllowedShops) {
       throw Object.assign(new Error(`You have reached the maximum allowed shops (${maxAllowedShops})`), { statusCode: 403 });
     }
-    if (req.body.data) {
-      const result = await cloudinary.uploader.upload(req.body.data, { resource_type: 'image', format: 'png' });
+    // if (req.body.data) {
+    //   const result = await cloudinary.uploader.upload(req.body.data, { resource_type: 'image', format: 'png' });
 
-    image = result.secure_url;
-    }
+    // image = result.secure_url;
+    // }
 
       const {
         shop_name,
@@ -561,20 +562,25 @@ const getallshops = asynchandler(async (req, res) => {
 // desc list all shops
 // route /shops/al
 const getall = asynchandler(async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const pageSize = parseInt(req.query.pageSize) || 10;
   try {
-    owner = false;
-    const totalCount = await SHOPS.countDocuments();
-    const totalPages = Math.ceil(totalCount / pageSize);
-    const shops = await SHOPS.find()
-      .skip((page - 1) * pageSize)
-      .limit(pageSize);
+    const shops = await SHOPS.find();
+       const payments = await PAYMENTS.aggregate([
+      { $group: { _id: "$shop_id", count: { $sum: 1 } } }
+    ]);
+
+    // Convert payments to a map for faster lookup
+    const paymentMap = {};
+    payments.forEach(payment => {
+      paymentMap[payment._id.toString()] = payment.count;
+    });
+
+    // Add payment count to each shop
+    shops.forEach(shop => {
+      shop.paymentCount = paymentMap[shop._id.toString()] || 0;
+    });
+
     res.status(200).json({
-      owner: owner,
       data: shops,
-      page: page,
-      totalPages: totalPages,
     });
 
     logger.info(
@@ -587,6 +593,8 @@ const getall = asynchandler(async (req, res) => {
     });
   }
 });
+
+
 //desc get all barbers end point
 //access public
 //routes /babers
