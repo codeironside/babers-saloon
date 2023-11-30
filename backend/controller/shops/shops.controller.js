@@ -1,5 +1,6 @@
 const asynchandler = require("express-async-handler");
 const SHOPS = require("../../model/shops/shop");
+const PAYMENTS = require("../../model/shops/shop");
 const logger = require("../../utils/logger");
 const USER = require("../../model/users/user.js");
 const working_hours = require("../../model/shops/openinghours.model");
