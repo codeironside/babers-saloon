@@ -1,5 +1,6 @@
 const asynchandler = require("express-async-handler");
 const CHAT = require("../../model/chat/chat");
+const thread = require("../../model/chat/thread");
 const users = require("../../model/users/user");
 const jwt = require("jsonwebtoken");
 
@@ -65,7 +66,40 @@ const chatlogic = asynchandler(async (req, res, io) => {
   }
 });
 
-
+const thread = asynchandler(async (req, res) => {
+  try {
+    const { id } = req.auth;
+    const {  content } = req.body;
+    const {chatId } =req.params
+    if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
+    if (!content)  throw Object.assign(new Error("Body cannot be empty"), {
+      statusCode: 400,
+    });
+    const user = await USER.findById(id);
+    const blog = await thread.create({
+      chatId,
+      owner_id: id,
+      owner_name: user.userName,
+      content,
+    });
+    const chats = await CHAT.findById(blog_id);
+    const threads = await thread.find({ chatId: chatId });
+    const threadCount = threads.length;
+    const token = generateToken(id);
+    res
+      .status(200)
+      .header("Authorization", `Bearer ${token}`)
+      .json({ chats, threads, threadCount });
+    logger.info(
+      `User with id ${id} created a commen with id: ${blog._id} at ${blog.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+    );
+  } catch (error) {
+    console.error(error);
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
+  }
+});
 /**
  * @api {get} /getall Get All Chats
  * @apiName GetAllChats
@@ -107,26 +141,61 @@ const chatlogic = asynchandler(async (req, res, io) => {
  *       "error": "NotAUser"
  *     }
  */
-const getallchats = asynchandler(async (req, res, io) => {
+const getallchats = asyncHandler(async (req, res, io) => {
   try {
     const { id } = req.auth;
-    if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });;
+    if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
     const name = await users.findById(id); // Assuming
     if (name.banned_from_forum) {
       throw Object.assign(new Error("Banned from forum"), { statusCode: 403 });
-;
     }
     const allChats = await CHAT.find().sort({ createdAt: -1 });
+    const chatsWithThreadCount = await Promise.all(allChats.map(async (chat) => {
+      const threads = await thread.find({ chatId: chat._id });
+      return {
+        ...chat._doc,
+        threadCount: threads.length,
+      };
+    }));
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      data: allChats,
+      data: chatsWithThreadCount,
     });
     logger.info(
       `chats fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
     );
   } catch (error) {
     throw Object.assign(new Error("Banned from forum"), { statusCode: 403 });
-;
+  }
+});
+const getOneChat = asyncHandler(async (req, res, io) => {
+  try {
+    const { id } = req.auth;
+    const { chatId } = req.params;
+    if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
+    const name = await users.findById(id); // Assuming
+    if (name.banned_from_forum) {
+      throw Object.assign(new Error("Banned from forum"), { statusCode: 403 });
+    }
+    const chat = await CHAT.findById(chatId);
+    if (!chat) {
+      throw Object.assign(new Error("Chat not found"), { statusCode: 404 });
+    }
+    const threads = await thread.find({ chatId: chat._id });
+    const threadCount = threads.length;
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      data: {
+        ...chat._doc,
+        threadCount,
+        threads,
+      },
+    });
+    logger.info(
+      `chat fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
+    );
+  } catch (error) {
+    throw Object.assign(new Error("Banned from forum"), { statusCode: 403 });
   }
 });
 
@@ -212,4 +281,4 @@ const generateToken = (id) => {
     { expiresIn: "12h" }
   );
 };
-module.exports = { chatlogic, getallchats, deletechat };
+module.exports = { chatlogic,getOneChat, thread,getallchats, deletechat };
