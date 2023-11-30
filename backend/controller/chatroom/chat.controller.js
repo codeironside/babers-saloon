@@ -141,7 +141,7 @@ const thread = asynchandler(async (req, res) => {
  *       "error": "NotAUser"
  *     }
  */
-const getallchats = asyncHandler(async (req, res, io) => {
+const getallchats = asynchandler(async (req, res, io) => {
   try {
     const { id } = req.auth;
     if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
@@ -168,7 +168,7 @@ const getallchats = asyncHandler(async (req, res, io) => {
     throw Object.assign(new Error("Banned from forum"), { statusCode: 403 });
   }
 });
-const getOneChat = asyncHandler(async (req, res, io) => {
+const getOneChat = asynchandler(async (req, res, io) => {
   try {
     const { id } = req.auth;
     const { chatId } = req.params;
