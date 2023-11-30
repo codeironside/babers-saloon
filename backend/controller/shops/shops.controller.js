@@ -563,6 +563,21 @@ const getallshops = asynchandler(async (req, res) => {
 const getall = asynchandler(async (req, res) => {
   try {
     const shops = await SHOPS.find();
+    const payments = await PAYMENTS.aggregate([
+      { $group: { _id: "$shop_id", count: { $sum: 1 } } }
+    ]);
+
+    // Convert payments to a map for faster lookup
+    const paymentMap = {};
+    payments.forEach(payment => {
+      paymentMap[payment._id] = payment.count;
+    });
+
+    // Add payment count to each shop
+    shops.forEach(shop => {
+      shop.paymentCount = paymentMap[shop._id] || 0;
+    });
+
     res.status(200).json({
       data: shops,
     });
@@ -577,6 +592,7 @@ const getall = asynchandler(async (req, res) => {
     });
   }
 });
+
 
 //desc get all barbers end point
 //access public
