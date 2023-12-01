@@ -82,7 +82,7 @@ const login_users = asynchandler(async (req, res) => {
       const referralCount = referredUsers.length;
       const appointmentCount = appointments.length;
       const blogCount = bum.length;
-      console.log(blogCount);
+      // console.log(blogCount);
       const token = generateToken(user._id);
       const userWithoutPassword = await USER.findById(user.id).select(
         "-password"
@@ -787,8 +787,7 @@ const updateUser = asynchandler(async (req, res) => {
     const updatUser = await USER.findById(userId);
     console.log(updatUser._id);
     if (
-      userId !== updatUser._id.toString() ||
-      process.env.role !== "superadmin"
+      userId !== updatUser._id.toString()
     ) {
       throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
     }
