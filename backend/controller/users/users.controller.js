@@ -1025,12 +1025,13 @@ const searchItems = asynchandler(async (req, res) => {
 });
 const logout_user = asynchandler(async (req, res) => {
   try {
+    const {id}=req.auth
     res.status(200).header("Authorization", null).json({
       message: "Logged out successfully",
     });
     logger.info(
       `user with id ${
-        req.user._id
+        id
       } logged out at ${currentDateTimeWAT.toString()} - ${res.statusCode} - ${
         res.statusMessage
       } - ${req.originalUrl} - ${req.method} - ${req.ip}`

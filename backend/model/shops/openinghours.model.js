@@ -4,32 +4,39 @@ const workinghoursSchema = mongoose.Schema({
   shopId: { type: mongoose.Schema.ObjectId, ref: 'SHOPS', required: true },
   hours: {
     monday: {
-      opening: { type: String, default: "09:30:00" },
-      closing: { type: String, default: "21:30:00" },
+      morning: { type: String, default: "09:30:00" },
+      afternoon: { type: String, default: "14:00:00" },
+      evening: { type: String, default: "18:00:00" },
     },
     tuesday: {
-      opening: { type: String, default: "09:30:00" },
-      closing: { type: String, default: "21:30:00" },
+      morning: { type: String, default: "09:30:00" },
+      afternoon: { type: String, default: "14:00:00" },
+      evening: { type: String, default: "18:00:00" },
     },
     wednesday: {
-      opening: { type: String, default: "09:30:00" },
-      closing: { type: String, default: "21:30:00" },
+      morning: { type: String, default: "09:30:00" },
+      afternoon: { type: String, default: "14:00:00" },
+      evening: { type: String, default: "18:00:00" },
     },
     thursday: {
-      opening: { type: String, default: "09:30:00" },
-      closing: { type: String, default: "21:30:00" },
+      morning: { type: String, default: "09:30:00" },
+      afternoon: { type: String, default: "14:00:00" },
+      evening: { type: String, default: "18:00:00" },
     },
     friday: {
-      opening: { type: String, default: "09:30:00" },
-      closing: { type: String, default: "21:30:00" },
+      morning: { type: String, default: "09:30:00" },
+      afternoon: { type: String, default: "14:00:00" },
+      evening: { type: String, default: "18:00:00" },
     },
     saturday: {
-      opening: { type: String, default: "09:30:00" },
-      closing: { type: String, default: "21:30:00" },
+      morning: { type: String, default: "09:30:00" },
+      afternoon: { type: String, default: "14:00:00" },
+      evening: { type: String, default: "18:00:00" },
     },
     sunday: {
-      opening: { type: String, default: "09:30:00" },
-      closing: { type: String, default: "21:30:00" },
+      morning: { type: String, default: "09:30:00" },
+      afternoon: { type: String, default: "14:00:00" },
+      evening: { type: String, default: "18:00:00" },
     },
   },
 }, {

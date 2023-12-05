@@ -152,20 +152,28 @@ const create_shops = asynchandler(async (req, res) => {
         maximum_price,
         instant_booking,
         category,
-        monday_opening_hours,
-        monday_closing_hours,
-        tuesday_opening_hours,
-        tuesday_closing_hours,
-        wednesday_opening_hours,
-        wednesday_closing_hours,
-        thursday_opening_hours,
-        thursday_closing_hours,
-        friday_opening_hours,
-        friday_closing_hours,
-        saturday_opening_hours,
-        saturday_closing_hours,
-        sunday_opening_hours,
-        sunday_closing_hours,
+        monday_morning_hours,
+        monday_afternoon_hours,
+        monday_evening_hours,
+        tuesday_morning_hours,
+        tuesday_afternoon_hours,
+        tuesday_evening_hours,
+        wednesday_morning_hours,
+        wednesday_afternoon_hours,
+        wednesday_evening_hours,
+        thursday_morning_hours,
+        thursday_afternoon_hours,
+        thursday_evening_hours,
+        friday_morning_hours,
+        friday_afternoon_hours,
+        friday_evening_hours,
+        saturday_morning_hours,
+        saturday_afternoon_hours,
+        saturday_evening_hours,
+        sunday_morning_hours,
+        sunday_afternoon_hours,
+        sunday_evening_hours,
+        
       } = req.body;
 
       // Use the uploaded image URL from Cloudinary
@@ -205,35 +213,43 @@ const create_shops = asynchandler(async (req, res) => {
           shopId: createShops._id,
           hours: {
             monday: {
-              opening: monday_opening_hours,
-              closing: monday_closing_hours,
+              morning: monday_morning_hours,
+              afternoon: monday_afternoon_hours,
+              evening: monday_evening_hours,
             },
             tuesday: {
-              opening: tuesday_opening_hours,
-              closing: tuesday_closing_hours,
+              morning: tuesday_morning_hours,
+              afternoon: tuesday_afternoon_hours,
+              evening: tuesday_evening_hours,
             },
             wednesday: {
-              opening: wednesday_opening_hours,
-              closing: wednesday_closing_hours,
+              morning: wednesday_morning_hours,
+              afternoon: wednesday_afternoon_hours,
+              evening: wednesday_evening_hours,
             },
             thursday: {
-              opening: thursday_opening_hours,
-              closing: thursday_closing_hours,
+              morning: thursday_morning_hours,
+              afternoon: thursday_afternoon_hours,
+              evening: thursday_evening_hours,
             },
             friday: {
-              opening: friday_opening_hours,
-              closing: friday_closing_hours,
+              morning: friday_morning_hours,
+              afternoon: friday_afternoon_hours,
+              evening: friday_evening_hours,
             },
             saturday: {
-              opening: saturday_opening_hours,
-              closing: saturday_closing_hours,
+              morning: saturday_morning_hours,
+              afternoon: saturday_afternoon_hours,
+              evening: saturday_evening_hours,
             },
             sunday: {
-              opening: sunday_opening_hours,
-              closing: sunday_closing_hours,
+              morning: sunday_morning_hours,
+              afternoon: sunday_afternoon_hours,
+              evening: sunday_evening_hours,
             },
           }
         };
+        
 
         newWorkingHours = await working_hours.create(workingHoursData);
 
