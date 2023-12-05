@@ -786,9 +786,7 @@ const updateUser = asynchandler(async (req, res) => {
 
     const updatUser = await USER.findById(userId);
     console.log(updatUser._id);
-    if (
-      userId !== updatUser._id.toString()
-    ) {
+    if (userId !== updatUser._id.toString()) {
       throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
     }
     // if (req.body.data) {
@@ -958,7 +956,7 @@ const generateToken = (id) => {
       id,
     },
     process.env.JWT_SECRET,
-    { expiresIn: "12h" }
+    { expiresIn: "48h" }
   );
 };
 /**
@@ -1025,6 +1023,24 @@ const searchItems = asynchandler(async (req, res) => {
     });
   }
 });
+const logout_user = asynchandler(async (req, res) => {
+  try {
+    res.status(200).header("Authorization", null).json({
+      message: "Logged out successfully",
+    });
+    logger.info(
+      `user with id ${
+        req.user._id
+      } logged out at ${currentDateTimeWAT.toString()} - ${res.statusCode} - ${
+        res.statusMessage
+      } - ${req.originalUrl} - ${req.method} - ${req.ip}`
+    );
+  } catch (error) {
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
+  }
+});
 
 module.exports = {
   register_users,
@@ -1037,5 +1053,6 @@ module.exports = {
   searchItems,
   landingpage,
   oneUser,
-  changePassword
+  changePassword,
+  logout_user
 };

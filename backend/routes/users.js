@@ -2,7 +2,7 @@ const express = require("express")
 
 
 const { protect } = require("../middleware/authmiddleware")
-const { register_users, login_users,updateUser, oneUser,getUser,landingpage, getallusers, forum_status,searchItems, landing_page,changePassword } = require("../controller/users/users.controller")
+const { register_users, login_users,updateUser, oneUser,getUser,landingpage, getallusers, forum_status,searchItems, landing_page,changePassword,logout_user } = require("../controller/users/users.controller")
 const Router = express.Router()
 
 
@@ -19,6 +19,7 @@ Router.route('/updatefor/:userId').put(protect, forum_status)
 Router.route('/updatepass/:userId').put(protect, changePassword)
 //get one user
 Router.route('/getone').get(protect,getUser)
+
 Router.route('/one').get(protect,oneUser)
 //access private
 Router.route('/users').get(protect, landing_page)
@@ -29,5 +30,7 @@ Router.route('/home').get(landingpage)
 Router.route('/search').get(searchItems)
 //get all yses
 Router.route('/getall').get(protect,getallusers)
+//update a user
+Router.route('/logout').get(protect,logout_user)
  
 module.exports=Router
