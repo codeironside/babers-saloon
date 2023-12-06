@@ -6,16 +6,16 @@ const CHAT = mongoose.Schema(
       required:[true,'please add a message'],
      
     },
-    topic: {
-      type: String,
-      required:[true,'please add a message'],
+    // topic: {
+    //   type: String,
+    //   required:[true,'please add a message'],
      
-    },
-    category: {
-      type: String,
-      required:[true,'please add a message'],
+    // },
+    // category: {
+    //   type: String,
+    //   required:[true,'please add a message'],
      
-    },
+    // },
     images: {
       type: String,
       required:[true,'please add a message'],
