@@ -57,7 +57,7 @@ const chatlogic = asynchandler(async (req, res, io) => {
     }
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      successful: true,
+      chatCreate
     });
     logger.info(
       `user with id ${id},send a message ${chatCreate._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip} `
@@ -173,31 +173,28 @@ const getallchats = asynchandler(async (req, res, io) => {
 const getOneChat = asynchandler(async (req, res, io) => {
   try {
     const { id } = req.auth;
-    const { chatId } = req.params;
+    const { query } = req.params;
     if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
     const name = await users.findById(id); // Assuming
     if (name.banned_from_forum) {
       throw Object.assign(new Error("Banned from forum"), { statusCode: 403 });
     }
-    const chat = await CHAT.findById(chatId);
-    if (!chat) {
-      throw Object.assign(new Error("Chat not found"), { statusCode: 404 });
+    const chats = await CHAT.find({ chat: { $regex: query } });;
+    if (!chats) {
+      throw Object.assign(new Error("No chats found"), { statusCode: 404 });
     }
-    // const threads = await thread.find({ chatId: chat._id });
-    // const threadCount = threads.length;
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      data: {
-        ...chat._doc
-      },
+      data: chats,
     });
     logger.info(
-      `chat fetched by ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
+      `chats fetched by ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
     );
   } catch (error) {
     throw Object.assign(new Error("Banned from forum"), { statusCode:error.statusCode });
   }
 });
+
 
 
 /**

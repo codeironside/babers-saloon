@@ -9,7 +9,7 @@ const Router = express.Router()
 Router.route("/send-message").post(protect, chatlogic)
 //get all
 Router.route("/getall").get(protect, getallchats)
-Router.route("/getone/:chatId").get(protect, getOneChat)
+Router.route("/getone/:query").get(protect, getOneChat)
 //access private
 Router.route("/delete/:chatId").delete(protect, deletechat)
 Router.route("/thread/:chatId").post(protect, threads)
