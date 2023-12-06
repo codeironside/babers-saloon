@@ -43,7 +43,7 @@ const chatlogic = asynchandler(async (req, res, io) => {
     const { id } = req.auth;
     const { chat } = req.body;
     const name = await users.findById(id); // Assuming
-    if (!name.banned_from_forum) {
+    if (name.banned_from_forum) {
       throw Object.assign(new Error("Not a user"), { statusCode: 404 });
     }
     const chatCreate = await CHAT.create({
