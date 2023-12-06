@@ -51,6 +51,10 @@ const USERS = mongoose.Schema(
       default:'basic',
     },
     pictureUrl: { type: String },
+    bio: { type: String },
+    phoneNumber: { type: String },
+  },
+  },
   },
 
   {
