@@ -18,7 +18,6 @@ const CHAT = mongoose.Schema(
     // },
     images: {
       type: String,
-      required:[true,'please add a message'],
      
     },
     
