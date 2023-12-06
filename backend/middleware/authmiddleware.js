@@ -9,7 +9,7 @@ const protect = asyncHandler(async (req, res, next) => {
     try {
       // Get token from header
       token = req.headers.authorization.split(" ")[1];
-
+      //console.log(token)
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -30,7 +30,7 @@ const protect = asyncHandler(async (req, res, next) => {
 
       next();
     } catch (error) {
-      if (error.name === 'TokenExpiredError') {
+      if (error.message === 'Session expired') {
         throw Object.assign(new Error("Session expired"), { statusCode: 401 });
 
       } else {

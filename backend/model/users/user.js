@@ -54,8 +54,7 @@ const USERS = mongoose.Schema(
     bio: { type: String },
     phoneNumber: { type: String },
   },
-  },
-  },
+
 
   {
     timestamps: true,

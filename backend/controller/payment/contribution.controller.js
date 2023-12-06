@@ -78,7 +78,8 @@ const contributeToCrowdfunding = asynchandler(async (req, res) => {
       contributionDate: new Date(),
     });
 
-    crowdfunding.currentAmount += amount;
+    crowdfunding.currentAmount += Number(amount);
+
 
     const saved = await crowdfunding.save();
     if (!saved) {

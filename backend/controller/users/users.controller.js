@@ -776,7 +776,6 @@ const updateUser = asynchandler(async (req, res) => {
   const clientIp = req.clientIp;
   const { id } = req.auth;
   const updateData = req.body;
-
   try {
     if (!userId || !updateData) {
       throw Object.assign(new Error("Fields cannot be empty"), {
@@ -785,8 +784,11 @@ const updateUser = asynchandler(async (req, res) => {
     }
 
     const updatUser = await USER.findById(userId);
+    if(!updatUser){
+      throw Object.assign(new Error("user not found"), { statusCode: 404 });
+    }
     console.log(updatUser._id);
-    if (userId !== updatUser._id.toString()) {
+    if (id !== updatUser._id.toString()) {
       throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
     }
     // if (req.body.data) {
