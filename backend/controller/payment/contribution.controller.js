@@ -163,8 +163,7 @@ const getCrowdfundingsForUser = asynchandler(async (req, res) => {
     }
     if (
       id !== userId &&
-      user.role !== "superadmin" &&
-      process.env.role.toString() !== "superadmin"
+      user.role !== "superadmin" 
     ) {
       throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
     }

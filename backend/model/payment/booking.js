@@ -20,6 +20,11 @@ const BookingSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    delivered: {
+      type: Boolean,
+      required: [true, "please specify if product has been delivered"],
+      default: false,
+    },
     time: {
       type: String,
       required: true,

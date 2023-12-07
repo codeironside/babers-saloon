@@ -62,32 +62,36 @@ const SHOPS = new mongoose.Schema(
       type: String,
       required: [true, "please include a contact email"],
     },
-    approved : {
-      type:Boolean,
-      default:false
+    approved: {
+      type: Boolean,
+      default: false,
     },
-    price:{
-      type:Number,
-      default:0
+    price: {
+      type: Number,
+      default: 0,
     },
-    availabilty:{
-      type:Boolean,
-      default:false
+    availabilty: {
+      type: Boolean,
+      default: false,
     },
-    
+
     servicesOffered: {
       type: [String], // Array of services offered
     },
-    subscriptionType:{
-      type:String
-    }
+    subscriptionType: {
+      type: String,
+    },
+    hasConsented: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-SHOPS.index({ shop_name: 'text' });
+SHOPS.index({ shop_name: "text" });
 
 const ShopsModel = mongoose.model("SHOPS", SHOPS);
 

@@ -11,6 +11,11 @@ const cartSchema = new mongoose.Schema(
       type: String,
       required: [true,'please add a user name'],
     },
+    delivered: {
+      type: Boolean,
+      required: [true,'please specify if product has been delivered'],
+      default:false
+    },
     items: [
       {
         product: {

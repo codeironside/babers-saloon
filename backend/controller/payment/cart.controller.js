@@ -246,6 +246,31 @@ const getAllcartsForuser = asynchandler(async (req, res) => {
     throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
+
+const confirmDelivery = asynchandler(async (req, res) => {
+  try {
+    const { id } = req.auth;
+    const { cartId } = req.params;
+    if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
+    const deliver = await cart.findByIdAndUpdate(cartId, { delivered: true }, { new: true });
+    if (!deliver) {
+      throw Object.assign(new Error("Product not found"), { statusCode: 404 });
+    }
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      status: "success",
+      data: deliver,
+    });
+    logger.info(
+      `Product delivery confirmed by ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
+    );
+  } catch (error) {
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
+  }
+});
+
 const getLocation = asynchandler(async (ip) => {
   try {
     // Set endpoint and your access key
@@ -282,4 +307,5 @@ module.exports = {
   getAllcartForAdmins,
   getAllCartsForVendor,
   getAllcartsForuser,
+  confirmDelivery
 };

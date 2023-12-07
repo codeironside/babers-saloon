@@ -609,6 +609,38 @@ const getall = asynchandler(async (req, res) => {
     });
   }
 });
+// const getall = asynchandler(async (req, res) => {
+//   try {
+//     const shops = await SHOPS.find({ isApproved: true, hasConsented: true });
+//     const payments = await PAYMENTS.aggregate([
+//       { $group: { _id: "$shop_id", count: { $sum: 1 } } }
+//     ]);
+
+//     // Convert payments to a map for faster lookup
+//     const paymentMap = {};
+//     payments.forEach(payment => {
+//       paymentMap[payment._id.toString()] = payment.count;
+//     });
+
+//     // Add payment count to each shop
+//     shops.forEach(shop => {
+//       shop.paymentCount = paymentMap[shop._id.toString()] || 0;
+//     });
+
+//     res.status(200).json({
+//       data: shops,
+//     });
+
+//     logger.info(
+//       `shops were fetched  - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+//     );
+//   } catch (error) {
+//     console.log(error);
+//     throw Object.assign(new Error(`${error}`), {
+//       statusCode: error.statusCode,
+//     });
+//   }
+// });
 
 
 //desc get all barbers end point
