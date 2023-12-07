@@ -212,7 +212,7 @@ const getContributionForUser = asynchandler(async (req, res) => {
     }
     if (
       user.role !== "superadmin" &&
-      process.env.role.toString() !== "superadmin"
+      id !== user._id.toString()
     ) {
       throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
     }
