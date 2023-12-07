@@ -9,7 +9,7 @@ const { convertToWAT } = require("../../utils/datetime");
 const Crowdfunding = require("../../model/payment/contribution");
 const booking = require("../../model/payment/subscription");
 const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
-
+const mongoose = require('mongoose');
 //create campain
 const createCrowdfunding = asynchandler(async (req, res) => {
   try {
@@ -215,39 +215,40 @@ const getContributionForUser = asynchandler(async (req, res) => {
     ) {
       throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
     }
-
+    const objectI = new mongoose.Types.ObjectId(userId);
+    try{
     const crowdfundings = await Crowdfunding.find({
       contributions: {
         $elemMatch: {
-          contributor: userId,
+          contributor:objectI,
         },
       },
-    })
-      .populate({
+    }).populate({
         path: "organizer",
         model: "USER",
         select: "firstName userName email number address",
-      })
-      .populate({
+      }).populate({
         path: "contributions.contributor",
         model: "USER",
         select: "firstName userName email number address",
       });
+      // if (!crowdfundings || crowdfundings.length === 0) {
 
-    if (!crowdfundings || crowdfundings.length === 0) {
-      throw Object.assign(new Error("No contributions found"), {
-        statusCode: 404,
+      // }
+  
+      const token = generateToken(user._id);
+      res.status(200).header("Authorization", `Bearer ${token}`).json({
+        data: crowdfundings,
       });
-    }
+  
+      logger.info(
+        `contribution data was fetched by ${user._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+      );}catch(error){
+        throw Object.assign(new Error("No contributions found"), {
+          statusCode: 404,
+        });
+      }
 
-    const token = generateToken(user._id);
-    res.status(200).header("Authorization", `Bearer ${token}`).json({
-      data: crowdfundings,
-    });
-
-    logger.info(
-      `contribution data was fetched by ${user._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
-    );
   } catch (error) {
     throw Object.assign(new Error(`${error}`), {
       statusCode: error.statusCode,
