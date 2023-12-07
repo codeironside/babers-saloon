@@ -205,7 +205,7 @@ const getContributionForUser = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
     const { userId } = req.params;
-    const user = await USER.findById(id);
+    const user = await USER.findById(userId);
     if (!user) {
       throw Object.assign(new Error("User not found"), { statusCode: 404 });
     }
@@ -242,7 +242,6 @@ const getContributionForUser = asynchandler(async (req, res) => {
 
     const token = generateToken(user._id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      status: "success",
       data: crowdfundings,
     });
 

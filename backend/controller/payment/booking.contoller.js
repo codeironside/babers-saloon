@@ -267,10 +267,15 @@ const confirmDelivery = asynchandler(async (req, res) => {
     const { id } = req.auth;
     const { bookId } = req.params;
     if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
+    const books = await booking.findById(bookId)
+    if(id !== books.user.toString()){
+      throw Object.assign(new Error("not authorized"), { statusCode: 403 })
+    }
     const book = await booking.findByIdAndUpdate(bookId, { delivered: true }, { new: true });
     if (!book) {
       throw Object.assign(new Error("Product not found"), { statusCode: 404 });
     }
+    
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
       data: book,

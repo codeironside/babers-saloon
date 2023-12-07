@@ -646,33 +646,33 @@ const getall = asynchandler(async (req, res) => {
 //desc get all barbers end point
 //access public
 //routes /babers
-// const getbabers = asynchandler(async (req, res) => {
-//   const page = parseInt(req.query.page) || 1;
-//   const pageSize = parseInt(req.query.pageSize) || 10;
-//   try {
-//     owner = false;
-//     const totalCount = await SHOPS.countDocuments();
-//     const totalPages = Math.ceil(totalCount / pageSize);
-//     const shops = await SHOPS.find({category:"barbers"})
-//       .skip((page - 1) * pageSize)
-//       .limit(pageSize);
-//     res.status(200).json({
-//       owner: owner,
-//       data: shops,
-//       page: page,
-//       totalPages: totalPages,
-//     });
+const getbabers = asynchandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+  try {
+    owner = false;
+    const totalCount = await SHOPS.countDocuments();
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const shops = await SHOPS.find({category:"barbers"})
+      .skip((page - 1) * pageSize)
+      .limit(pageSize);
+    res.status(200).json({
+      owner: owner,
+      data: shops,
+      page: page,
+      totalPages: totalPages,
+    });
 
-//     logger.info(
-//       `shops were fetched  - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
-//     );
-//   } catch (error) {
-//     console.log(error);
-//     throw Object.assign(new Error(`${error}`), {
-//       statusCode: error.statusCode,
-//     });
-//   }
-// });
+    logger.info(
+      `shops were fetched  - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+    );
+  } catch (error) {
+    console.log(error);
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
+  }
+});
 
 /**
  * @api {get} /getallone Get All Shops for One User
@@ -1098,6 +1098,29 @@ const updateWorkingHours = asynchandler(async (req, res) => {
     });
   }
 });
+const consentToUserAgreement = asynchandler(async (req, res, io) => {
+  try {
+    const { id } = req.auth;
+    const {shopId}= req.params
+    if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
+    const shops = await SHOPS.findByIdAndUpdate(shopId)
+    if(id!==shops.owner.toString())throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
+    const user = await SHOPS.findByIdAndUpdate(shopId, { hasConsented: true }, { new: true });
+    if (!user) {
+      throw Object.assign(new Error("shop not found"), { statusCode: 404 });
+    }
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      status: "success",
+      data: user,
+    });
+    logger.info(
+      `User agreement consent updated by ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
+    );
+  } catch (error) {
+    throw Object.assign(new Error("Banned from forum"), { statusCode:error.statusCode });
+  }
+});
 
 const getLocation = asynchandler(async (ip) => {
   try {
@@ -1514,5 +1537,6 @@ module.exports = {
   getshop,
   getall,
   updateavalability,
+  consentToUserAgreement,
   updateServices,
 };

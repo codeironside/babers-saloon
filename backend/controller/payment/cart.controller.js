@@ -252,6 +252,10 @@ const confirmDelivery = asynchandler(async (req, res) => {
     const { id } = req.auth;
     const { cartId } = req.params;
     if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
+    const carts = await cart.findById(cartId)
+    if(id !== carts.user.toString()){
+      throw Object.assign(new Error("not authorized"), { statusCode: 403 })
+    }
     const deliver = await cart.findByIdAndUpdate(cartId, { delivered: true }, { new: true });
     if (!deliver) {
       throw Object.assign(new Error("Product not found"), { statusCode: 404 });
