@@ -534,7 +534,7 @@ const getallshops = asynchandler(async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    throw Object.assign(new Error(`{error}`), { statusCode: error.statusCode });
+    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
   }
 });
 /**
