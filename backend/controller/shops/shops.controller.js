@@ -490,8 +490,7 @@ const getallshops = asynchandler(async (req, res) => {
     const user = await USER.findById(id);
     if (
       !(
-        user.role === "superadmin" ||
-        process.env.role.toString() === "superadmin"
+        user.role === "superadmin"
       )
     ) {
       throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
