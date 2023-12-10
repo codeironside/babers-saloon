@@ -9,8 +9,9 @@ const SHOPS = new mongoose.Schema(
     },
     shop_address: {
       type: String,
-      required: [true, "please add an address"],
+      
     },
+    //required: [true, "please add an address"]
     keywords: {
       type: String,
       required: [true, "please add a keyword"],
