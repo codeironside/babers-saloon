@@ -14,7 +14,6 @@ const SHOPS = new mongoose.Schema(
     //required: [true, "please add an address"]
     keywords: {
       type: String,
-      required: [true, "please add a keyword"],
     },
     google_maps_place_id: {
       type: String,
