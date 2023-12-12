@@ -400,12 +400,11 @@ const getshop = asynchandler(async (req, res) => {
     // Format the time as a string
     const currentTime = `${hours}:${minutes}:${seconds}`;
     let owner = false;
-    if ((id === shop.owner, toString())) {
+    if ((id === shop.owner.toString())) {
       const token = generateToken(shop._id);
       owner = true;
       if (shop) {
         res.status(200).header("Authorization", `Bearer ${token}`).json({
-          successful: true,
           data: shop,
           owner: owner,
         });
@@ -417,7 +416,6 @@ const getshop = asynchandler(async (req, res) => {
       const token = generateToken(shop._id);
       if (shop) {
         res.status(200).header("Authorization", `Bearer ${token}`).json({
-          successful: true,
           data: shop,
           owner: owner,
         });
