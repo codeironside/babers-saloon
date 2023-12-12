@@ -175,7 +175,7 @@ const create_shops = asynchandler(async (req, res) => {
       } = req.body;
 
       // Use the uploaded image URL from Cloudinary
-      const image = result.secure_url;
+      // const image = result.secure_url;
 
       // Create shop with Cloudinary image URL
       const createShops = await SHOPS.create({
