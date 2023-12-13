@@ -193,7 +193,6 @@ const create_shops = asynchandler(async (req, res) => {
         website,
         twitter,
         whatsapp,
-        image,
         instagram,
         servicesOffered: services.split(","),
         minimum_price,

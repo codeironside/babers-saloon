@@ -10,45 +10,66 @@ const { convertToWAT } = require("../../utils/datetime");
 const Subscription = require("../../model/payment/subscription");
 const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 
+
 //desc register users
 //access public
 //router /users/register
 // Controller for creating a subscription
 const createSubscription = asynchandler(async (req, res) => {
   try {
-    const { plan, amount,type, paymentMethod, billingAddress, status } =
+    const { plan, amount, type, paymentMethod, billingAddress, status } =
       req.body;
     const startDate = new Date(); // Set the start date as the current date
     const { id } = req.auth;
     const endDate = new Date(startDate); // Set the end date based on the selected plan
     const user = await USER.findById(id);
 
-    if (!user) throw Object.assign(new Error("Not found"), { statusCode: 4034 });
-    ;
-    const find = await Subscription.findOne({user_id:user._id})
-    if(find) throw Object.assign(new Error("cannot create two subscribtion, please update if that is what you wish to do"), { statusCode: 403 });
+    if (!user)
+      throw Object.assign(new Error("Not found"), { statusCode: 4034 });
+    const find = await Subscription.findOne({ user_id: user._id });
+    if (find)
+      throw Object.assign(
+        new Error(
+          "cannot create two subscribtion, please update if that is what you wish to do"
+        ),
+        { statusCode: 403 }
+      );
+    // Create a Stripe customer
+    const customer = await stripe.customers.create({
+      email: req.body.stripeEmail,
+      source: req.body.stripeToken,
+    });
+
+    // Create a Stripe subscription
+    const subscription = await stripe.subscriptions.create({
+      customer: customer.id,
+      items: [{ plan: "plan_id" }],
+    });
 
     const newSubscription = await Subscription.create({
       user_id: user._id,
-     
-      billingDetails: [{
-        name: user.userName,
-        billingAddress: billingAddress,
-        paymentMethod,
-        plan,
-        type,
-        amount,
-        startDate,
-        endDate,
-        status
-      }],
+
+      billingDetails: [
+        {
+          name: user.userName,
+          billingAddress: billingAddress,
+          paymentMethod,
+          plan,
+          type,
+          amount,
+          startDate,
+          endDate,
+          status,
+        },
+      ],
     });
     const update = await USER.findByIdAndUpdate(id, {
       $set: { subscribed: true, type: type },
     });
     if (!update) {
-      throw Object.assign(new Error("Error updating user"), { statusCode: 500 });
-;
+      throw Object.assign(new Error("Error updating user"), {
+        statusCode: 500,
+      });
     }
     // Update the subscription type for all shops
     const updateShops = await SHOPS.updateMany(
@@ -62,7 +83,7 @@ const createSubscription = asynchandler(async (req, res) => {
         message: newSubscription,
       });
     }
-    
+
     res.status(200).header("Authorization", `Bearer ${Token}`).json({
       status: "success",
       message: newSubscription,
@@ -73,8 +94,9 @@ const createSubscription = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
-;
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 
@@ -87,7 +109,10 @@ const adminSubscriptionPanel = asynchandler(async (req, res) => {
   const user = await USER.findById(id);
 
   try {
-    if (user.role==='superadmin'|| process.env.role.toString() === "superadmin") {
+    if (
+      user.role === "superadmin" ||
+      process.env.role.toString() === "superadmin"
+    ) {
       // Calculate total count of subscriptions
       const totalCount = await Subscription.countDocuments();
 
@@ -111,16 +136,14 @@ const adminSubscriptionPanel = asynchandler(async (req, res) => {
       );
     } else {
       throw Object.assign(new Error("not authorized"), { statusCode: 403 });
-      ;
     }
   } catch (error) {
     console.error(error);
     throw Object.assign(new Error(`${error}`), {
       statusCode: error.statusCode,
-    });;
+    });
   }
 });
-
 
 // Update one user subscription plan
 // Access private for user
@@ -129,36 +152,43 @@ const adminSubscriptionPanel = asynchandler(async (req, res) => {
 const updateSubscriptionPlan = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth; // Get the user ID from the request
-    const { plan, type, status,amount, paymentMethod,billingAddress } = req.body; 
+    const { plan, type, status, amount, paymentMethod, billingAddress } =
+      req.body;
     const { planId } = req.params; // Get the subscription plan ID from the request parameters
 
     const user = await USER.findById(id);
-    if (!user) throw Object.assign(new Error("user not found"), { statusCode: 404 });
-    ;
-
+    if (!user)
+      throw Object.assign(new Error("user not found"), { statusCode: 404 });
     const subscription = await Subscription.findById(planId);
-    if (!subscription || subscription.user_id.toString() !== id.toString() || process.env.role.toString() !== "superadmin") {
+    if (
+      !subscription ||
+      subscription.user_id.toString() !== id.toString() ||
+      process.env.role.toString() !== "superadmin"
+    ) {
       throw Object.assign(new Error("who goes you"), { statusCode: 403 });
-;
     }
 
     const currentDate = new Date();
     if (subscription.endDate > currentDate) {
-      throw Object.assign(new Error("Cannot cancel an existing subscription. It has not expired yet."), { statusCode: 403 });
-;
+      throw Object.assign(
+        new Error(
+          "Cannot cancel an existing subscription. It has not expired yet."
+        ),
+        { statusCode: 403 }
+      );
     }
 
-   const startDate = new Date();
-   let endDate = new Date(startDate);
-   if (plan === "monthly") {
-     endDate.setMonth(endDate.getMonth() + 1);
-   } else if (plan === "yearly") {
-     endDate.setFullYear(endDate.getFullYear() + 1);
-   }
+    const startDate = new Date();
+    let endDate = new Date(startDate);
+    if (plan === "monthly") {
+      endDate.setMonth(endDate.getMonth() + 1);
+    } else if (plan === "yearly") {
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    }
 
     subscription.billingDetails.push({
-      name:user.userName,
-       billingAddress,
+      name: user.userName,
+      billingAddress,
       paymentMethod,
       type,
       startDate,
@@ -171,11 +201,9 @@ const updateSubscriptionPlan = asynchandler(async (req, res) => {
     // Update the subscription type for all shops owned by the user
     const updateShops = await SHOPS.updateMany(
       { owner: id },
-      { subscriptionType:type }
+      { subscriptionType: type }
     );
- 
 
- 
     const updatedSubscription = await Subscription.findByIdAndUpdate(
       planId,
       {
@@ -193,7 +221,6 @@ const updateSubscriptionPlan = asynchandler(async (req, res) => {
       });
     }
 
-    
     res.status(200).header("Authorization", `Bearer ${token}`).json({
       status: "success",
       data: updatedSubscription,
@@ -205,10 +232,9 @@ const updateSubscriptionPlan = asynchandler(async (req, res) => {
   } catch (error) {
     throw Object.assign(new Error(`${error}`), {
       statusCode: error.statusCode,
-    });;
+    });
   }
 });
-
 
 // Description: Get all subscriptions for developers
 const getAllUsersSubscription = asynchandler(async (req, res) => {
@@ -218,7 +244,10 @@ const getAllUsersSubscription = asynchandler(async (req, res) => {
   const user = await USER.findById(id);
 
   try {
-    if (user._id.toString() === id || process.env.role.toString() === "superadmin") {
+    if (
+      user._id.toString() === id ||
+      process.env.role.toString() === "superadmin"
+    ) {
       // Calculate total count of subscriptions for the specified user
       const totalCount = await Subscription.countDocuments({ user_id: id });
 
@@ -241,17 +270,17 @@ const getAllUsersSubscription = asynchandler(async (req, res) => {
         `Subscriptions for user with ID: ${id} were fetched - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
       );
     } else {
-      throw Object.assign(new Error("No subscription for user"), { statusCode: 404 });
-;
+      throw Object.assign(new Error("No subscription for user"), {
+        statusCode: 404,
+      });
     }
   } catch (error) {
     console.error(error);
     throw Object.assign(new Error(`${error}`), {
       statusCode: error.statusCode,
-    });;
+    });
   }
 });
-
 
 const getLocation = asynchandler(async (ip) => {
   try {

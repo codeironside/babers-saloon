@@ -53,6 +53,7 @@ app.use("/api/v1/booking", require("./routes/booking"));
 app.use("/api/v1/cart", require("./routes/cart"));
 app.use("/api/v1/payment", require("./routes/payment"));
 app.use("/api/v1/campaign", require("./routes/campaign"));
+app.use("/api/v1/stripe", require("./routes/stripe.route"));
 
 // Error handling middleware
 app.use(errorHandler);
