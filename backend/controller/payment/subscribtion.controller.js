@@ -34,17 +34,6 @@ const createSubscription = asynchandler(async (req, res) => {
         ),
         { statusCode: 403 }
       );
-    // Create a Stripe customer
-    const customer = await stripe.customers.create({
-      email: req.body.stripeEmail,
-      source: req.body.stripeToken,
-    });
-
-    // Create a Stripe subscription
-    const subscription = await stripe.subscriptions.create({
-      customer: customer.id,
-      items: [{ plan: "plan_id" }],
-    });
 
     const newSubscription = await Subscription.create({
       user_id: user._id,

@@ -111,7 +111,7 @@ const create_shops = asynchandler(async (req, res) => {
       case "basic":
         maxAllowedShops = 5;
         break;
-      case "gold":
+      case "premium":
         maxAllowedShops = 15;
         break;
       case "diamond":

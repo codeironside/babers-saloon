@@ -10,7 +10,7 @@ const subscriptionSchema = new mongoose.Schema({
   billingDetails: [{
     type: {
       type: String,
-      enum: ['gold', 'platinum'],
+      enum: ['premium', 'diamond'],
       required: [true,'please and a subscription type'],
     },
     plan: {
