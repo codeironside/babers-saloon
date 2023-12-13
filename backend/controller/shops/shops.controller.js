@@ -5,8 +5,7 @@ const logger = require("../../utils/logger");
 const USER = require("../../model/users/user.js");
 const working_hours = require("../../model/shops/openinghours.model");
 const jwt = require("jsonwebtoken");
-const cloudinary = require('cloudinary').v2;;
-
+const cloudinary = require("cloudinary").v2;
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -101,9 +100,9 @@ const create_shops = asynchandler(async (req, res) => {
 
     // Check the user's subscription type
     const user = await USER.findById(id);
-    if (!user) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
+    if (!user)
+      throw Object.assign(new Error("Not a user"), { statusCode: 404 });
 
-    
     let maxAllowedShops;
 
     // Set the maximum allowed shops based on the user's subscription type
@@ -118,13 +117,20 @@ const create_shops = asynchandler(async (req, res) => {
         maxAllowedShops = Infinity; // Unlimited shops for diamond subscription
         break;
       default:
-        throw Object.assign(new Error("Invalid subscription type"), { statusCode: 422 });
+        throw Object.assign(new Error("Invalid subscription type"), {
+          statusCode: 422,
+        });
     }
 
     // Check the current number of shops created by the user
     const userShopsCount = await SHOPS.countDocuments({ owner: id });
     if (userShopsCount >= maxAllowedShops) {
-      throw Object.assign(new Error(`You have reached the maximum allowed shops (${maxAllowedShops})`), { statusCode: 403 });
+      throw Object.assign(
+        new Error(
+          `You have reached the maximum allowed shops (${maxAllowedShops})`
+        ),
+        { statusCode: 403 }
+      );
     }
     // if (req.body.data) {
     //   const result = await cloudinary.uploader.upload(req.body.data, { resource_type: 'image', format: 'png' });
@@ -132,58 +138,58 @@ const create_shops = asynchandler(async (req, res) => {
     // image = result.secure_url;
     // }
 
-      const {
-        shop_name,
-        shop_address,
-        keywords,
-        services,
-        google_maps_place_id,
-        longitude,
-        images,
-        facebook,
-        description,
-        website,
-        twitter,
-        whatsapp,
-        instagram,
-        minimum_price,
-        maximum_price,
-        instant_booking,
-        category,
-        monday_morning_hours,
-        monday_afternoon_hours,
-        monday_evening_hours,
-        tuesday_morning_hours,
-        tuesday_afternoon_hours,
-        tuesday_evening_hours,
-        wednesday_morning_hours,
-        wednesday_afternoon_hours,
-        wednesday_evening_hours,
-        thursday_morning_hours,
-        thursday_afternoon_hours,
-        thursday_evening_hours,
-        friday_morning_hours,
-        friday_afternoon_hours,
-        friday_evening_hours,
-        saturday_morning_hours,
-        saturday_afternoon_hours,
-        saturday_evening_hours,
-        sunday_morning_hours,
-        sunday_afternoon_hours,
-        sunday_evening_hours,
-        
-      } = req.body;
+    const {
+      shop_name,
+      shop_address,
+      keywords,
+      services,
+      google_maps_place_id,
+      longitude,
+      images,
+      facebook,
+      description,
+      website,
+      twitter,
+      whatsapp,
+      instagram,
+      minimum_price,
+      maximum_price,
+      instant_booking,
+      category,
+      monday_morning_hours,
+      monday_afternoon_hours,
+      monday_evening_hours,
+      tuesday_morning_hours,
+      tuesday_afternoon_hours,
+      tuesday_evening_hours,
+      wednesday_morning_hours,
+      wednesday_afternoon_hours,
+      wednesday_evening_hours,
+      thursday_morning_hours,
+      thursday_afternoon_hours,
+      thursday_evening_hours,
+      friday_morning_hours,
+      friday_afternoon_hours,
+      friday_evening_hours,
+      saturday_morning_hours,
+      saturday_afternoon_hours,
+      saturday_evening_hours,
+      sunday_morning_hours,
+      sunday_afternoon_hours,
+      sunday_evening_hours,
+    } = req.body;
 
-      // Use the uploaded image URL from Cloudinary
-      // const image = result.secure_url;
+    // Use the uploaded image URL from Cloudinary
+    // const image = result.secure_url;
 
-      // Create shop with Cloudinary image URL
+    // Create shop with Cloudinary image URL
+    if (services) {
       const createShops = await SHOPS.create({
         owner: id,
         shop_name,
         shop_address,
-        contact_email:user.email,
-        contact_number :user.phoneNumber,
+        contact_email: user.email,
+        contact_number: user.phoneNumber,
         keywords,
         google_maps_place_id,
         longitude,
@@ -244,16 +250,15 @@ const create_shops = asynchandler(async (req, res) => {
               afternoon: sunday_afternoon_hours,
               evening: sunday_evening_hours,
             },
-          }
+          },
         };
-        
 
         newWorkingHours = await working_hours.create(workingHoursData);
 
         // Update user role
         const updatedUser = await USER.findByIdAndUpdate(
           id,
-          { $set: { role: 'SHOP_OWNER' } },
+          { $set: { role: "SHOP_OWNER" } },
           { new: true }
         );
 
@@ -266,17 +271,112 @@ const create_shops = asynchandler(async (req, res) => {
             SHOP_ID: createShops._id,
           });
 
-          logger.info(`User with id ${id} created a shop with id: ${createShops._id} at ${createShops.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`);
+          logger.info(
+            `User with id ${id} created a shop with id: ${createShops._id} at ${createShops.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+          );
         }
       }
-    } catch (error) {
-      console.error(error);
-  
-      throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+    } else {
+      const createShops = await SHOPS.create({
+        owner: id,
+        shop_name,
+        shop_address,
+        contact_email: user.email,
+        contact_number: user.phoneNumber,
+        keywords,
+        google_maps_place_id,
+        longitude,
+        images,
+        facebook,
+        description,
+        website,
+        twitter,
+        whatsapp,
+        instagram,
+        minimum_price,
+        maximum_price,
+        instant_booking,
+        category,
+        subscriptionType: user.type,
+      });
+
+      if (createShops) {
+        let newWorkingHours;
+
+        // Creating working hours for the shop
+        const workingHoursData = {
+          shopId: createShops._id,
+          hours: {
+            monday: {
+              morning: monday_morning_hours,
+              afternoon: monday_afternoon_hours,
+              evening: monday_evening_hours,
+            },
+            tuesday: {
+              morning: tuesday_morning_hours,
+              afternoon: tuesday_afternoon_hours,
+              evening: tuesday_evening_hours,
+            },
+            wednesday: {
+              morning: wednesday_morning_hours,
+              afternoon: wednesday_afternoon_hours,
+              evening: wednesday_evening_hours,
+            },
+            thursday: {
+              morning: thursday_morning_hours,
+              afternoon: thursday_afternoon_hours,
+              evening: thursday_evening_hours,
+            },
+            friday: {
+              morning: friday_morning_hours,
+              afternoon: friday_afternoon_hours,
+              evening: friday_evening_hours,
+            },
+            saturday: {
+              morning: saturday_morning_hours,
+              afternoon: saturday_afternoon_hours,
+              evening: saturday_evening_hours,
+            },
+            sunday: {
+              morning: sunday_morning_hours,
+              afternoon: sunday_afternoon_hours,
+              evening: sunday_evening_hours,
+            },
+          },
+        };
+
+        newWorkingHours = await working_hours.create(workingHoursData);
+
+        // Update user role
+        const updatedUser = await USER.findByIdAndUpdate(
+          id,
+          { $set: { role: "SHOP_OWNER" } },
+          { new: true }
+        );
+
+        if (createShops && updatedUser) {
+          res.status(200).json({
+            data: {
+              shop: createShops,
+              workingHours: newWorkingHours,
+            },
+            SHOP_ID: createShops._id,
+          });
+
+          logger.info(
+            `User with id ${id} created a shop with id: ${createShops._id} at ${createShops.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+          );
+        }
+      }
     }
-  });
+  } catch (error) {
+    console.error(error);
 
-
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
+  }
+});
 
 /**
  * @api {post} /login Login Shop
@@ -399,7 +499,7 @@ const getshop = asynchandler(async (req, res) => {
     // Format the time as a string
     const currentTime = `${hours}:${minutes}:${seconds}`;
     let owner = false;
-    if ((id === shop.owner.toString())) {
+    if (id === shop.owner.toString()) {
       const token = generateToken(shop._id);
       owner = true;
       if (shop) {
@@ -483,11 +583,7 @@ const getallshops = asynchandler(async (req, res) => {
   const { id } = req.auth;
   try {
     const user = await USER.findById(id);
-    if (
-      !(
-        user.role === "superadmin"
-      )
-    ) {
+    if (!(user.role === "superadmin")) {
       throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
     }
     let owner = false;
@@ -528,7 +624,9 @@ const getallshops = asynchandler(async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    throw Object.assign(new Error(`${error}`), { statusCode: error.statusCode });
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
   }
 });
 /**
@@ -574,18 +672,18 @@ const getallshops = asynchandler(async (req, res) => {
 const getall = asynchandler(async (req, res) => {
   try {
     const shops = await SHOPS.find();
-       const payments = await PAYMENTS.aggregate([
-      { $group: { _id: "$shop_id", count: { $sum: 1 } } }
+    const payments = await PAYMENTS.aggregate([
+      { $group: { _id: "$shop_id", count: { $sum: 1 } } },
     ]);
 
     // Convert payments to a map for faster lookup
     const paymentMap = {};
-    payments.forEach(payment => {
+    payments.forEach((payment) => {
       paymentMap[payment._id.toString()] = payment.count;
     });
 
     // Add payment count to each shop
-    shops.forEach(shop => {
+    shops.forEach((shop) => {
       shop.paymentCount = paymentMap[shop._id.toString()] || 0;
     });
 
@@ -636,7 +734,6 @@ const getall = asynchandler(async (req, res) => {
 //   }
 // });
 
-
 //desc get all barbers end point
 //access public
 //routes /babers
@@ -647,7 +744,7 @@ const getbabers = asynchandler(async (req, res) => {
     owner = false;
     const totalCount = await SHOPS.countDocuments();
     const totalPages = Math.ceil(totalCount / pageSize);
-    const shops = await SHOPS.find({category:"barbers"})
+    const shops = await SHOPS.find({ category: "barbers" })
       .skip((page - 1) * pageSize)
       .limit(pageSize);
     res.status(200).json({
@@ -826,13 +923,13 @@ const updateShops = asynchandler(async (req, res) => {
     if (!shopId) {
       throw Object.assign(new Error("shop id is empty"), {
         statusCode: 400,
-      });;
+      });
     }
 
     if (!updateData) {
       throw Object.assign(new Error("update data is empty"), {
         statusCode: 400,
-      });;
+      });
     }
 
     const shop = await SHOPS.findById(shopId);
@@ -840,7 +937,7 @@ const updateShops = asynchandler(async (req, res) => {
     if (!shop) {
       throw Object.assign(new Error("shop not found"), {
         statusCode: 404,
-      });;
+      });
     }
 
     // Check if the authenticated user is the owner of the shop
@@ -871,11 +968,10 @@ const updateShops = asynchandler(async (req, res) => {
       new: true, // Return the updated shop document
     });
 
-
     if (!updatedShop) {
       throw Object.assign(new Error("error updating shop"), {
         statusCode: 404,
-      });;
+      });
     }
 
     const location = await getLocation(clientIp);
@@ -1095,11 +1191,16 @@ const updateWorkingHours = asynchandler(async (req, res) => {
 const consentToUserAgreement = asynchandler(async (req, res, io) => {
   try {
     const { id } = req.auth;
-    const {shopId}= req.params
+    const { shopId } = req.params;
     if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
-    const shops = await SHOPS.findByIdAndUpdate(shopId)
-    if(id!==shops.owner.toString())throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
-    const user = await SHOPS.findByIdAndUpdate(shopId, { hasConsented: true }, { new: true });
+    const shops = await SHOPS.findByIdAndUpdate(shopId);
+    if (id !== shops.owner.toString())
+      throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
+    const user = await SHOPS.findByIdAndUpdate(
+      shopId,
+      { hasConsented: true },
+      { new: true }
+    );
     if (!user) {
       throw Object.assign(new Error("shop not found"), { statusCode: 404 });
     }
@@ -1112,7 +1213,9 @@ const consentToUserAgreement = asynchandler(async (req, res, io) => {
       `User agreement consent updated by ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
     );
   } catch (error) {
-    throw Object.assign(new Error("Banned from forum"), { statusCode:error.statusCode });
+    throw Object.assign(new Error("Banned from forum"), {
+      statusCode: error.statusCode,
+    });
   }
 });
 
