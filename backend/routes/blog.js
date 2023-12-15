@@ -25,7 +25,7 @@ Router.route("/blogs").get(protect, blogs)
 Router.route("/getblog").get(protect,getallblogsowner)
 
 //access private
-Router.route('/getone').get(protect, getblog)
+Router.route('/getone/:blog_id').get(protect, getblog)
 //access public
 Router.route('/search').get(searchBlogs)
 
