@@ -567,7 +567,6 @@ const getblog = asynchandler(async (req, res) => {
     if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
 
     const blogs = await BLOG.findById(blog_id).populate('owner_id');
-    console.log(blogs);
     let owner = false;
     if (id === blogs.owner_id) {
       owner = true;
