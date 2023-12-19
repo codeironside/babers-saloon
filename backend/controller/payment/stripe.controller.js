@@ -3,11 +3,12 @@ const asynchandler = require("express-async-handler");
 
 const cartPayment = asynchandler(async (req, res) => {
   try {
+    const { id } = req.auth;
     const { cart, stripeEmail, stripeToken } = req.body;
     if (!cart || !stripeEmail || !stripeToken) {
-        throw Object.assign(new Error(`fields can not be empty`), {
-            statusCode: "404"
-          });
+      throw Object.assign(new Error(`fields can not be empty`), {
+        statusCode: "404",
+      });
     }
     const customer = await stripe.customers.create({
       email: stripeEmail,
@@ -26,6 +27,9 @@ const cartPayment = asynchandler(async (req, res) => {
       status: "success",
       message: "Payment successful",
     });
+    logger.info(
+      `User with id: ${id} paid for a product - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+    );
   } catch (error) {
     throw Object.assign(new Error(`${error}`), {
       statusCode: error.statusCode,
@@ -35,6 +39,7 @@ const cartPayment = asynchandler(async (req, res) => {
 
 const bookingPayment = asynchandler(async (req, res) => {
   try {
+    const { id } = req.auth;
     const { booking, stripeEmail, stripeToken } = req.body;
     if (!booking || !stripeEmail || !stripeToken) {
       throw Object.assign(new Error(`fields can not be empty`), {
@@ -58,6 +63,9 @@ const bookingPayment = asynchandler(async (req, res) => {
         status: "success",
         message: "Payment successful",
       });
+      logger.info(
+        `User with id: ${id} paid for a product - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+      );
     }
   } catch (error) {
     throw Object.assign(new Error(`${error}`), {
@@ -68,6 +76,7 @@ const bookingPayment = asynchandler(async (req, res) => {
 
 const contributionPayment = asynchandler(async (req, res) => {
   try {
+    const { id } = req.auth;
     const { contribution, stripeEmail, stripeToken } = req.body;
     if (!contribution || !stripeEmail || !stripeToken) {
       throw Object.assign(new Error(`fields can not be empty`), {
@@ -89,6 +98,9 @@ const contributionPayment = asynchandler(async (req, res) => {
         status: "success",
         message: "Payment successful",
       });
+      logger.info(
+        `User with id: ${id} paid for a product - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+      );
     }
   } catch (error) {
     throw Object.assign(new Error(`${error}`), {
@@ -99,6 +111,7 @@ const contributionPayment = asynchandler(async (req, res) => {
 
 const subscriptionPayment = asynchandler(async (req, res) => {
   try {
+    const { id } = req.auth;
     const { plan, stripeEmail, stripeToken } = req.body;
     if (!plan || !stripeEmail || !stripeToken) {
       throw Object.assign(new Error(`fields can not be empty`), {
@@ -118,6 +131,9 @@ const subscriptionPayment = asynchandler(async (req, res) => {
         status: "success",
         message: "Subscription successful",
       });
+      logger.info(
+        `User with id: ${id} paid for a product - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+      );
     }
   } catch (error) {
     throw Object.assign(new Error(`${error}`), {
@@ -126,9 +142,42 @@ const subscriptionPayment = asynchandler(async (req, res) => {
   }
 });
 
-module.exports ={
-    subscriptionPayment,
-    contributionPayment,
-    cartPayment,
-    bookingPayment 
-}
+const createPaymentIntent = asynchandler(async (req, res) => {
+  try {
+    const { amount, currency, stripeToken } = req.body;
+    const { id } = req.auth;
+    if (!amount || !currency || !stripeToken) {
+      throw Object.assign(new Error(`Fields cannot be empty`), {
+        statusCode: "404",
+      });
+    }
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency,
+      payment_method_types: ["card"],
+      metadata: { userId: id },
+    });
+    if (paymentIntent) {
+      res.status(200).json({
+        status: "success",
+        message: "PaymentIntent created successfully",
+        clientSecret: paymentIntent.client_secret,
+      });
+      logger.info(
+        `User with id: ${id} paid for a product - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+      );
+    }
+  } catch (error) {
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
+  }
+});
+
+module.exports = {
+  subscriptionPayment,
+  contributionPayment,
+  cartPayment,
+  createPaymentIntent,
+  bookingPayment,
+};

@@ -163,7 +163,7 @@ const getallchats = asynchandler(async (req, res, io) => {
       allChats,
     });
     logger.info(
-      `chats fetched by ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
+      `chats fetched by ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
     );
   } catch (error) {
     throw Object.assign(new Error("Banned from forum"), { statusCode:error.statusCode });
