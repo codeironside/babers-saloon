@@ -1,4 +1,4 @@
-const stripe = require("stripe")("your_secret_key");
+const stripe = require("stripe")(process.env.stripe_secret);
 const asynchandler = require("express-async-handler");
 
 const cartPayment = asynchandler(async (req, res) => {
