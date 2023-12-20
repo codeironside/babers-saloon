@@ -53,6 +53,7 @@ const USERS = mongoose.Schema(
     pictureUrl: { type: String },
     bio: { type: String },
     phoneNumber: { type: String },
+    experience: { type: String },
   },
 
 

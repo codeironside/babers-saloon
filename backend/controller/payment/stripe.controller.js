@@ -144,7 +144,7 @@ const subscriptionPayment = asynchandler(async (req, res) => {
 
 const createPaymentIntent = asynchandler(async (req, res) => {
   try {
-    const { amount, currency, stripeToken } = req.body;
+    const { amount, currency } = req.body;
     const { id } = req.auth;
     if (!amount || !currency || !stripeToken) {
       throw Object.assign(new Error(`Fields cannot be empty`), {
