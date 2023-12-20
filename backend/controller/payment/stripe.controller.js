@@ -146,7 +146,7 @@ const createPaymentIntent = asynchandler(async (req, res) => {
   try {
     const { amount, currency } = req.body;
     const { id } = req.auth;
-    if (!amount || !currency || !stripeToken) {
+    if (!amount || !currency) {
       throw Object.assign(new Error(`Fields cannot be empty`), {
         statusCode: "404",
       });
