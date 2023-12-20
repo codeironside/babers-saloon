@@ -482,6 +482,7 @@ const login_shops = asynchandler(async (req, res) => {
 const getshop = asynchandler(async (req, res) => {
   const { id } = req.auth;
   const { SHOP_ID } = req.params;
+  console.log(id)
   if (!id) {
     throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
   }
