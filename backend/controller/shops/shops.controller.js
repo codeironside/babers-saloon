@@ -505,8 +505,7 @@ const getshop = asynchandler(async (req, res) => {
       owner = true;
       if (shop) {
         res.status(200).header("Authorization", `Bearer ${token}`).json({
-          data: shop,
-          owner: owner,
+          ...shop._doc,owner,
         });
         logger.info(
           `User with id ${id} logged in a shop with id: ${SHOP_ID} at ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
