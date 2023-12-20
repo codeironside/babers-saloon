@@ -19,7 +19,7 @@ Router.route('/updateS/:shopId').put(protect, updateShops)
 //access private
 Router.route('/getallone').get(protect, getallshopone)
 //access private for users and shop owners
-Router.route('/getone/:SHOP_ID').get(protect,getshop)
+Router.route('/getone/:SHOP_ID').get(protect, getshop)
 
 
 //access private

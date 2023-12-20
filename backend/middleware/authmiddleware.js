@@ -20,7 +20,7 @@ const protect = asyncHandler(async (req, res, next) => {
       const timeElapsedInSeconds = currentTimeInSeconds - decoded.iat;
 
       // Check if more than 12 hours (12 hours * 60 minutes * 60 seconds)
-      if (timeElapsedInSeconds > 12 * 60 * 60) {
+      if (timeElapsedInSeconds > 48 * 60 * 60) {
         throw Object.assign(new Error("Session expired"), { statusCode: 401 });
 ;
       }
