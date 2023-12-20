@@ -490,7 +490,7 @@ const getshop = asynchandler(async (req, res) => {
     throw Object.assign(new Error("No shops found"), { statusCode: 404 });
   }
   try {
-    const shop = await SHOPS.findById(SHOP_ID);
+    const shop = await SHOPS.findById(SHOP_ID).populate('owner');
     // Get the current time
     const now = new Date();
     const hours = now.getHours();
@@ -505,7 +505,7 @@ const getshop = asynchandler(async (req, res) => {
       owner = true;
       if (shop) {
         res.status(200).header("Authorization", `Bearer ${token}`).json({
-          ...shop._doc,owner,
+          ...shop._doc,
         });
         logger.info(
           `User with id ${id} logged in a shop with id: ${SHOP_ID} at ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
