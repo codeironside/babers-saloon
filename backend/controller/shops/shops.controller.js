@@ -491,6 +491,7 @@ const getshop = asynchandler(async (req, res) => {
   }
   try {
     const shop = await SHOPS.findById(SHOP_ID).populate('owner');
+    const whours=await working_hours.findOne({owner : shop._id})
     // Get the current time
     const now = new Date();
     const hours = now.getHours();
@@ -505,7 +506,7 @@ const getshop = asynchandler(async (req, res) => {
       owner = true;
       if (shop) {
         res.status(200).header("Authorization", `Bearer ${token}`).json({
-          ...shop._doc,
+          ...shop._doc,whours
         });
         logger.info(
           `User with id ${id} logged in a shop with id: ${SHOP_ID} at ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
@@ -515,8 +516,7 @@ const getshop = asynchandler(async (req, res) => {
       const token = generateToken(shop._id);
       if (shop) {
         res.status(200).header("Authorization", `Bearer ${token}`).json({
-          data: shop,
-          owner: owner,
+          ...shop._doc,whours
         });
         logger.info(
           `User with id ${id} logged in a shop with id: ${SHOP_ID} at ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`

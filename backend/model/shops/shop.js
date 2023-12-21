@@ -85,6 +85,14 @@ const SHOPS = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    qualification: {
+      type: String,
+      default: false,
+    },
+    experience: {
+      type: String,
+      default: false,
+    },
   },
   {
     timestamps: true,
