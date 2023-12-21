@@ -153,10 +153,13 @@ const createPaymentIntent = asynchandler(async (req, res) => {
         statusCode: "404",
       });
     }
+    // payment_method_types: ["card"],
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency,
-      payment_method_types: ["card"],
+     automatic_payment_methods:{
+      enabled:true
+     },
       metadata: { userId: id },
     });
     if (paymentIntent) {
