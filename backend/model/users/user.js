@@ -54,6 +54,9 @@ const USERS = mongoose.Schema(
     bio: { type: String },
     phoneNumber: { type: String },
     experience: { type: String },
+    youtube: { type: String },
+    linkedln: { type: String },
+    instagram: { type: String },
   },
 
 
