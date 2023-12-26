@@ -108,7 +108,7 @@ const create_shops = asynchandler(async (req, res) => {
     // Set the maximum allowed shops based on the user's subscription type
     switch (user.type) {
       case "basic":
-        maxAllowedShops = 5;
+        maxAllowedShops = 3;
         break;
       case "premium":
         maxAllowedShops = 15;
@@ -256,11 +256,11 @@ const create_shops = asynchandler(async (req, res) => {
         newWorkingHours = await working_hours.create(workingHoursData);
 
         // Update user role
-        const updatedUser = await USER.findByIdAndUpdate(
-          id,
-          { $set: { role: "SHOP_OWNER" } },
-          { new: true }
-        );
+        // const updatedUser = await USER.findByIdAndUpdate(
+        //   id,
+        //   { $set: { role: "SHOP_OWNER" } },
+        //   { new: true }
+        // );
 
         if (createShops && updatedUser) {
           res.status(200).json({
