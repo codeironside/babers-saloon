@@ -13,7 +13,7 @@ Router.route("/getone/:vendorId").get(protect,getAllCartsForVendor)
 Router.route("/user").get(protect,getAllcartsForuser)
 
 //access private
-Router.route('/updatebooking/:cartId').put(protect, updateCart)
+Router.route('/updatebooking/:cart_id').put(protect, updateCart)
 //access private
 Router.route('/confirm-delivery/:cartId').put(protect, confirmDelivery);
 

@@ -9,12 +9,12 @@ const cartSchema = new mongoose.Schema(
     },
     user_name: {
       type: String,
-      required: [true,'please add a user name'],
+      required: [true, "please add a user name"],
     },
     delivered: {
       type: Boolean,
-      required: [true,'please specify if product has been delivered'],
-      default:false
+      required: [true, "please specify if product has been delivered"],
+      default: false,
     },
     items: [
       {
@@ -24,6 +24,10 @@ const cartSchema = new mongoose.Schema(
           required: true,
         },
         product_name: {
+          type: String,
+          required: true,
+        },
+        image: {
           type: String,
           required: true,
         },
