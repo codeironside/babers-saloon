@@ -143,7 +143,7 @@ const updateSubscriptionPlan = asynchandler(async (req, res) => {
     const { id } = req.auth; // Get the user ID from the request
     const { plan, type, status, amount, paymentMethod, billingAddress } =
       req.body;
-    const { planId } = req.params; // Get the subscription plan ID from the request parameters
+    //const { planId } = req.params; // Get the subscription plan ID from the request parameters
 
     const user = await USER.findById(id);
     if (!user)
