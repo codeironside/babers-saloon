@@ -563,7 +563,7 @@ const getUser = asynchandler(async (req, res) => {
     const { user_id } = req.body;
     const user = await USER.findById(user_id);
     const admin = await USER.findById(d);
-    if (admin.role === "superadmin" || process.env.role === "superadmin") {
+    if (admin.role === "superadmin") {
       owner = true;
       if (!user) {
         throw Object.assign(new Error("user Not authorized"), {
