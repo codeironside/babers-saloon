@@ -12,7 +12,7 @@ Router.route("/getone").get(protect,getAllUsersSubscription)
 
 
 //access private
-Router.route('/updateplan/:planId').put(protect, updateSubscriptionPlan)
+Router.route('/updateplan').put(protect, updateSubscriptionPlan)
 //access private
 
 module.exports= Router
