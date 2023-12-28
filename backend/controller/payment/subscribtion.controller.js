@@ -201,16 +201,17 @@ const updateSubscriptionPlan = asynchandler(async (req, res) => {
       },
       { new: true }
     );
+    const update = await USER.findByIdAndUpdate(id, {
+      $set: { subscribed: true, type: type },
+    });
     const token = generateToken(id);
     if (updateShops.nModified === 0) {
       return res.status(200).header("Authorization", `Bearer ${token}`).json({
-        status: "success",
         message: newSubscription,
       });
     }
 
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      status: "success",
       data: updatedSubscription,
     });
 
