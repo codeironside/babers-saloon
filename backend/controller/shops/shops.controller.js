@@ -202,7 +202,7 @@ const create_shops = asynchandler(async (req, res) => {
         twitter,
         whatsapp,
         instagram,
-        servicesOffered: services.split(","),
+        servicesOffered: services,
         minimum_price,
         maximum_price,
         instant_booking,

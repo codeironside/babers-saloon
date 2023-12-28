@@ -76,7 +76,7 @@ const SHOPS = new mongoose.Schema(
     },
 
     servicesOffered: {
-      type: [String], // Array of services offered
+      type: String, // Array of services offered
     },
     subscriptionType: {
       type: String,
