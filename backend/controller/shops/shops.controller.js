@@ -147,6 +147,7 @@ const create_shops = asynchandler(async (req, res) => {
       longitude,
       images,
       facebook,
+      price,
       description,
       website,
       twitter,
@@ -183,7 +184,7 @@ const create_shops = asynchandler(async (req, res) => {
     // const image = result.secure_url;
 
     // Create shop with Cloudinary image URL
-    if (services) {
+    if (category==="barbers") {
       const createShops = await SHOPS.create({
         owner: id,
         shop_name,
@@ -197,6 +198,7 @@ const create_shops = asynchandler(async (req, res) => {
         facebook,
         description,
         website,
+        price: Number(price),
         twitter,
         whatsapp,
         instagram,
@@ -292,6 +294,7 @@ const create_shops = asynchandler(async (req, res) => {
         website,
         twitter,
         whatsapp,
+        price: Number(price),
         instagram,
         minimum_price,
         maximum_price,
