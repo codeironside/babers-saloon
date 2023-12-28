@@ -151,8 +151,7 @@ const updateSubscriptionPlan = asynchandler(async (req, res) => {
     const subscription = await Subscription.findById(planId);
     if (
       !subscription ||
-      subscription.user_id.toString() !== id.toString() ||
-      process.env.role.toString() !== "superadmin"
+      subscription.user_id.toString() !== id.toString()
     ) {
       throw Object.assign(new Error("who goes you"), { statusCode: 403 });
     }
