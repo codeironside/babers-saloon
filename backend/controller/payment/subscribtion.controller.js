@@ -148,7 +148,7 @@ const updateSubscriptionPlan = asynchandler(async (req, res) => {
     const user = await USER.findById(id);
     if (!user)
       throw Object.assign(new Error("user not found"), { statusCode: 404 });
-    const subscription = await Subscription.findById(planId);
+    const subscription = await Subscription.findOne({user_id:id});
     if (
       !subscription ||
       subscription.user_id.toString() !== id.toString()
