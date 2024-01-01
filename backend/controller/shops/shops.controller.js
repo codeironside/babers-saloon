@@ -411,7 +411,7 @@ const create_shops = asynchandler(async (req, res) => {
  *     }
  */
 const login_shops = asynchandler(async (req, res) => {
-  const { SHOP_ID } = req.body;
+  const { SHOP_ID } = req.params;
   if (!SHOP_ID) {
     throw Object.assign(new Error("No shops found"), { statusCode: 404 });
   }
@@ -691,7 +691,7 @@ const getall = asynchandler(async (req, res) => {
     });
 
     res.status(200).json({
-      data: shops,
+      shops,
     });
 
     logger.info(

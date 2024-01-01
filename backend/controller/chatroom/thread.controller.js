@@ -284,6 +284,14 @@ const deletethread = asynchandler(async (req, res) => {
 ;
   }
 });
+
+
+
+
+
+
+
+
 const getThreadWithComments =asynchandler( async (req, res) => {
   try {
     const { threadId } = req.params;

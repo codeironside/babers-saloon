@@ -10,7 +10,7 @@ Router.route("/getall").get(protect,getallshops)
 //ccess public
 Router.route("/all").get(getall)
 //acess private for a guesst
-Router.route('/login').get(login_shops)
+Router.route('/login/:SHOP_ID').get(login_shops)
 //access public
 Router.route('/search').get(searchShops)
 
