@@ -427,8 +427,7 @@ const login_shops = asynchandler(async (req, res) => {
     const currentTime = `${hours}:${minutes}:${seconds}`;
     if (shop) {
       res.status(200).json({
-        successful: true,
-        data: shop,
+   shop,
       });
       logger.info(
         `shop with id ${SHOP_ID} was fetched at ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
