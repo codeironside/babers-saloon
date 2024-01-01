@@ -840,7 +840,7 @@ const getallshopone = asynchandler(async (req, res) => {
     );
   } catch (error) {
     console.log(error);
-    throw Object.assign(new Error("Not authorized"), {
+    throw Object.assign(new Error(`$(error)`), {
       statusCode: error.statusCode,
     });
   }

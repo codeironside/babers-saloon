@@ -1,22 +1,26 @@
 const mongoose = require("mongoose");
 
-const thread = new mongoose.Schema(
+const reply = new mongoose.Schema(
   {
     owner_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "USER",
       required: [true, "please add a owner id"],
     },
-    chatId: {
+    threadId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CHAT",
       required: [true, "please add a owner id"],
     },
-    owner_name: { type: String, required: [true, "please add a owner name"] },
+    userName: { type: String, required: [true, "please add a owner name"] },
  
     content: {
       type: String,
       required: [true, "please add a comment"],
+    },
+    image:{
+      type :String,
+      required:[true,'please add a owner name'],
     },
   },
   {
@@ -24,4 +28,4 @@ const thread = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("THREAD", thread);
+module.exports = mongoose.model("reply", reply);

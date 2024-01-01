@@ -1,27 +1,26 @@
 const mongoose = require("mongoose");
-const CHAT = mongoose.Schema(
+const thread = mongoose.Schema(
   {
-    chat: {
+    thread: {
       type: String,
       required:[true,'please add a message'],
      
     },
-    // topic: {
-    //   type: String,
-    //   required:[true,'please add a message'],
-     
-    // },
-    // category: {
-    //   type: String,
-    //   required:[true,'please add a message'],
-     
-    // },
-    images: {
+    topic: {
       type: String,
+      required:[true,'please add a topic'],
      
     },
-    
-    chat_owner:{
+    category: {
+      type: String,
+      required:[true,'please add a category'],
+     
+    },
+    // images: {
+    //   type: String,
+     
+    // },
+    thread_owner:{
       type :mongoose.Schema.Types.ObjectId,
       required:[true,'please add an owner id'],
       ref:'USER'
@@ -29,6 +28,9 @@ const CHAT = mongoose.Schema(
     userName:{
       type :String,
       required:[true,'please add a owner name'],
+    },
+    image:{
+      type :String,
     },
 
 
@@ -38,4 +40,4 @@ const CHAT = mongoose.Schema(
     timestamps: true,
   }
 );
-module.exports = mongoose.model("CHAT",CHAT );
+module.exports = mongoose.model("thread",thread );
