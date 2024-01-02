@@ -157,27 +157,13 @@ const create_shops = asynchandler(async (req, res) => {
       maximum_price,
       instant_booking,
       category,
-      monday_morning_hours,
-      monday_afternoon_hours,
-      monday_evening_hours,
-      tuesday_morning_hours,
-      tuesday_afternoon_hours,
-      tuesday_evening_hours,
-      wednesday_morning_hours,
-      wednesday_afternoon_hours,
-      wednesday_evening_hours,
-      thursday_morning_hours,
-      thursday_afternoon_hours,
-      thursday_evening_hours,
-      friday_morning_hours,
-      friday_afternoon_hours,
-      friday_evening_hours,
-      saturday_morning_hours,
-      saturday_afternoon_hours,
-      saturday_evening_hours,
-      sunday_morning_hours,
-      sunday_afternoon_hours,
-      sunday_evening_hours,
+      monday,
+      tuesday,
+      wednesday,
+      thursday,
+      friday,
+      saturday,
+      sunday,
     } = req.body;
 
     // Use the uploaded image URL from Cloudinary
@@ -217,41 +203,13 @@ const create_shops = asynchandler(async (req, res) => {
         const workingHoursData = {
           shopId: createShops._id,
           hours: {
-            monday: {
-              morning: monday_morning_hours,
-              afternoon: monday_afternoon_hours,
-              evening: monday_evening_hours,
-            },
-            tuesday: {
-              morning: tuesday_morning_hours,
-              afternoon: tuesday_afternoon_hours,
-              evening: tuesday_evening_hours,
-            },
-            wednesday: {
-              morning: wednesday_morning_hours,
-              afternoon: wednesday_afternoon_hours,
-              evening: wednesday_evening_hours,
-            },
-            thursday: {
-              morning: thursday_morning_hours,
-              afternoon: thursday_afternoon_hours,
-              evening: thursday_evening_hours,
-            },
-            friday: {
-              morning: friday_morning_hours,
-              afternoon: friday_afternoon_hours,
-              evening: friday_evening_hours,
-            },
-            saturday: {
-              morning: saturday_morning_hours,
-              afternoon: saturday_afternoon_hours,
-              evening: saturday_evening_hours,
-            },
-            sunday: {
-              morning: sunday_morning_hours,
-              afternoon: sunday_afternoon_hours,
-              evening: sunday_evening_hours,
-            },
+            Monday: monday,
+            Tuesday: tuesday,
+            Wednesday: wednesday,
+            Thursday: thursday,
+            Friday: friday,
+            Saturday: saturday,
+            Sunday: sunday,
           },
         };
 
