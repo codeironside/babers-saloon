@@ -165,6 +165,23 @@ const create_shops = asynchandler(async (req, res) => {
       saturday,
       sunday,
     } = req.body;
+    if (!monday || typeof monday !== 'string') {
+      throw Object.assign(
+        new Error(
+          `Monday working hours should be a string`
+        ),
+        { statusCode: 400 })
+    }
+    // const { monday, tuesday, wednesday, thursday, friday, saturday, sunday } = req.body;
+
+    const MtimeSlotsArray = monday ? monday.split(',').map(slot => slot.trim()) : [];
+    const TtimeSlotsArray = tuesday ? tuesday.split(',').map(slot => slot.trim()) : [];
+    const WtimeSlotsArray = wednesday ? wednesday.split(',').map(slot => slot.trim()) : [];
+    const THtimeSlotsArray = thursday ? thursday.split(',').map(slot => slot.trim()) : [];
+    const FtimeSlotsArray = friday ? friday.split(',').map(slot => slot.trim()) : [];
+    const StimeSlotsArray = saturday ? saturday.split(',').map(slot => slot.trim()) : [];
+    const SUtimeSlotsArray = sunday ? sunday.split(',').map(slot => slot.trim()) : [];
+    
 
     // Use the uploaded image URL from Cloudinary
     // const image = result.secure_url;
@@ -203,13 +220,13 @@ const create_shops = asynchandler(async (req, res) => {
         const workingHoursData = {
           shopId: createShops._id,
           hours: {
-            Monday: monday,
-            Tuesday: tuesday,
-            Wednesday: wednesday,
-            Thursday: thursday,
-            Friday: friday,
-            Saturday: saturday,
-            Sunday: sunday,
+            Monday: MtimeSlotsArray,
+            Tuesday: TtimeSlotsArray,
+            Wednesday: WtimeSlotsArray,
+            Thursday: THtimeSlotsArray,
+            Friday: FtimeSlotsArray,
+            Saturday: StimeSlotsArray,
+            Sunday: SUtimeSlotsArray,
           },
         };
 
@@ -222,13 +239,10 @@ const create_shops = asynchandler(async (req, res) => {
         //   { new: true }
         // );
 
-        if (createShops && updatedUser) {
+        if (createShops && newWorkingHours) {
           res.status(200).json({
-            data: {
-              shop: createShops,
-              workingHours: newWorkingHours,
-            },
-            SHOP_ID: createShops._id,
+           createShops,newWorkingHours,
+            
           });
 
           logger.info(
