@@ -11,7 +11,7 @@ const {
 } = require("../controller/payment/booking.contoller");
 
 //access private
-Router.route("/create").post(protect, makebooking);
+Router.route("/create/:shop_id ").post(protect, makebooking);
 //ccess privare
 Router.route("/getall").get(protect, getAllBookingsForAdmins);
 //ccess private
