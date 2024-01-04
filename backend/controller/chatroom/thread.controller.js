@@ -154,7 +154,6 @@ const getallthread = asynchandler(async (req, res, io) => {
     const { id } = req.auth;
     if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
     const name = await users.findById(id); // Assuming
-    console.log(name)
     if (name.banned_from_forum) {
       throw Object.assign(new Error("Banned from forum"), { statusCode: 403 });
     }

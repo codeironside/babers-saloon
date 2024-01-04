@@ -901,7 +901,7 @@ const updateShops = asynchandler(async (req, res) => {
     }
 
     if (!updateData) {
-      throw Object.assign(new Error("update data is empty"), {
+      throw Object.assign(new Error("update data is em pty"), {
         statusCode: 400,
       });
     }
@@ -960,7 +960,7 @@ const updateShops = asynchandler(async (req, res) => {
     });
 
     logger.info(
-      `User with id ${id} updated shop with id: ${shopId} at ${updatedShop.updatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+      `User with id ${id} updated shop with id: ${shopId} at ${updatedShop.updatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
     );
   } catch (error) {
     throw Object.assign(new Error(`${error}`), {
@@ -1047,28 +1047,19 @@ const updateShops = asynchandler(async (req, res) => {
  *       "error": "ErrorUpdatingHours"
  *     }
  */
-const updateWorkingHours = asynchandler(async (req, res) => {
-  const { shopId } = req.params; // Get the working hours ID from the route parameters
-  const {
-    monday_opening_hours,
-    monday_closing_hours,
-    tuesday_opening_hours,
-    tuesday_closing_hours,
-    wednesday_opening_hours,
-    wednesday_closing_hours,
-    thursday_opening_hours,
-    thursday_closing_hours,
-    friday_opening_hours,
-    friday_closing_hours,
-    saturday_opening_hours,
-    saturday_closing_hours,
-    sunday_opening_hours,
-    sunday_closing_hours,
-  } = req.body; // Get the updated data from the request body
-  const clientIp = req.ip;
-  const { id } = req.auth;
-
+const updateWorkingHours =asynchandler( async (req, res) => {
   try {
+    const { shopId } = req.params;
+    const {
+      monday,
+      tuesday,
+      wednesday,
+      thursday,
+      friday,
+      saturday,
+      sunday,
+    } = req.body;
+
     if (!shopId) {
       throw Object.assign(new Error("Working hours ID is empty"), {
         statusCode: 400,
@@ -1076,7 +1067,7 @@ const updateWorkingHours = asynchandler(async (req, res) => {
     }
 
     if (!req.body) {
-      throw Object.assign(new Error("Required fields can not be empty"), {
+      throw Object.assign(new Error("Required fields cannot be empty"), {
         statusCode: 400,
       });
     }
@@ -1084,84 +1075,56 @@ const updateWorkingHours = asynchandler(async (req, res) => {
     const workingHours = await working_hours.findOne({ shopId: shopId });
 
     if (!workingHours) {
-      throw Object.assign(new Error("working hours not found"), {
+      throw Object.assign(new Error("Working hours not found"), {
         statusCode: 404,
       });
     }
-    // Check if the authenticated user is the owner of the associated shop
-    const shop = await SHOPS.findById(shopId);
-    if (
-      !(
-        shop.owner.toString() === id ||
-        process.env.role.toString() === "superadmin"
-      )
-    ) {
-      throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
-    }
+
     const workingHoursData = {
-      shopId: shop._id,
+      shopId: shopId,
       hours: {
-        monday: {
-          opening: monday_opening_hours,
-          closing: monday_closing_hours,
-        },
-        tuesday: {
-          opening: tuesday_opening_hours,
-          closing: tuesday_closing_hours,
-        },
-        wednesday: {
-          opening: wednesday_opening_hours,
-          closing: wednesday_closing_hours,
-        },
-        thursday: {
-          opening: thursday_opening_hours,
-          closing: thursday_closing_hours,
-        },
-        friday: {
-          opening: friday_opening_hours,
-          closing: friday_closing_hours,
-        },
-        saturday: {
-          opening: saturday_opening_hours,
-          closing: saturday_closing_hours,
-        },
-        sunday: {
-          opening: sunday_opening_hours,
-          closing: sunday_closing_hours,
-        },
+        Monday: monday ? monday.split(',').map(slot => slot.trim()) : [],
+        Tuesday: tuesday ? tuesday.split(',').map(slot => slot.trim()) : [],
+        Wednesday: wednesday ? wednesday.split(',').map(slot => slot.trim()) : [],
+        Thursday: thursday ? thursday.split(',').map(slot => slot.trim()) : [],
+        Friday: friday ? friday.split(',').map(slot => slot.trim()) : [],
+        Saturday: saturday ? saturday.split(',').map(slot => slot.trim()) : [],
+        Sunday: sunday ? sunday.split(',').map(slot => slot.trim()) : [],
       },
     };
-    const updatedWorkingHours = await working_hours.findByIdAndUpdate(
-      workingHours._id,
+
+    const updatedWorkingHours = await working_hours.findOneAndUpdate(
+      { shopId: shopId },
       workingHoursData,
       {
-        new: true, // Return the updated working hours document
+        new: true,
+        upsert: true,
       }
     );
 
     if (!updatedWorkingHours) {
-      throw Object.assign(new Error("Error updating hours"), {
+      throw Object.assign(new Error("Error updating working hours"), {
         statusCode: 500,
       });
     }
 
-    const location = await getLocation(clientIp);
-    const token = generateToken(id);
-    res.status(202).header("Authorization", `Bearer ${token}`).json({
-      successful: true,
-      data: updatedWorkingHours,
+    res.status(200).json({
+  updatedWorkingHours,
     });
 
     logger.info(
-      `User with id ${id} updated working hours with id: ${shopId} at ${updatedWorkingHours.updatedAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${location}`
+      `Updated working hours for shop ID ${shopId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
     );
   } catch (error) {
     console.error(error);
     throw Object.assign(new Error(`${error}`), {
-      statusCode: error.statusCode,
+      statusCode: error.statusCode || 500,
     });
   }
 });
+
+
+
 const consentToUserAgreement = asynchandler(async (req, res, io) => {
   try {
     const { id } = req.auth;
@@ -1192,6 +1155,52 @@ const consentToUserAgreement = asynchandler(async (req, res, io) => {
     });
   }
 });
+const deleteShop = asynchandler( async (req, res) => {
+  const { shopId } = req.params;
+  const { id } = req.auth;
+
+  try {
+    if (!shopId) {
+      throw Object.assign(new Error("Shop ID is empty"), {
+        statusCode: 400,
+      });
+    }
+
+    const shop = await SHOPS.findById(shopId);
+    if (!shop) {
+      throw Object.assign(new Error("Shop not found"), {
+        statusCode: 404,
+      });
+    }
+
+    if (!(shop.owner.toString() === id || process.env.role.toString() === "superadmin")) {
+      throw Object.assign(new Error("Not authorized"), {
+        statusCode: 403,
+      });
+    }
+
+    const deletedShop = await SHOPS.findByIdAndDelete(shopId);
+
+    if (!deletedShop) {
+      throw Object.assign(new Error("Error deleting shop"), {
+        statusCode: 500,
+      });
+    }
+
+    // Delete associated working hours or other related data if needed
+    // ...
+
+    res.status(200).json({
+      success: true,
+      message: "Shop deleted successfully",
+    });
+
+    logger.info(`User with id ${id} deleted shop with id: ${shopId} at ${new Date()} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`);
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ error: error.message });
+  }
+}
+);
 
 const getLocation = asynchandler(async (ip) => {
   try {
@@ -1607,6 +1616,7 @@ module.exports = {
   searchShops,
   getshop,
   getall,
+  deleteShop,
   updateavalability,
   consentToUserAgreement,
   updateServices,
