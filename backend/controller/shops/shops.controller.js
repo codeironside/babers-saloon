@@ -465,7 +465,7 @@ const getshop = asynchandler(async (req, res) => {
   }
   try {
     const shop = await SHOPS.findById(SHOP_ID).populate('owner');
-    const whours=await working_hours.findOne({owner : shop._id})
+    const whours=await working_hours.findOne({shopId: shop._id})
     // Get the current time
     const now = new Date();
     const hours = now.getHours();
