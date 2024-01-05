@@ -234,10 +234,9 @@ const getAllcartsForuser = asynchandler(async (req, res) => {
     const { id } = req.auth;
     const user = await USER.findById(id);
     if (
-      id !== user._id.toString() ||
-      process.env.role.toString() !== "superadmin"
+      id !== user._id.toString()
     )
-      throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
+      throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
     let carts = await cart.find({ user: id }).populate({
       path: "items.product",
       model: "SHOPS",
@@ -246,7 +245,7 @@ const getAllcartsForuser = asynchandler(async (req, res) => {
         model: "USER",
         select: "firstName email number address",
       },
-      select: "shop_name contact_email shop_address contact_number",
+      select: "shop_name contact_email shop_address images contact_number",
     });
 
     const token = generateToken(id);
