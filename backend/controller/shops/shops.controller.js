@@ -274,74 +274,18 @@ const create_shops = asynchandler(async (req, res) => {
         category,
         subscriptionType: user.type,
       });
-
       if (createShops) {
-        let newWorkingHours;
-
-        // Creating working hours for the shop
-        const workingHoursData = {
-          shopId: createShops._id,
-          hours: {
-            monday: {
-              morning: monday_morning_hours,
-              afternoon: monday_afternoon_hours,
-              evening: monday_evening_hours,
-            },
-            tuesday: {
-              morning: tuesday_morning_hours,
-              afternoon: tuesday_afternoon_hours,
-              evening: tuesday_evening_hours,
-            },
-            wednesday: {
-              morning: wednesday_morning_hours,
-              afternoon: wednesday_afternoon_hours,
-              evening: wednesday_evening_hours,
-            },
-            thursday: {
-              morning: thursday_morning_hours,
-              afternoon: thursday_afternoon_hours,
-              evening: thursday_evening_hours,
-            },
-            friday: {
-              morning: friday_morning_hours,
-              afternoon: friday_afternoon_hours,
-              evening: friday_evening_hours,
-            },
-            saturday: {
-              morning: saturday_morning_hours,
-              afternoon: saturday_afternoon_hours,
-              evening: saturday_evening_hours,
-            },
-            sunday: {
-              morning: sunday_morning_hours,
-              afternoon: sunday_afternoon_hours,
-              evening: sunday_evening_hours,
-            },
+        res.status(200).json({
+          data: {
+            shop: createShops,
+            workingHours: newWorkingHours,
           },
-        };
+          SHOP_ID: createShops._id,
+        });
 
-        newWorkingHours = await working_hours.create(workingHoursData);
-
-        // Update user role
-        const updatedUser = await USER.findByIdAndUpdate(
-          id,
-          { $set: { role: "SHOP_OWNER" } },
-          { new: true }
+        logger.info(
+          `User with id ${id} created a shop with id: ${createShops._id} at ${createShops.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
         );
-
-        if (createShops && updatedUser) {
-          res.status(200).json({
-            data: {
-              shop: createShops,
-              workingHours: newWorkingHours,
-            },
-            SHOP_ID: createShops._id,
-          });
-
-          logger.info(
-            `User with id ${id} created a shop with id: ${createShops._id} at ${createShops.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
-          );
-        }
       }
     }
   } catch (error) {
