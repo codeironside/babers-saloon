@@ -1173,7 +1173,7 @@ const deleteShop = asynchandler( async (req, res) => {
       });
     }
 
-    if (!(shop.owner.toString() === id || process.env.role.toString() === "superadmin")) {
+    if (!(shop.owner.toString() === id)) {
       throw Object.assign(new Error("Not authorized"), {
         statusCode: 403,
       });
@@ -1192,12 +1192,13 @@ const deleteShop = asynchandler( async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Shop deleted successfully",
     });
 
     logger.info(`User with id ${id} deleted shop with id: ${shopId} at ${new Date()} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`);
   } catch (error) {
-    res.status(error.statusCode || 500).json({ error: error.message });
+    throw Object.assign(new Error("Banned from forum"), {
+      statusCode: error.statusCode,
+    })
   }
 }
 );
