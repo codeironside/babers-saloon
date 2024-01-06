@@ -294,6 +294,53 @@ const confirmDelivery = asynchandler(async (req, res) => {
     });
   }
 });
+const getOneCart = asynchandler(async (req, res) => {
+  try {
+    const { cartId } = req.params;
+    const { id } = req.auth;
+
+    // Fetch the user
+    const user = await USER.findById(id);
+    if (!user) {
+      throw Object.assign(new Error("User not found"), { statusCode: 404 });
+    }
+
+    // Find the cart by ID
+    const foundCart = await cart.findById(cartId)
+      .populate({
+        path: "items.product",
+        model: "SHOPS",
+      })
+      .populate({
+        path: "user",
+        model: "USER",
+        select: "firstName userName email number",
+      });
+
+    // Check if the cart belongs to the user or if the user is an admin/superadmin
+    if (
+      !foundCart ||
+      (id !== foundCart.user.toString())
+    ) {
+      throw Object.assign(new Error("Not authorized to view this cart"), { statusCode: 401 });
+    }
+
+    const token = generateToken(id);
+
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+     foundCart,
+    });
+
+    logger.info(
+      `Cart retrieved for user with ID: ${id} - Cart ID: ${cartId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+    );
+  } catch (error) {
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode || 500,
+    });
+  }
+});
+
 
 const getLocation = asynchandler(async (ip) => {
   try {
@@ -332,4 +379,5 @@ module.exports = {
   getAllCartsForVendor,
   getAllcartsForuser,
   confirmDelivery,
+  getOneCart,
 };
