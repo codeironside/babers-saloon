@@ -70,12 +70,15 @@ const updateCart = asynchandler(async (req, res) => {
     let { items } = req.body;
     let { cart_id } = req.params;
     const user = await USER.findById(id);
+    
     if (!user) {
-      throw Object.assign(new Error("user not found"), { statusCode: 404 });
+      throw Object.assign(new Error("User not found"), { statusCode: 404 });
     }
+
     if (typeof items === "string") {
       items = JSON.parse(items);
     }
+
     if (!items || !Array.isArray(items)) {
       throw Object.assign(new Error("Invalid items format"), {
         statusCode: 400,
@@ -83,79 +86,90 @@ const updateCart = asynchandler(async (req, res) => {
     }
 
     const userCart = await cart.findById(cart_id);
-    const existingItems = userCart ? userCart.items : [];
 
-    // Iterate through the items in the request
-    for (const item of items) {
-      const { shop_id, quantity } = item;
+    if (userCart && userCart.paid === false) {
+      let existingItems = userCart.items;
 
-      // Check if the shop exists
-      const shop = await SHOPS.findById(shop_id);
-      if (!shop) {
-        throw Object.assign(new Error("shop not found"), { statusCode: 404 });
+      for (const item of items) {
+        const { shop_id, quantity } = item;
+
+        const shop = await SHOPS.findById(shop_id);
+        if (!shop) {
+          throw Object.assign(new Error("Shop not found"), { statusCode: 404 });
+        }
+
+        const existingProductIndex = existingItems.findIndex(
+          (existingItem) => existingItem.product.toString() === shop_id
+        );
+
+        if (existingProductIndex !== -1) {
+          existingItems[existingProductIndex].quantity += quantity;
+          existingItems[existingProductIndex].amount += quantity * shop.price;
+        } else {
+          existingItems.push({
+            product: shop_id,
+            product_name: shop.shop_name,
+            quantity,
+            amount: quantity * shop.price,
+            image: shop.images,
+          });
+        }
       }
 
-      // Check if the product already exists in the user's cart
-      const existingProductIndex = existingItems.findIndex(
-        (existingItem) => existingItem.product.toString() === shop_id
+      const totalAmount = existingItems.reduce(
+        (total, item) => total + item.amount,
+        0
       );
 
-      if (existingProductIndex !== -1) {
-        // If the product exists, update quantity and amount
-        existingItems[existingProductIndex].quantity += quantity;
-        existingItems[existingProductIndex].amount += quantity * shop.price;
-      } else {
-        // If the product doesn't exist, add it to the user's cart
-        existingItems.push({
-          product: shop_id,
-          product_name: shop.shop_name,
-          quantity,
-          amount: quantity * shop.price,
-          image: shop.images,
-        });
-      }
-    }
-
-    // Calculate the total amount for the user's cart
-    const totalAmount = existingItems.reduce(
-      (total, item) => total + item.amount,
-      0
-    );
-
-    // Update the user's cart with the modified items and totalAmount
-    if (userCart) {
       userCart.items = existingItems;
       userCart.totalAmount = totalAmount;
       await userCart.save();
+
+      const token = generateToken(id);
+      res
+        .status(200)
+        .header("Authorization", `Bearer ${token}`)
+        .json({
+          updatedCart: userCart,
+        });
+
+      logger.info(
+        `Cart updated for user with ID: ${id} - Cart ID: ${cart_id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+      );
     } else {
-      // Create a new cart for the user if it doesn't exist
       const newCart = new cart({
         user: id,
         user_name: user.userName,
-        items: existingItems,
-        totalAmount,
-        image: shop.images,
+        items: items.map(item => ({
+          product: item.shop_id,
+          quantity: item.quantity,
+          // You may need to fetch shop details from DB to set other item properties like amount, product_name, image, etc.
+        })),
+        // You may need to calculate the totalAmount for the new cart based on the items added
       });
       await newCart.save();
-    }
-    const token = generateToken(id);
-    res
-      .status(200)
-      .header("Authorization", `Bearer ${token}`)
-      .json({
-        updatedCart: userCart || newCart,
-      });
 
-    // Log your info here if needed
-    logger.info(
-      `user with id: ${id} updated his cart ${userCart._id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
-    );
+      const token = generateToken(id);
+      res
+        .status(201)
+        .header("Authorization", `Bearer ${token}`)
+        .json({
+          newCart,
+        });
+
+      logger.info(
+        `New cart created for user with ID: ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+      );
+    }
   } catch (error) {
     throw Object.assign(new Error(`${error}`), {
-      statusCode: error.statusCode,
+      statusCode: error.statusCode || 500,
     });
   }
 });
+
+
+
 
 // Controller to get all cart for admins
 const getAllcartForAdmins = asynchandler(async (req, res) => {
