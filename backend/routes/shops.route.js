@@ -34,5 +34,5 @@ Router.route('/updateapp/:shopId').put(protect, updateapproval)
 //access private
 Router.route('/updateserices/:shopId').put(protect, updateServices)
 Router.route('/consent/:shopId').put(protect, consentToUserAgreement)
-Router.route('/delete/:shopId').put(protect, deleteShop)
+Router.route('/delete/:shopId'). delete(protect, deleteShop)
 module.exports= Router
