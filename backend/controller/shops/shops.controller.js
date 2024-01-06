@@ -165,29 +165,53 @@ const create_shops = asynchandler(async (req, res) => {
       saturday,
       sunday,
     } = req.body;
-    if (!monday || typeof monday !== 'string') {
-      throw Object.assign(
-        new Error(
-          `Monday working hours should be a string`
-        ),
-        { statusCode: 400 })
-    }
+    // Function to validate if the input is a string
+    const validateDayString = (day, dayName) => {
+      if (day && typeof day !== "string") {
+        throw Object.assign(
+          new Error(`${dayName} working hours should be a string`),
+          { statusCode: 400 }
+        );
+      }
+    };
+
+    // Validate each day
+    validateDayString(monday, "Monday");
+    validateDayString(tuesday, "Tuesday");
+    validateDayString(wednesday, "Wednesday");
+    validateDayString(thursday, "Thursday");
+    validateDayString(friday, "Friday");
+    validateDayString(saturday, "Saturday");
+    validateDayString(sunday, "Sunday");
     // const { monday, tuesday, wednesday, thursday, friday, saturday, sunday } = req.body;
 
-    const MtimeSlotsArray = monday ? monday.split(',').map(slot => slot.trim()) : [];
-    const TtimeSlotsArray = tuesday ? tuesday.split(',').map(slot => slot.trim()) : [];
-    const WtimeSlotsArray = wednesday ? wednesday.split(',').map(slot => slot.trim()) : [];
-    const THtimeSlotsArray = thursday ? thursday.split(',').map(slot => slot.trim()) : [];
-    const FtimeSlotsArray = friday ? friday.split(',').map(slot => slot.trim()) : [];
-    const StimeSlotsArray = saturday ? saturday.split(',').map(slot => slot.trim()) : [];
-    const SUtimeSlotsArray = sunday ? sunday.split(',').map(slot => slot.trim()) : [];
-    
+    const MtimeSlotsArray = monday
+      ? monday.split(",").map((slot) => slot.trim())
+      : [];
+    const TtimeSlotsArray = tuesday
+      ? tuesday.split(",").map((slot) => slot.trim())
+      : [];
+    const WtimeSlotsArray = wednesday
+      ? wednesday.split(",").map((slot) => slot.trim())
+      : [];
+    const THtimeSlotsArray = thursday
+      ? thursday.split(",").map((slot) => slot.trim())
+      : [];
+    const FtimeSlotsArray = friday
+      ? friday.split(",").map((slot) => slot.trim())
+      : [];
+    const StimeSlotsArray = saturday
+      ? saturday.split(",").map((slot) => slot.trim())
+      : [];
+    const SUtimeSlotsArray = sunday
+      ? sunday.split(",").map((slot) => slot.trim())
+      : [];
 
     // Use the uploaded image URL from Cloudinary
     // const image = result.secure_url;
 
     // Create shop with Cloudinary image URL
-    if (category==="barbers") {
+    if (category === "barbers") {
       const createShops = await SHOPS.create({
         owner: id,
         shop_name,
@@ -241,8 +265,8 @@ const create_shops = asynchandler(async (req, res) => {
 
         if (createShops && newWorkingHours) {
           res.status(200).json({
-           createShops,newWorkingHours,
-            
+            createShops,
+            newWorkingHours,
           });
 
           logger.info(
@@ -343,7 +367,7 @@ const login_shops = asynchandler(async (req, res) => {
     const currentTime = `${hours}:${minutes}:${seconds}`;
     if (shop) {
       res.status(200).json({
-   shop,
+        shop,
       });
       logger.info(
         `shop with id ${SHOP_ID} was fetched at ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
@@ -400,7 +424,7 @@ const login_shops = asynchandler(async (req, res) => {
 const getshop = asynchandler(async (req, res) => {
   const { id } = req.auth;
   const { SHOP_ID } = req.params;
-  console.log(id)
+  console.log(id);
   if (!id) {
     throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
   }
@@ -408,8 +432,8 @@ const getshop = asynchandler(async (req, res) => {
     throw Object.assign(new Error("No shops found"), { statusCode: 404 });
   }
   try {
-    const shop = await SHOPS.findById(SHOP_ID).populate('owner');
-    const whours=await working_hours.findOne({shopId: shop._id})
+    const shop = await SHOPS.findById(SHOP_ID).populate("owner");
+    const whours = await working_hours.findOne({ shopId: shop._id });
     // Get the current time
     const now = new Date();
     const hours = now.getHours();
@@ -423,9 +447,13 @@ const getshop = asynchandler(async (req, res) => {
       const token = generateToken(shop._id);
       owner = true;
       if (shop) {
-        res.status(200).header("Authorization", `Bearer ${token}`).json({
-          ...shop._doc,whours
-        });
+        res
+          .status(200)
+          .header("Authorization", `Bearer ${token}`)
+          .json({
+            ...shop._doc,
+            whours,
+          });
         logger.info(
           `User with id ${id} logged in a shop with id: ${SHOP_ID} at ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
         );
@@ -433,9 +461,13 @@ const getshop = asynchandler(async (req, res) => {
     } else {
       const token = generateToken(shop._id);
       if (shop) {
-        res.status(200).header("Authorization", `Bearer ${token}`).json({
-          ...shop._doc,whours
-        });
+        res
+          .status(200)
+          .header("Authorization", `Bearer ${token}`)
+          .json({
+            ...shop._doc,
+            whours,
+          });
         logger.info(
           `User with id ${id} logged in a shop with id: ${SHOP_ID} at ${currentTime} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
         );
@@ -724,38 +756,42 @@ const getbabers = asynchandler(async (req, res) => {
 
 const getallshopone = asynchandler(async (req, res) => {
   let page = parseInt(req.query.page) || 1;
-
   const pageSize = parseInt(req.query.pageSize) || 10;
-  const { id } = req.auth; // Assuming you are passing userId as a route parameter
+  const { id } = req.auth;
+
   if (!id)
     throw Object.assign(new Error("Not authorized"), { statusCode: 401 });
 
   try {
-    const totalCount = await SHOPS.countDocuments({ owner: id }); // Assuming user field represents the user's ID
+    const totalCount = await SHOPS.countDocuments({ owner: id });
     const totalPages = Math.ceil(totalCount / pageSize);
     const shops = await SHOPS.find({ owner: id })
       .skip((page - 1) * pageSize)
       .limit(pageSize);
-    // Get the current time
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const seconds = now.getSeconds();
 
-    // Format the time as a string
-    const currentTime = `${hours}:${minutes}:${seconds}`;
+    const shopsWithWorkingHours = [];
+    for (const shop of shops) {
+      const shopData = shop.toObject();
+      const whours = await working_hours.findOne({ shopId: shop._id });
+
+      // Optionally, you can add the working hours to the shop data
+      shopData.whours = whours;
+      shopsWithWorkingHours.push(shopData);
+    }
+
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      data: shops,
+      shopsWithWorkingHours,
       page: page,
       totalPages: totalPages,
     });
+
     logger.info(
-      `user with id ${id},fectched all his products - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip} `
+      `user with id ${id}, fetched all his products - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip} `
     );
   } catch (error) {
     console.log(error);
-    throw Object.assign(new Error(`$(error)`), {
+    throw Object.assign(new Error(`${error}`), {
       statusCode: error.statusCode,
     });
   }
@@ -991,18 +1027,11 @@ const updateShops = asynchandler(async (req, res) => {
  *       "error": "ErrorUpdatingHours"
  *     }
  */
-const updateWorkingHours =asynchandler( async (req, res) => {
+const updateWorkingHours = asynchandler(async (req, res) => {
   try {
     const { shopId } = req.params;
-    const {
-      monday,
-      tuesday,
-      wednesday,
-      thursday,
-      friday,
-      saturday,
-      sunday,
-    } = req.body;
+    const { monday, tuesday, wednesday, thursday, friday, saturday, sunday } =
+      req.body;
 
     if (!shopId) {
       throw Object.assign(new Error("Working hours ID is empty"), {
@@ -1027,13 +1056,19 @@ const updateWorkingHours =asynchandler( async (req, res) => {
     const workingHoursData = {
       shopId: shopId,
       hours: {
-        Monday: monday ? monday.split(',').map(slot => slot.trim()) : [],
-        Tuesday: tuesday ? tuesday.split(',').map(slot => slot.trim()) : [],
-        Wednesday: wednesday ? wednesday.split(',').map(slot => slot.trim()) : [],
-        Thursday: thursday ? thursday.split(',').map(slot => slot.trim()) : [],
-        Friday: friday ? friday.split(',').map(slot => slot.trim()) : [],
-        Saturday: saturday ? saturday.split(',').map(slot => slot.trim()) : [],
-        Sunday: sunday ? sunday.split(',').map(slot => slot.trim()) : [],
+        Monday: monday ? monday.split(",").map((slot) => slot.trim()) : [],
+        Tuesday: tuesday ? tuesday.split(",").map((slot) => slot.trim()) : [],
+        Wednesday: wednesday
+          ? wednesday.split(",").map((slot) => slot.trim())
+          : [],
+        Thursday: thursday
+          ? thursday.split(",").map((slot) => slot.trim())
+          : [],
+        Friday: friday ? friday.split(",").map((slot) => slot.trim()) : [],
+        Saturday: saturday
+          ? saturday.split(",").map((slot) => slot.trim())
+          : [],
+        Sunday: sunday ? sunday.split(",").map((slot) => slot.trim()) : [],
       },
     };
 
@@ -1053,7 +1088,7 @@ const updateWorkingHours =asynchandler( async (req, res) => {
     }
 
     res.status(200).json({
-  updatedWorkingHours,
+      updatedWorkingHours,
     });
 
     logger.info(
@@ -1066,8 +1101,6 @@ const updateWorkingHours =asynchandler( async (req, res) => {
     });
   }
 });
-
-
 
 const consentToUserAgreement = asynchandler(async (req, res, io) => {
   try {
@@ -1099,7 +1132,7 @@ const consentToUserAgreement = asynchandler(async (req, res, io) => {
     });
   }
 });
-const deleteShop = asynchandler( async (req, res) => {
+const deleteShop = asynchandler(async (req, res) => {
   const { shopId } = req.params;
   const { id } = req.auth;
 
@@ -1138,14 +1171,17 @@ const deleteShop = asynchandler( async (req, res) => {
       success: true,
     });
 
-    logger.info(`User with id ${id} deleted shop with id: ${shopId} at ${new Date()} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`);
+    logger.info(
+      `User with id ${id} deleted shop with id: ${shopId} at ${new Date()} - ${
+        res.statusCode
+      } - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+    );
   } catch (error) {
     throw Object.assign(new Error("Banned from forum"), {
       statusCode: error.statusCode,
-    })
+    });
   }
-}
-);
+});
 
 const getLocation = asynchandler(async (ip) => {
   try {
