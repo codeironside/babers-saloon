@@ -2,7 +2,7 @@ const express = require('express')
 const Router= express.Router()
 const {protect} = require('../middleware/authmiddleware')
  
-const { makecart, updateCart, getAllCartsForVendor, getOneCart, getAllcartForAdmins, getAllcartsForuser, confirmDelivery } = require('../controller/payment/cart.controller')
+const { makecart, updateCart, getAllCartsForVendor, getOneCart, getAllcartForAdmins, getAllcartsForuser, confirmDelivery,confirmpayment } = require('../controller/payment/cart.controller')
 
 //access private
 Router.route('/create').post(protect,makecart)
@@ -17,6 +17,8 @@ Router.route("/user").get(protect,getAllcartsForuser)
 Router.route('/updatebooking/:cart_id').put(protect, updateCart)
 //access private
 Router.route('/confirm-delivery/:cartId').put(protect, confirmDelivery);
+
+Router.route('/payment/:cartId').put(protect, confirmpayment);
 Router.route('/one/:cartId').put(protect,  getOneCart);
 
 module.exports= Router
