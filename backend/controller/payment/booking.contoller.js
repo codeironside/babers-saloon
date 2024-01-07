@@ -291,6 +291,34 @@ const confirmDelivery = asynchandler(async (req, res) => {
   }
 });
 
+const confirmedpayment= asynchandler(async (req, res) => {
+  try {
+    const { id } = req.auth;
+    const { bookId } = req.params;
+    if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
+    const books = await booking.findById(bookId)
+    if(id !== books.user.toString()){
+      throw Object.assign(new Error("not authorized"), { statusCode: 403 })
+    }
+    const book = await booking.findByIdAndUpdate(bookId, { paid: true }, { new: true });
+    if (!book) {
+      throw Object.assign(new Error("Product not found"), { statusCode: 404 });
+    }
+    
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      data: book,
+    });
+    logger.info(
+      `Product delivery confirmed by ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
+    );
+  } catch (error) {
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
+  }
+});
+
 const getLocation = asynchandler(async (ip) => {
   try {
     // Set endpoint and your access key
@@ -327,5 +355,6 @@ module.exports = {
   getAllBookingsForAdmins,
   getAllBookingsForUser,
   getAllBookingsForVendor,
-  confirmDelivery
+  confirmDelivery,
+  confirmedpayment
 };
