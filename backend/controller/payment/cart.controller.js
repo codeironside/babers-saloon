@@ -323,7 +323,7 @@ const confirmpayment= asynchandler(async (req, res) => {
       { paid: true },
       { new: true }
     );
-    if (!deliver) {
+    if (!paid) {
       throw Object.assign(new Error("Product not found"), { statusCode: 404 });
     }
     const token = generateToken(id);
