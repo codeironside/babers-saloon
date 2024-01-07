@@ -308,6 +308,38 @@ const confirmDelivery = asynchandler(async (req, res) => {
     });
   }
 });
+
+const confirmpayment= asynchandler(async (req, res) => {
+  try {
+    const { id } = req.auth;
+    const { cartId } = req.params;
+    if (!id) throw Object.assign(new Error("Not a user"), { statusCode: 404 });
+    const carts = await cart.findById(cartId);
+    if (id !== carts.user.toString()) {
+      throw Object.assign(new Error("not authorized"), { statusCode: 403 });
+    }
+    const paid = await cart.findByIdAndUpdate(
+      cartId,
+      { paid: true },
+      { new: true }
+    );
+    if (!deliver) {
+      throw Object.assign(new Error("Product not found"), { statusCode: 404 });
+    }
+    const token = generateToken(id);
+    res.status(200).header("Authorization", `Bearer ${token}`).json({
+      deliver,
+    });
+    logger.info(
+      `Product delivery confirmed by ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
+    );
+  } catch (error) {
+    throw Object.assign(new Error(`${error}`), {
+      statusCode: error.statusCode,
+    });
+  }
+})
+
 const getOneCart = asynchandler(async (req, res) => {
   try {
     const { cartId } = req.params;
@@ -394,4 +426,5 @@ module.exports = {
   getAllcartsForuser,
   confirmDelivery,
   getOneCart,
+  confirmpayment
 };
