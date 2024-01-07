@@ -8,6 +8,7 @@ const {
   getAllBookingsForUser,
   getAllBookingsForVendor,
   confirmDelivery,
+  confirmedpayment
 } = require("../controller/payment/booking.contoller");
 
 //access private
@@ -23,4 +24,5 @@ Router.route("/user").get(protect, getAllBookingsForUser);
 Router.route("/updatebooking/:bookingId").put(protect, updateBooking);
 //access private
 Router.route("/confirm-delivery/:bookId").put(protect, confirmDelivery);
+Router.route("/confirm-delivery/:bookId").put(protect, confirmedpayment);
 module.exports = Router;
