@@ -328,7 +328,7 @@ const confirmpayment= asynchandler(async (req, res) => {
     }
     const token = generateToken(id);
     res.status(200).header("Authorization", `Bearer ${token}`).json({
-      deliver,
+      paid,
     });
     logger.info(
       `Product delivery confirmed by ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} `
