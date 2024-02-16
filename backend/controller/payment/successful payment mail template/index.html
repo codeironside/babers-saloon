@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+        }
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+        .content {
+            margin: 15px;
+        }
+        .footer {
+            background-color: #f2f2f2;
+            padding: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Payment Successful</h1>
+        </div>
+        <div class="content">
+            <p>Dear {{username}},</p>
+            <p>We are pleased to inform you that your payment of ${{amount}} has been successfully received.</p>
+            <p>Transaction ID: {{transactionId}}</p>
+            <p>Thank you for your purchase!</p>
+        </div>
+        <div class="footer">
+            <p>© 2024 Your Company</p>
+        </div>
+    </div>
+</body>
+</html>

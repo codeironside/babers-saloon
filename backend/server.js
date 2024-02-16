@@ -15,8 +15,8 @@ const logger = require("./utils/logger");
 const app = express();
 
 
-const port = process.env.PORT || 5087;
-
+const port = process.env.PORT;
+console.log(port)
 // Logger
 app.use(morgan("tiny", { stream: logger.stream }));
 app.use(morgan(':date[iso] - :method :url :status :res[content-length] - :response-time ms'));

@@ -1,0 +1,11 @@
+NODE_ENV=production
+PORT=5087
+MONGO_URI
+OFFLINEMONGOURI=mongodb://localhost:27017/babers-saloon
+JWT_SECRET=
+CLOUDINARY_CLOUD_NAME=code-blooded
+CLOUD_API_KEY=972578696642856
+CLOUD_API_SECRET=3KrPqfJGlow9vdQWVKMny0_K68E
+sessionSecret =sdngbsdbdfbvbabers-saloonjksdvkhbdfbdfuibfbvvjkbdgugdh
+ip_secret_key = dc96915c-3307-4aa7-bd07-2e30c20c72b3
+stripe_secret = sk_test_51NoiuxA0Wdj6YMZbzLZhG2GqqoPnCKd4JZxCTTjHy809CVNLOCa8E4jEK8Nj2LZpor6FHAoh0EdgnEovwoD8BgRe00rfVnHiZR
