@@ -35,6 +35,7 @@ const USERS = mongoose.Schema(
       default: "USER",
     },
     blog_owner: { type: Boolean, default: false },
+    active: { type: Boolean, default: false },
     banned_from_forum: {
       type: Boolean,
       default: false,
@@ -57,6 +58,11 @@ const USERS = mongoose.Schema(
     youtube: { type: String },
     linkedln: { type: String },
     instagram: { type: String },
+    website:{type:String},
+    state:{type:String},
+    city:{type:String},
+    county:{type:String},
+    token:{type:String}
   },
 
 
