@@ -3,6 +3,7 @@ const Router= express.Router()
 const {protect} = require('../middleware/authmiddleware')
 const { create_shops, getallshops, updateShops, getallshopone, login_shops, updateWorkingHours,updateapproval, updatesubscription,searchShops,getshop,getall, updateavalability, updateServices,consentToUserAgreement,deleteShop } = require('../controller/shops/shops.controller')
 
+
 //access private
 Router.route('/register').post(protect,create_shops )
 //ccess privare

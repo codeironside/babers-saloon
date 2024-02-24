@@ -16,7 +16,6 @@ const app = express();
 
 
 const port = process.env.PORT;
-console.log(port)
 // Logger
 app.use(morgan("tiny", { stream: logger.stream }));
 app.use(morgan(':date[iso] - :method :url :status :res[content-length] - :response-time ms'));
@@ -54,6 +53,7 @@ app.use("/api/v1/cart", require("./routes/cart"));
 app.use("/api/v1/payment", require("./routes/payment"));
 app.use("/api/v1/campaign", require("./routes/campaign"));
 app.use("/api/v1/stripe", require("./routes/stripe.route"));
+app.use("/api/v1/customerservice", require("./routes/customerservice.route"));
 
 // Error handling middleware
 app.use(errorHandler);

@@ -25,7 +25,7 @@ const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 const makebooking = asynchandler(async (req, res) => {
   try {
     const { id } = req.auth;
-    const { service, date, no_persons, time} = req.body;
+    const { service, date, no_persons,transport, time} = req.body;
     const { shop_id }= req.params
     if (!id) throw Object.assign(new Error("Not allowed"), { statusCode: 403 });
     const user = await USER.findById(id);
@@ -47,6 +47,7 @@ const makebooking = asynchandler(async (req, res) => {
       date: new Date(date),
       no_persons: Number(no_persons),
       amount: n,
+      transport
     });
     if (book) {
       const token = generateToken(user._id);
