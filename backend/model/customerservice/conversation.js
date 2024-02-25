@@ -14,8 +14,8 @@ const messageSchema = new mongoose.Schema(
 
 const conversationSchema = new mongoose.Schema(
   {
-    user_one: { type: mongoose.Schema.Types.ObjectId, ref: "SHOPS" }, // Reference to the seller
-    user_two: { type: mongoose.Schema.Types.ObjectId, ref: "USER" }, // Reference to the buyer
+    user_one: { type: mongoose.Schema.Types.ObjectId, ref: "USER" },
+    user_two: { type: mongoose.Schema.Types.ObjectId, ref: "USER" }, 
     messages: [messageSchema], // An array of message objects.
   },
   {
