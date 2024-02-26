@@ -44,11 +44,11 @@ const sendMessage = asynchandler(async (req, res) => {
   try {
     await clearOldMessages();
     const { message } = req.body;
-    const { firstId } = req.auth;
-    const { id} = req.params;
+    const { id } = req.auth;
+    const { firstid} = req.params;
 
-    const user_one = await USER.findById(firstId);
-    const user_two = await USER.findById(secondId);
+    const user_one = await USER.findById(id);
+    const user_two = await USER.findById(firstid);
 
     if (!user_one || !user_two) {
       throw Object.assign(new Error("Not authorized"), { statusCode: 404 });
@@ -57,8 +57,8 @@ const sendMessage = asynchandler(async (req, res) => {
     // Find conversation where both firstId and secondId match in either order
     let conversation = await Conversation.findOne({
       $or: [
-        { user_one: firstId, user_two: id },
-        { user_one: id, user_two: firstId },
+        { user_one: firstid, user_two: id },
+        { user_one: id, user_two: firstid },
       ],
     });
 
@@ -66,10 +66,11 @@ const sendMessage = asynchandler(async (req, res) => {
       conversation.messages.push({ message });
     } else {
       conversation = await Conversation.create({
-        user_one: firstId,
+        user_one: firstid,
         user_two: id,
         messages: [{ message }],
       });
+      
     }
 
     await conversation.save();
@@ -87,10 +88,10 @@ const getMessages = asynchandler(async (req, res) => {
   try {
     await clearOldMessages();
     const { id } = req.auth;
-    const { secondId } = req.params;
+    const { firstid} = req.params;
 
-    const user_one = await User.findById(firstId);
-    const user_two = await User.findById(secondId);
+    const user_one = await USER.findById(firstid);
+    const user_two = await USER.findById(id);
 
     if (!user_one || !user_two) {
       throw Object.assign(new Error("Not authorized"), { statusCode: 403 });
@@ -99,8 +100,8 @@ const getMessages = asynchandler(async (req, res) => {
     // Find messages where both firstId and secondId match in either order
     const messages = await Conversation.findOne({
       $or: [
-        { user_one: id, user_two: secondId },
-        { user_one: secondId, user_two: id },
+        { user_one: id, user_two: firstid },
+        { user_one: firstid, user_two: id },
       ],
     });
 
