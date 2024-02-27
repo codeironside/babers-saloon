@@ -262,15 +262,15 @@ const register_users = asynchandler(async (req, res) => {
         { new: true }
       );
       if (updateReferral) {
-        console.log(updateRerral);
+        
         const transporter = nodemailer.createTransport({
           service: "gmail",
           auth: {
-            user: process.env.email,
+            user: process.env.gmail,
             pass: process.env.password,
           },
         });
-        console.log(transporter);
+        // console.log(transporter);
         const html = `
         <!DOCTYPE html
         PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -1037,7 +1037,7 @@ const register_users = asynchandler(async (req, res) => {
               `;
 
         const mailOptions = {
-          from: process.env.email,
+          from: process.env.gmail,
           to: email,
           subject: `confirm yout mail, ${lastName} `,
           html: html,
@@ -1100,11 +1100,11 @@ const register_users = asynchandler(async (req, res) => {
         const transporter = nodemailer.createTransport({
           service: "gmail",
           auth: {
-            user: process.env.email,
+            user: process.env.gmail,
             pass: process.env.password,
           },
         });
-        console.log(transporter);
+        // console.log(transporter);
         const html = `
         <!DOCTYPE html
         PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -1871,7 +1871,7 @@ const register_users = asynchandler(async (req, res) => {
               `;
 
         const mailOptions = {
-          from: process.env.email,
+          from: process.env.gmail,
           to: email,
           subject: `confirm yout mail, ${lastName} `,
           html: html,
