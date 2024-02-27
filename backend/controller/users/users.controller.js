@@ -9,7 +9,7 @@ const logger = require("../../utils/logger");
 const { DateTime } = require("luxon");
 const { convertToWAT } = require("../../utils/datetime");
 const BOOKING = require("../../model/payment/booking");
-const nodemailer = require('nodemailer')
+const nodemailer = require("nodemailer");
 
 const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 /**
@@ -262,7 +262,7 @@ const register_users = asynchandler(async (req, res) => {
         { new: true }
       );
       if (updateReferral) {
-        console.log(updateRerral)
+        console.log(updateRerral);
         const transporter = nodemailer.createTransport({
           service: "gmail",
           auth: {
@@ -270,7 +270,7 @@ const register_users = asynchandler(async (req, res) => {
             pass: process.env.password,
           },
         });
-
+        console.log(transporter);
         const html = `
         <!DOCTYPE html
         PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -1104,7 +1104,7 @@ const register_users = asynchandler(async (req, res) => {
             pass: process.env.password,
           },
         });
-
+        console.log(transporter);
         const html = `
         <!DOCTYPE html
         PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -2686,5 +2686,5 @@ module.exports = {
   oneUser,
   changePassword,
   logout_user,
-  confirmEmail
+  confirmEmail,
 };

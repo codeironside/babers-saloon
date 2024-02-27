@@ -34,46 +34,55 @@ const clearOldMessages = asynchandler(async () => {
 
     console.log("Old messages and empty conversations deleted successfully");
   } catch (error) {
-    console.error("Error deleting old messages and empty conversations:", error);
+    console.error(
+      "Error deleting old messages and empty conversations:",
+      error
+    );
     throw error;
   }
 });
-
 
 const sendMessage = asynchandler(async (req, res) => {
   try {
     await clearOldMessages();
     const { message } = req.body;
-    const { id } = req.auth;
-    const { firstid} = req.params;
+    const { id: senderId } = req.auth;
+    const { firstid: receiverId } = req.params;
 
-    const user_one = await USER.findById(id);
-    const user_two = await USER.findById(firstid);
+    const sender = await USER.findById(senderId);
+    const receiver = await USER.findById(receiverId);
 
-    if (!user_one || !user_two) {
+    if (!sender || !receiver) {
       throw Object.assign(new Error("Not authorized"), { statusCode: 404 });
     }
 
-    // Find conversation where both firstId and secondId match in either order
+    // Find conversation where both senderId and receiverId match in either order
     let conversation = await Conversation.findOne({
       $or: [
-        { user_one: firstid, user_two: id },
-        { user_one: id, user_two: firstid },
+        { user_one: senderId, user_two: receiverId },
+        { user_one: receiverId, user_two: senderId },
       ],
     });
 
+    const newMessage = { sender: senderId, message };
+
     if (conversation) {
-      conversation.messages.push({ message });
+      conversation.messages.push(newMessage);
     } else {
       conversation = await Conversation.create({
-        user_one: firstid,
-        user_two: id,
-        messages: [{ message }],
+        user_one: senderId,
+        user_two: receiverId,
+        messages: [newMessage],
       });
-      
     }
 
     await conversation.save();
+
+    // Populate user_one, user_two, and messages.sender before sending the conversation back
+    conversation = await Conversation.findById(conversation._id)
+      .populate("user_one")
+      .populate("user_two")
+      .populate("messages.sender");
 
     res.status(200).json({ conversation });
   } catch (error) {
@@ -88,7 +97,7 @@ const getMessages = asynchandler(async (req, res) => {
   try {
     await clearOldMessages();
     const { id } = req.auth;
-    const { firstid} = req.params;
+    const { firstid } = req.params;
 
     const user_one = await USER.findById(firstid);
     const user_two = await USER.findById(id);
@@ -98,27 +107,35 @@ const getMessages = asynchandler(async (req, res) => {
     }
 
     // Find messages where both firstId and secondId match in either order
-    const messages = await Conversation.findOne({
+    let conversation = await Conversation.findOne({
       $or: [
         { user_one: id, user_two: firstid },
         { user_one: firstid, user_two: id },
       ],
     });
 
-    if (!messages) {
+    if (!conversation) {
       throw Object.assign(new Error("No messages for these users"), {
         statusCode: 404,
       });
     }
 
-    res.status(200).json({ messages });
+    // Populate all ID fields in the schema
+    // Populate user_one, user_two, and messages.sender before sending the conversation back
+    conversation = await Conversation.findById(conversation._id)
+      .populate("user_one")
+      .populate("user_two")
+      .populate("messages.sender");
+
+    res.status(200).json({ messages: conversation });
   } catch (error) {
     console.error("Error retrieving messages:", error);
     throw Object.assign(new Error(`${error.message}`), {
       statusCode: error.statusCode,
     });
   }
-})
+});
+
 // Retrieve messages in a conversation
 
 module.exports = {
