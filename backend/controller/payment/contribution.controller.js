@@ -87,152 +87,107 @@ const contributeToCrowdfunding = asynchandler(async (req, res) => {
         statusCode: 500,
       });
     }
-//     const transporter = nodemailer.createTransport({
-//       service: "gmail",
-//       auth: {
-//         user: process.env.email,
-//         pass: process.env.password,
-//       },
-//     });
-  
-//     const html = `
-//     <!DOCTYPE html>
-// <html>
-// <head>
-//   <style>
-//     /* Set the body background to the image */
-//     body {
-//       background-image:url('https://img.freepik.com/free-photo/front-view-stacked-books-graduation-cap-open-book-education-day_23-2149241017.jpg?w=740&t=st=1672839251~exp=1672839851~hmac=250a8619cf050e204e19f685163952c48a928f250756df0e7e70c93e889369da') ;
-//       background-size: cover;
-//       background-repeat: no-repeat;
-//       font-family: sans-serif;
-//       color: white;
-//       text-align: center;
-//       padding: 50px;
-//     }
-
-//     /* Style the header */
-//     h1 {
-//         color:red;
-//       font-size: 48px;
-//       margin-bottom: 20px;
-//       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-//     }
-
-//     /* Style the message */
-//     .class{
-//       font-size: 28px;
-//       font-family:comic-sans;
-//       font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-//       margin-bottom: 20px;
-//       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-//     }
-//     .class1{
-//       font-size: 20px;
-//       font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-//       margin-bottom: 20px;
-//       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-//     }
-//     .center{
-//       justify-content:center;
-//       align-self: flex-start;
-//       font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-//       font-size: 17px;
-//       color: rgba(17, 17, 17, 0.87);
-//       font-weight: bold;
-//       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5)
-//     }
-
-//     /* Style the button */
-//     .button {
-//       display: inline-block;
-//       background-color: #3498db;
-//       color: white;
-//       padding: 15px 30px;
-//       border-radius: 5px;
-//       text-decoration: none;
-//       font-size: 18px;
-//       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-//     }
-//   </style>
-// </head>
-
-// <body><h1>Welcome to RMS</h1>
-//   <p class="class">Dear ${firstName} with id: ${id}.</p>,
-
-//  <div class="center"> <p class="class1">Welcome to RMS</p><br>
- 
-//  I hope this email finds you well. On behalf of the entire team, I would like to extend a warm welcome to our restaurant platform. We are thrilled to have you as a new member of our team and are excited to embark on this journey together.<br>
-
-// Your registration on the platform marks the beginning of an exciting chapter, and we are confident that your skills and expertise will make a valuable contribution to our restaurant's success. We believe that your presence will help us continue to provide exceptional service and unforgettable dining experiences to our valued customers.<br>
-
-// As you settle into your role, you can expect a supportive and friendly work environment. Our team is dedicated to ensuring that every member feels included, valued, and empowered to thrive. Should you have any questions or need assistance, please don't hesitate to reach out to your manager or any of your colleagues.<br>
-
-// In the coming days, you will receive further information about your specific duties, training sessions, and schedules. We encourage you to familiarize yourself with our platform and our restaurant's mission, values, and service standards.<br>
-
-// <p>We want to emphasize the importance of maintaining the security of your login details. Your account credentials are vital for accessing our platform and performing your duties effectively. Ensuring the confidentiality of these details helps protect sensitive information and maintains the overall security of our system.</p>
-// <h1>Security Guidelines for Login Details</h1>
-// <h2>To keep your login details safe, we kindly request that you adhere to the following guidelines:</h2>
-// <ul>
-// <li><strong>Never Share Your Login Information:</strong> 
-// Your login credentials are unique to you, and they should never be shared with anyone, including colleagues or friends. Our system is designed to grant appropriate access based on individual accounts, and sharing credentials poses a significant security risk.</li>
-// <li><strong>Beware of Phishing Attempts:</strong> Be cautious of any emails or messages requesting your login credentials. Legitimate organizations, including ours, will never ask you to share sensitive information through email or other messaging platforms.</li>
-// <li><strong>Log Out When Not in Use:</strong> Always log out of the platform when you are not actively using it, especially if you are using a shared or public computer.</li>
-// <li><strong>Inform Management of Any Suspicious Activity:</strong> If you notice any unusual activity related to your account or suspect a security breach, please report it immediately to your manager or our IT department.</li>
-// </ul>
-
-// <p>We take the security and privacy of our employees seriously, and these measures are in place to protect both you and our organization from potential security risks.</p>
-// Once again, welcome aboard! We are truly delighted to have you as part of our team and are looking forward to achieving great success together.<br>
-
-// If you have any questions before your first day, please feel free to contact Emmanuel Asoba at asomba505@gmail.com or +2348164975474.<br>
-// Thank you for joining RMS. We look forward to your contributions to our platform!<br>
-// <p class="center">Best regards,<br></p> 
-// <p class="center">The RMS team<br></p>
-// <p class="center">Oluwatobi Ayoola jolaosho<br></p> 
-// <p class="center">Backend developer<br></p> 
-// <p class="center">Contact Information: fury25423@gmail.com and 09038745017<br></p> 
-  
-
-
-  
-// </body>
-// </html>
-//   `;
-  
-//     const mailOptions = {
-//       from: process.env.email,
-//       to: email,
-//       subject: `your c, ${lastName} `,
-//       html: html,
-//     };
-  
-//     transporter.sendMail(mailOptions, (error, info) => {
-//       if (error) {
-//         console.log(error);
-//         throw new Error("email not sent");
-//       } else {
-//         console.log("Email sent: " + info.response);
-
-//         // const token = generateToken(user._id);
-//         // res.status(201).header("Authorization", `Bearer ${token}`).json({
-//         //   status: "success",
-//         //   data: crowdfunding,
-//         // });
-    
-//         // logger.info(
-//         //   `user with id:${user._id} and name ${user.userName}, contributed to a  campaign with id: ${crowdfunding._id} with name ${crowdfunding.campaignName} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
-//         // );
-//     }
-//   })
   const token = generateToken(user._id);
+  if (token) {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.gmail,
+        pass: process.env.password,
+      },
+    });
+    // console.log(transporter);
+    const html = `
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Successful Payment</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  color: #333;
+  text-align: center;
+}
+
+p {
+  color: #666;
+  line-height: 1.6;
+}
+
+.button {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #a88b4e;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 5px;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Successful Payment</h1>
+<p>Dear ${user.lastName},</p>
+<p>We are pleased to inform you that your payment of ${amount} has been successfully processed.</p>
+<p>Your order details:</p>
+<ul>
+  <li>Order ID: ${crowdfunding._id}</li>
+  <li>Amount: ${amount}</li>
+  <!-- Add more order details here if needed -->
+</ul>
+<p>Thank you for your purchase!</p>
+<p>If you have any questions or concerns, please don't hesitate to contact us.</p>
+<p>Best regards,<br> univeral soul babers</p>
+<p><a href="http://universoulbarbers.com/" class="button">Visit our Website</a></p>
+</div>
+</body>
+</html>  `;
+
+    const mailOptions = {
+      from: process.env.gmail,
+      to: email,
+      subject: `confirm yout mail, ${lastName} `,
+      html: html,
+    };
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+        throw new Error("email not sent");
+      } else {
+        console.log("Email sent: " + info.response);
         res.status(201).header("Authorization", `Bearer ${token}`).json({
-          status: "success",
           data: crowdfunding,
         });
     
         logger.info(
           `user with id:${user._id} and name ${user.userName}, contributed to a  campaign with id: ${crowdfunding._id} with name ${crowdfunding.campaignName} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
         );
+      }
+    });
+  } 
+ 
+
   } catch (error) {
     throw Object.assign(new Error(`${error}`), {
       statusCode: error.statusCode,

@@ -2,7 +2,7 @@ const express = require("express")
 
 
 const { protect } = require("../middleware/authmiddleware")
-const { register_users, login_users,updateUser, oneUser,getUser,landingpage, getallusers, forum_status,searchItems, landing_page,changePassword,logout_user } = require("../controller/users/users.controller")
+const { register_users,confirmEmail, login_users,updateUser, oneUser,getUser,landingpage, getallusers, forum_status,searchItems, landing_page,changePassword,logout_user } = require("../controller/users/users.controller")
 const Router = express.Router()
 
 
@@ -32,5 +32,7 @@ Router.route('/search').get(searchItems)
 Router.route('/getall').get(protect,getallusers)
 //update a user
 Router.route('/logout').get(protect,logout_user)
+//confirm mail
+Router.route("/mail").get(confirmEmail)
  
 module.exports=Router
