@@ -8,5 +8,5 @@ Router.route('/sendMessages/:firstid').post(protect,sendMessage)
 //ccess privare
 Router.route("/getMessages/:firstid").get(protect,getMessages)
 //access private
-Router.route("/getMessages/:firstid").get(protect,getAllMessagesForUser)
+Router.route("/oneUser").get(protect,getAllMessagesForUser)
 module.exports= Router
