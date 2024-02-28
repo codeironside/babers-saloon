@@ -197,6 +197,8 @@ const register_users = asynchandler(async (req, res) => {
       state,
       city,
       county,
+      role,
+      agreement
     } = req.body;
 
     if (
@@ -248,6 +250,8 @@ const register_users = asynchandler(async (req, res) => {
         state,
         city,
         county,
+        role,
+        agreement
       });
 
       const codeOne = createUsers._id.toString().slice(2, 9);
@@ -1082,6 +1086,8 @@ const register_users = asynchandler(async (req, res) => {
         password: hashedPassword,
         userName,
         phoneNumber,
+        role,
+        agreement
       });
 
       const codeOne = createUsers._id.toString().slice(3, 7);
@@ -1845,7 +1851,6 @@ const register_users = asynchandler(async (req, res) => {
                                                                                 style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#CCCCCC;font-size:12px"></a>No
                                                                             longer want to receive these emails?&nbsp;<a
                                                                                 href="" target="_blank"
-                                                                                style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#CCCCCC;font-size:12px">Unsubscribe</a>.<a
                                                                                 target="_blank" href=""
                                                                                 style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#CCCCCC;font-size:12px"></a>
                                                                         </p>
@@ -1888,14 +1893,13 @@ const register_users = asynchandler(async (req, res) => {
           } else {
             console.log("Email sent: " + info.response);
 
-            res
-              .status(202)
-              .header("Authorization", `Bearer ${token}`)
-              .json({
-                ...userWithoutPassword._doc,
-                referredUsers,
-              });
-
+            res.status(202).header("Authorization", `Bearer ${token}`).json({
+              status: "202",
+              message: updateReferral,
+              referralCount: referredUsers.length,
+              referredUsers: referredUsers,
+            });
+      
             logger.info(
               `User with ID ${createUsers._id} was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
             );
@@ -1903,16 +1907,7 @@ const register_users = asynchandler(async (req, res) => {
         });
       }
 
-      res.status(202).header("Authorization", `Bearer ${token}`).json({
-        status: "202",
-        message: updateReferral,
-        referralCount: referredUsers.length,
-        referredUsers: referredUsers,
-      });
 
-      logger.info(
-        `User with ID ${createUsers._id} was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
-      );
     }
   } catch (error) {
     throw Object.assign(new Error(`${error}`), {

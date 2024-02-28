@@ -137,7 +137,7 @@ const paidproduct = asynchandler(async (req, res) => {
   </div>
   </body>
   </html>  `;
-  
+
         const mailOptions = {
           from: process.env.gmail,
           to: email,
@@ -150,35 +150,16 @@ const paidproduct = asynchandler(async (req, res) => {
             throw new Error("email not sent");
           } else {
             console.log("Email sent: " + info.response);
-            if (updateShops.nModified === 0) {
-              return res
-                .status(200)
-                .header("Authorization", `Bearer ${token}`)
-                .json({
-                  status: "success",
-                  message: newSubscription,
-                });
-            }
-  
-            res.status(200).header("Authorization", `Bearer ${Token}`).json({
-              status: "success",
-              message: newSubscription,
+            res.status(200).header("Authorization", `Bearer ${token}`).json({
+              data: newPayment,
             });
-  
+
             logger.info(
-              `Subscription created for user with ID: ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
+              `User with id: ${id} paid for a product - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
             );
           }
         });
       }
-      res.status(200).header("Authorization", `Bearer ${token}`).json({
-        status: "success",
-        data: newPayment,
-      });
-
-      logger.info(
-        `User with id: ${id} paid for a product - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
-      );
     } else {
       const cart = await Cart.findById(cart_id);
       if (!cart)
@@ -187,7 +168,7 @@ const paidproduct = asynchandler(async (req, res) => {
       if (id !== cart.user.toString())
         throw Object.assign(new Error("not allowed"), { statusCode: 403 });
       for (let item of cart.items) {
-        console.log(item.product);
+        //console.log(item.product);
         const shop = await SHOPS.findById(item.product);
 
         if (!shop)
@@ -217,14 +198,106 @@ const paidproduct = asynchandler(async (req, res) => {
         );
       }
       const token = generateToken(user._id);
-      res.status(200).header("Authorization", `Bearer ${token}`).json({
-        status: "success",
-        data: newPayments,
-      });
+      if (token) {
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: process.env.gmail,
+            pass: process.env.password,
+          },
+        });
+        // console.log(transporter);
+        const html = `
+        <!DOCTYPE html>
+  <html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Successful Payment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+    
+    p {
+      color: #666;
+      line-height: 1.6;
+    }
+    
+    .button {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #a88b4e;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    
+    .button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+  </head>
+  <body>
+  <div class="container">
+    <h1>Successful Payment</h1>
+    <p>Dear ${user.lastName},</p>
+    <p>We are pleased to inform you that your payment of ${newPayments.amount} has been successfully processed.</p>
+    <p>Your order details:</p>
+    <ul>
+      <li>Order ID: ${newPayments._id}</li>
+      <li>Amount: ${newPayments.amount}</li>
+      <!-- Add more order details here if needed -->
+    </ul>
+    <p>Thank you for your purchase!</p>
+    <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
+    <p>Best regards,<br> univeral soul babers</p>
+    <p><a href="http://universoulbarbers.com/" class="button">Visit our Website</a></p>
+  </div>
+  </body>
+  </html>  `;
 
-      logger.info(
-        `User with id: ${id} paid for a product - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
-      );
+        const mailOptions = {
+          from: process.env.gmail,
+          to: email,
+          subject: `confirm yout mail, ${lastName} `,
+          html: html,
+        };
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.log(error);
+            throw new Error("email not sent");
+          } else {
+            console.log("Email sent: " + info.response);
+            res.status(200).header("Authorization", `Bearer ${token}`).json({
+              status: "success",
+              data: newPayments,
+            });
+      
+            logger.info(
+              `User with id: ${id} paid for a product - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+            );
+          }
+        });
+      } 
+     
     }
   } catch (error) {
     throw Object.assign(new Error(`${error}`), {

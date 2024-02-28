@@ -20,6 +20,11 @@ const USERS = mongoose.Schema(
       required: [true, "please add a user name "],
       unique: true,
     },
+    agreement:{
+      type: Boolean,
+      required: [true, "please add consent to our policy"],
+      default:false,
+    },
     email: {
       type: String,
       required: [true, "please add an email "],

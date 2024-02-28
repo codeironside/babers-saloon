@@ -25,6 +25,11 @@ const BookingSchema = new mongoose.Schema(
       required: [true, "please specify if product has been delivered"],
       default: false,
     },
+    transport : {
+      type: Boolean,
+      required: [true, "please specify if product has been delivered"],
+      default: false,
+    },
     time: {
       type: String,
       required: true,

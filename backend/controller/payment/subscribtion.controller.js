@@ -10,7 +10,6 @@ const { convertToWAT } = require("../../utils/datetime");
 const Subscription = require("../../model/payment/subscription");
 const currentDateTimeWAT = DateTime.now().setZone("Africa/Lagos");
 
-
 //desc register users
 //access public
 //router /users/register
@@ -126,19 +125,19 @@ const createSubscription = asynchandler(async (req, res) => {
 <body>
 <div class="container">
   <h1>Successful Payment</h1>
-  <p>Dear [Customer Name],</p>
-  <p>We are pleased to inform you that your payment of $[Amount] has been successfully processed.</p>
+  <p>Dear ${user.lastName},</p>
+  <p>We are pleased to inform you that your payment of ${amount} has been successfully processed.</p>
   <p>Your order details:</p>
   <ul>
-    <li>Order ID: [Order ID]</li>
-    <li>Product: [Product Name]</li>
-    <li>Amount: $[Amount]</li>
+    <li>Order ID: ${newSubscription._id}</li>
+    <li>Product: ${type} for a ${plan}</li>
+    <li>Amount: ${amount}</li>
     <!-- Add more order details here if needed -->
   </ul>
   <p>Thank you for your purchase!</p>
   <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
-  <p>Best regards,<br> [Your Company Name]</p>
-  <p><a href="" class="button">Visit our Website</a></p>
+  <p>Best regards,<br> univeral soul babers</p>
+  <p><a href="http://universoulbarbers.com/" class="button">Visit our Website</a></p>
 </div>
 </body>
 </html>  `;
@@ -149,46 +148,33 @@ const createSubscription = asynchandler(async (req, res) => {
         subject: `confirm yout mail, ${lastName} `,
         html: html,
       };
-      referredUsers = await USER.find(
-        { referredBy: referrerCode },
-        "firstName lastName userName pictureUrl"
-      );
-
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
           console.log(error);
           throw new Error("email not sent");
         } else {
           console.log("Email sent: " + info.response);
+          if (updateShops.nModified === 0) {
+            return res
+              .status(200)
+              .header("Authorization", `Bearer ${token}`)
+              .json({
+                status: "success",
+                message: newSubscription,
+              });
+          }
 
-          res.status(202).header("Authorization", `Bearer ${token}`).json({
-            status: "202",
-            message: updateReferral,
-            referralCount: referredUsers.length,
-            referredUsers: referredUsers,
+          res.status(200).header("Authorization", `Bearer ${Token}`).json({
+            status: "success",
+            message: newSubscription,
           });
-    
+
           logger.info(
-            `User with ID ${createUsers._id} was created at ${createUsers.createdAt} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`
+            `Subscription created for user with ID: ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
           );
         }
       });
     }
-    if (updateShops.nModified === 0) {
-      return res.status(200).header("Authorization", `Bearer ${token}`).json({
-        status: "success",
-        message: newSubscription,
-      });
-    }
-
-    res.status(200).header("Authorization", `Bearer ${Token}`).json({
-      status: "success",
-      message: newSubscription,
-    });
-
-    logger.info(
-      `Subscription created for user with ID: ${id} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
-    );
   } catch (error) {
     console.error(error);
     throw Object.assign(new Error(`${error}`), {
@@ -256,11 +242,8 @@ const updateSubscriptionPlan = asynchandler(async (req, res) => {
     const user = await USER.findById(id);
     if (!user)
       throw Object.assign(new Error("user not found"), { statusCode: 404 });
-    const subscription = await Subscription.findOne({user_id:id});
-    if (
-      !subscription ||
-      subscription.user_id.toString() !== id.toString()
-    ) {
+    const subscription = await Subscription.findOne({ user_id: id });
+    if (!subscription || subscription.user_id.toString() !== id.toString()) {
       throw Object.assign(new Error("who goes you"), { statusCode: 403 });
     }
 
@@ -312,20 +295,9 @@ const updateSubscriptionPlan = asynchandler(async (req, res) => {
     const update = await USER.findByIdAndUpdate(id, {
       $set: { subscribed: true, type: type },
     });
+
     const token = generateToken(id);
-    if (updateShops.nModified === 0) {
-      return res.status(200).header("Authorization", `Bearer ${token}`).json({
-        message: newSubscription,
-      });
-    }
-
-    res.status(200).header("Authorization", `Bearer ${token}`).json({
-      data: updatedSubscription,
-    });
-
-    logger.info(
-      `User with id: ${id} updated their subscription plan for subscription ${planId} - ${res.statusCode} - ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} - from ${req.ip}`
-    );
+   
   } catch (error) {
     throw Object.assign(new Error(`${error}`), {
       statusCode: error.statusCode,
