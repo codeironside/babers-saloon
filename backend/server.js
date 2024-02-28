@@ -40,7 +40,7 @@ app.use((req, res, next) => {
 });
 // Your routes go here
 app.get('/', (req, res) => {
-  res.send('Hello, world!');
+  res.send('finished the end point');
 });
 // Routes
 app.use("/api/v1/users", require("./routes/users"));
