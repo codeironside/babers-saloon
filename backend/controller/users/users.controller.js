@@ -196,8 +196,8 @@ const register_users = asynchandler(async (req, res) => {
       pictureUrl,
       state,
       city,
-      county,
       role,
+      county,
       agreement
     } = req.body;
 
