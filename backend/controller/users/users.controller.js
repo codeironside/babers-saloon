@@ -856,7 +856,7 @@ const register_users = asynchandler(async (req, res) => {
                                                                 <tr>
                                                                 <td align="center" style="padding:0;Margin:0;padding-top:10px;padding-bottom:10px">
                                                                 <span class="es-button-border" style="border-style:solid;border-color:#2CB543;background:#d5bb6a;border-width:0px;display:inline-block;border-radius:6px;width:auto">
-                                                                  <a href="https://unique-barbers.onrender.com/api/v1/mail?usertoken=${token}" class="es-button" target="_blank" style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;color:#FFFFFF;font-size:14px;padding:10px 30px 10px 30px;display:inline-block;background:#d5bb6a;border-radius:6px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-weight:normal;font-style:normal;line-height:17px;width:auto;text-align:center;mso-padding-alt:0;mso-border-alt:10px solid #d5bb6a;padding-left:30px;padding-right:30px">
+                                                                  <a href="https://www.universoulbarbers.com/activate?usertoken=${token}" class="es-button" target="_blank" style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;color:#FFFFFF;font-size:14px;padding:10px 30px 10px 30px;display:inline-block;background:#d5bb6a;border-radius:6px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-weight:normal;font-style:normal;line-height:17px;width:auto;text-align:center;mso-padding-alt:0;mso-border-alt:10px solid #d5bb6a;padding-left:30px;padding-right:30px">
                                                                     CONFIRM YOUR EMAIL
                                                                   </a>
                                                                 </span>
@@ -1692,7 +1692,7 @@ const register_users = asynchandler(async (req, res) => {
                                                                 <tr>
                                                                 <td align="center" style="padding:0;Margin:0;padding-top:10px;padding-bottom:10px">
                                                                 <span class="es-button-border" style="border-style:solid;border-color:#2CB543;background:#d5bb6a;border-width:0px;display:inline-block;border-radius:6px;width:auto">
-                                                                  <a href="https://unique-barbers.onrender.com/api/v1/mail?usertoken=${token}" class="es-button" target="_blank" style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;color:#FFFFFF;font-size:14px;padding:10px 30px 10px 30px;display:inline-block;background:#d5bb6a;border-radius:6px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-weight:normal;font-style:normal;line-height:17px;width:auto;text-align:center;mso-padding-alt:0;mso-border-alt:10px solid #d5bb6a;padding-left:30px;padding-right:30px">
+                                                                  <a href="https://www.universoulbarbers.com/activate?usertoken=${token}" class="es-button" target="_blank" style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;color:#FFFFFF;font-size:14px;padding:10px 30px 10px 30px;display:inline-block;background:#d5bb6a;border-radius:6px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-weight:normal;font-style:normal;line-height:17px;width:auto;text-align:center;mso-padding-alt:0;mso-border-alt:10px solid #d5bb6a;padding-left:30px;padding-right:30px">
                                                                     CONFIRM YOUR EMAIL
                                                                   </a>
                                                                 </span>
@@ -2638,7 +2638,7 @@ const logout_user = asynchandler(async (req, res) => {
     });
   }
 });
-const confirmEmail = asynchandler(async (req, res) => {
+const  confirmEmail = asynchandler(async (req, res) => {
   try {
     const { usertoken } = req.query;
     if (!usertoken) {
