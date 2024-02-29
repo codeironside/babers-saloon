@@ -196,6 +196,7 @@ const register_users = asynchandler(async (req, res) => {
       pictureUrl,
       state,
       city,
+      role,
       county,
     } = req.body;
 
@@ -248,6 +249,7 @@ const register_users = asynchandler(async (req, res) => {
         state,
         city,
         county,
+        role
       });
 
       const codeOne = createUsers._id.toString().slice(2, 9);
@@ -1082,6 +1084,7 @@ const register_users = asynchandler(async (req, res) => {
         password: hashedPassword,
         userName,
         phoneNumber,
+        role
       });
 
       const codeOne = createUsers._id.toString().slice(3, 7);
